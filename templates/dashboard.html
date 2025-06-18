@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="form-container">
+    <div class="text-center">
+        <h1>Tableau de bord</h1>
+        <p class="lead">Bienvenue sur votre espace personnel, {{ username }}!</p>
+        <hr>
+        <div class="alert alert-success">
+            <p>Vous êtes connecté avec succès.</p>
+        </div>
+        
+        <div class="mt-4">
+            <h3>Que pouvez-vous faire maintenant?</h3>
+            <div class="row mt-4">
+                <div class="col-md-4">
+                    <div class="card mb-3">
+                        <div class="card-body">
+                            <h4 class="card-title">Voir votre profil</h4>
+                            <p class="card-text">Consultez et modifiez vos informations personnelles</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card mb-3">
+                        <div class="card-body">
+                            <h4 class="card-title">Gérer vos préférences</h4>
+                            <p class="card-text">Personnalisez votre expérience utilisateur</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card mb-3">
+                        <div class="card-body">
+                            <h4 class="card-title">Sécurité du compte</h4>
+                            <p class="card-text">Changez votre mot de passe et paramètres de sécurité</p>
+                            <a href="{{ url_for('change_password') }}" class="btn btn-outline-primary mt-2">Changer le mot de passe</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="mt-4">
+            <a href="{{ url_for('logout') }}" class="btn btn-danger">Se déconnecter</a>
+        </div>
+    </div>
+</div>
+{% endblock %}

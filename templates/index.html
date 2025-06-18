@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="text-center mt-5">
+    <h1>Bienvenue sur notre Système de notation</h1>
+    <p class="lead mt-4">Un exemple simple de système d'authentification avec Flask</p>
+    
+    {% if 'user_id' in session %}
+    <div class="mt-5">
+        <h2>Bonjour, {{ session['username'] }}!</h2>
+        <p>Vous êtes connecté.</p>
+        <a href="{{ url_for('dashboard') }}" class="btn btn-primary">Accéder au tableau de bord</a>
+    </div>
+    {% else %}
+    <div class="mt-5">
+        <div class="row justify-content-center">
+            <div class="col-md-5">
+                <div class="card mb-4">
+                    <div class="card-body">
+                        <h3>Déjà inscrit?</h3>
+                        <p>Connectez-vous pour accéder à votre compte</p>
+                        <a href="{{ url_for('login') }}" class="btn btn-primary">Connexion</a>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-5">
+                <div class="card">
+                    <div class="card-body">
+                        <h3>Nouveau utilisateur?</h3>
+                        <p>Créez un compte rapidement et facilement</p>
+                        <a href="{{ url_for('register') }}" class="btn btn-success">Inscription</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
