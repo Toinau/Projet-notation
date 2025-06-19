@@ -216,3 +216,16 @@ def db_migrate(message):
 def db_upgrade():
     """Applique la migration (équivalent à flask db upgrade)"""
     alembic_upgrade()
+
+from flask import Flask, jsonify
+
+app = Flask(__name__)  # ← Cette ligne est cruciale !
+
+@app.route('/')
+def home():
+    return jsonify({
+        "message": "Hello from PythonAnywhere!", 
+        "status": "success"
+    })
+
+# Autres routes...
