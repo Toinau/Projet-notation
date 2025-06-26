@@ -1,15 +1,20 @@
 from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
+from flask_migrate import Migrate
 
-# Création de l'application Flask
-app = Flask(__name__)
+db = SQLAlchemy()
+migrate = Migrate()
 
-# Configuration de la base de données (SQLite ici)
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///app.db'
-app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+def create_app():
+    app = Flask(__name__)
+    
+    app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///app.db'
+    app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+    
+    db.init_app(app)
+    migrate.init_app(app, db)  # <<<<<< Important !
 
-# Initialisation de l'extension SQLAlchemy
-db = SQLAlchemy(app)
-
-# Import des modèles pour que SQLAlchemy les reconnaisse
-from app import models
+    with app.app_context():
+        from . import models
+    
+    return app
