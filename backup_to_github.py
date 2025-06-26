@@ -1,41 +1,44 @@
 import os
+import shutil
 import subprocess
 from datetime import datetime
 
-# === Configuration ===
-REPO_URL = "https://github.com/Toinau/Projet-notation.git"  
-BRANCH = "main"  # ou "master"
-COMMIT_MESSAGE = f"Backup auto - {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}"
+# === CONFIGURATION ===
+GITHUB_BACKUP_REPO = "https://github.com/Toinau/projet-notation-back-up.git"  
+BRANCH = "main"
 
-def run_git_command(command):
-    result = subprocess.run(command, shell=True, text=True, capture_output=True)
-    if result.returncode != 0:
-        print(f"Erreur avec la commande : {command}")
-        print(result.stderr)
-    else:
-        print(result.stdout)
+# === Création du dossier de backup ===
+timestamp = datetime.now().strftime('%Y-%m-%d_%H-%M')
+backup_dir = f"backups/main-backup-{timestamp}"
 
-def git_backup():
-    # Initialiser git si nécessaire
-    if not os.path.isdir(".git"):
-        print("Initialisation du dépôt Git...")
-        run_git_command("git init")
-        run_git_command(f"git remote add origin {REPO_URL}")
-        run_git_command(f"git branch -M {BRANCH}")
+print(f"🗂️ Création du dossier de backup : {backup_dir}")
+os.makedirs(backup_dir, exist_ok=True)
 
-    # Ajouter les fichiers
-    print("Ajout des fichiers au suivi Git...")
-    run_git_command("git add .")
+# === Fichiers à exclure ===
+excluded = {'__pycache__', '.git', 'backups', '.venv', 'node_modules'}
 
-    # Commit
-    print("Création du commit...")
-    run_git_command(f'git commit -m "{COMMIT_MESSAGE}"')
+def should_copy(path):
+    return not any(part in excluded for part in path.split(os.sep))
 
-    # Push vers GitHub
-    print("Envoi vers GitHub...")
-    run_git_command(f"git push origin {BRANCH}")
+# === Copier les fichiers ===
+for root, dirs, files in os.walk("."):
+    dirs[:] = [d for d in dirs if should_copy(os.path.join(root, d))]
+    if should_copy(root):
+        for file in files:
+            src_path = os.path.join(root, file)
+            if should_copy(src_path) and os.path.isfile(src_path):
+                dst_path = os.path.join(backup_dir, os.path.relpath(src_path, "."))
+                os.makedirs(os.path.dirname(dst_path), exist_ok=True)
+                shutil.copy2(src_path, dst_path)
 
-    print("✅ Backup terminé avec succès.")
+# === Initialiser Git dans le dossier backup ===
+print("🚀 Initialisation du dépôt Git dans le dossier de backup")
+os.chdir(backup_dir)
+subprocess.run(["git", "init"])
+subprocess.run(["git", "branch", "-M", BRANCH])
+subprocess.run(["git", "remote", "add", "origin", GITHUB_BACKUP_REPO])
+subprocess.run(["git", "add", "."])
+subprocess.run(["git", "commit", "-m", f"Backup du {timestamp}"])
+subprocess.run(["git", "push", "-u", "origin", BRANCH])
 
-if __name__ == "__main__":
-    git_backup()
+print("✅ Backup complet envoyé sur GitHub.")
