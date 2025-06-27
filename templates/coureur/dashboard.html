@@ -80,11 +80,11 @@
                         {{ username }}
                     </a>
                     <ul class="dropdown-menu">
-                        <li><a class="dropdown-item" href="{{ url_for('change_password') }}">
+                        <li><a class="dropdown-item" href="{{ url_for('main.change_password') }}">
                             <i class="fas fa-key me-2"></i>Changer le mot de passe
                         </a></li>
                         <li><hr class="dropdown-divider"></li>
-                        <li><a class="dropdown-item" href="{{ url_for('logout') }}">
+                        <li><a class="dropdown-item" href="{{ url_for('main.logout') }}">
                             <i class="fas fa-sign-out-alt me-2"></i>Déconnexion
                         </a></li>
                     </ul>

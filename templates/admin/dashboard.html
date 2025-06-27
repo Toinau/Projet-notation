@@ -52,11 +52,11 @@
                         {{ username }}
                     </a>
                     <ul class="dropdown-menu">
-                        <li><a class="dropdown-item" href="{{ url_for('change_password') }}">
+                        <li><a class="dropdown-item" href="{{ url_for('main.change_password') }}">
                             <i class="fas fa-key me-2"></i>Changer le mot de passe
                         </a></li>
                         <li><hr class="dropdown-divider"></li>
-                        <li><a class="dropdown-item" href="{{ url_for('logout') }}">
+                        <li><a class="dropdown-item" href="{{ url_for('main.logout') }}">
                             <i class="fas fa-sign-out-alt me-2"></i>Déconnexion
                         </a></li>
                     </ul>
@@ -143,7 +143,7 @@
                         <div class="row">
                             <div class="col-md-4 mb-3">
                                 <div class="d-grid">
-                                    <a href="{{ url_for('admin_users') }}" class="btn btn-custom btn-lg">
+                                    <a href="{{ url_for('main.admin_users') }}" class="btn btn-custom btn-lg">
                                         <i class="fas fa-users-cog me-2"></i>
                                         Gérer les Utilisateurs
                                     </a>
@@ -151,7 +151,7 @@
                             </div>
                             <div class="col-md-4 mb-3">
                                 <div class="d-grid">
-                                    <a href="{{ url_for('register') }}" class="btn btn-outline-primary btn-lg">
+                                    <a href="{{ url_for('main.register') }}" class="btn btn-outline-primary btn-lg">
                                         <i class="fas fa-user-plus me-2"></i>
                                         Créer un Compte
                                     </a>
@@ -159,7 +159,7 @@
                             </div>
                             <div class="col-md-4 mb-3">
                                 <div class="d-grid">
-                                    <a href="{{ url_for('change_password') }}" class="btn btn-outline-secondary btn-lg">
+                                    <a href="{{ url_for('main.change_password') }}" class="btn btn-outline-secondary btn-lg">
                                         <i class="fas fa-key me-2"></i>
                                         Changer Mot de Passe
                                     </a>

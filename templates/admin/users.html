@@ -47,7 +47,7 @@
     <!-- Navigation -->
     <nav class="navbar navbar-expand-lg navbar-dark navbar-custom">
         <div class="container">
-            <a class="navbar-brand" href="{{ url_for('admin_dashboard') }}">
+            <a class="navbar-brand" href="{{ url_for('main.admin_dashboard') }}">
                 <i class="fas fa-arrow-left me-2"></i>
                 Retour Dashboard
             </a>
@@ -58,11 +58,11 @@
                         Admin
                     </a>
                     <ul class="dropdown-menu">
-                        <li><a class="dropdown-item" href="{{ url_for('change_password') }}">
+                        <li><a class="dropdown-item" href="{{ url_for('main.change_password') }}">
                             <i class="fas fa-key me-2"></i>Changer le mot de passe
                         </a></li>
                         <li><hr class="dropdown-divider"></li>
-                        <li><a class="dropdown-item" href="{{ url_for('logout') }}">
+                        <li><a class="dropdown-item" href="{{ url_for('main.logout') }}">
                             <i class="fas fa-sign-out-alt me-2"></i>Déconnexion
                         </a></li>
                     </ul>
@@ -94,7 +94,7 @@
                 <p class="lead text-muted">Gérez tous les comptes de la plateforme</p>
             </div>
             <div class="col-md-4 text-end">
-                <a href="{{ url_for('register') }}" class="btn btn-custom btn-lg">
+                <a href="{{ url_for('main.register') }}" class="btn btn-custom btn-lg">
                     <i class="fas fa-user-plus me-2"></i>
                     Nouveau Compte
                 </a>
@@ -194,7 +194,7 @@
                                 <td>
                                     <div class="btn-group btn-group-sm" role="group">
                                         <!-- Toggle Status -->
-                                        <form method="POST" action="{{ url_for('toggle_user_status', user_id=user.id) }}" style="display: inline;">
+                                        <form method="POST" action="{{ url_for('main.toggle_user_status', user_id=user.id) }}" style="display: inline;">
                                             <button type="submit" class="btn btn-outline-{{ 'warning' if user.is_active else 'success' }}" 
                                                     title="{{ 'Désactiver' if user.is_active else 'Activer' }}">
                                                 <i class="fas fa-{{ 'pause' if user.is_active else 'play' }}"></i>
@@ -203,13 +203,13 @@
 
                                         <!-- Promote/Demote -->
                                         {% if user.role == 'coureur' %}
-                                            <form method="POST" action="{{ url_for('promote_user', user_id=user.id) }}" style="display: inline;">
+                                            <form method="POST" action="{{ url_for('main.promote_user', user_id=user.id) }}" style="display: inline;">
                                                 <button type="submit" class="btn btn-outline-warning" title="Promouvoir Admin">
                                                     <i class="fas fa-arrow-up"></i>
                                                 </button>
                                             </form>
                                         {% elif user.role == 'admin' and user.id != session.user_id %}
-                                            <form method="POST" action="{{ url_for('demote_user', user_id=user.id) }}" style="display: inline;">
+                                            <form method="POST" action="{{ url_for('main.demote_user', user_id=user.id) }}" style="display: inline;">
                                                 <button type="submit" class="btn btn-outline-info" title="Rétrograder Coureur">
                                                     <i class="fas fa-arrow-down"></i>
                                                 </button>
@@ -218,7 +218,7 @@
 
                                         <!-- Delete -->
                                         {% if user.id != session.user_id %}
-                                            <form method="POST" action="{{ url_for('delete_user', user_id=user.id) }}" 
+                                            <form method="POST" action="{{ url_for('main.delete_user', user_id=user.id) }}" 
                                                   style="display: inline;" 
                                                   onsubmit="return confirm('Êtes-vous sûr de vouloir supprimer {{ user.username }} ?')">
                                                 <button type="submit" class="btn btn-outline-danger" title="Supprimer">
@@ -243,7 +243,7 @@
             <i class="fas fa-users fa-3x text-muted mb-3"></i>
             <h4 class="text-muted">Aucun utilisateur trouvé</h4>
             <p class="text-muted">Créez le premier compte pour commencer.</p>
-            <a href="{{ url_for('register') }}" class="btn btn-custom">
+            <a href="{{ url_for('main.register') }}" class="btn btn-custom">
                 <i class="fas fa-user-plus me-2"></i>
                 Créer un Compte
             </a>
