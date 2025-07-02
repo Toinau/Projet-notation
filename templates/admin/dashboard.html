@@ -7,13 +7,18 @@
     <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <style>
+        body {
+            background: #000000;
+            min-height: 100vh;
+            color: #ffffff;
+        }
         .stats-card {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
+            background: #ffd700;
+            color: #000000;
             border-radius: 15px;
             padding: 1.5rem;
             margin-bottom: 1rem;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            box-shadow: 0 4px 15px rgba(255, 215, 0, 0.3);
             transition: transform 0.3s ease;
         }
         .stats-card:hover {
@@ -24,22 +29,62 @@
             opacity: 0.8;
         }
         .navbar-custom {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: #ffd700;
+            border-bottom: 3px solid #ffed4e;
+        }
+        .navbar-custom .navbar-brand,
+        .navbar-custom .nav-link {
+            color: #000000 !important;
+            font-weight: 600;
+        }
+        .navbar-custom .nav-link:hover {
+            color: #333333 !important;
         }
         .btn-custom {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: #ffd700;
             border: none;
-            color: white;
+            color: #000000;
+            font-weight: 600;
         }
         .btn-custom:hover {
-            background: linear-gradient(135deg, #5a67d8 0%, #6b46c1 100%);
-            color: white;
+            background: #ffed4e;
+            color: #000000;
+        }
+        .card {
+            background: #1a1a1a;
+            border: 1px solid #333333;
+        }
+        .card-header {
+            background: #ffd700 !important;
+            color: #000000;
+            border-bottom: 1px solid #ffed4e;
+        }
+        .text-muted {
+            color: #cccccc !important;
+        }
+        .dropdown-menu {
+            background: #1a1a1a;
+            border: 1px solid #333333;
+        }
+        .dropdown-item {
+            color: #ffffff;
+        }
+        .dropdown-item:hover {
+            background: #333333;
+            color: #ffffff;
+        }
+        .progress {
+            background: #333333;
+        }
+        .progress-bar {
+            background: #ffd700;
+            color: #000000;
         }
     </style>
 </head>
-<body class="bg-light">
+<body>
     <!-- Navigation -->
-    <nav class="navbar navbar-expand-lg navbar-dark navbar-custom">
+    <nav class="navbar navbar-expand-lg navbar-custom shadow-sm">
         <div class="container">
             <a class="navbar-brand" href="#">
                 <i class="fas fa-tachometer-alt me-2"></i>
@@ -85,12 +130,110 @@
                     <i class="fas fa-crown text-warning me-2"></i>
                     Dashboard Administrateur
                 </h1>
-                <p class="lead text-muted">Bienvenue {{ username }}, gérez votre plateforme de course</p>
+                <p class="lead text-muted">Bienvenue {{ username }}, gérez votre plateforme de notation</p>
+            </div>
+        </div>
+
+        <!-- Fonctionnalités principales -->
+        <div class="row mb-4">
+            <div class="col-md-3">
+                <div class="stats-card text-center">
+                    <div class="stats-icon">
+                        <i class="fas fa-edit"></i>
+                    </div>
+                    <h3 class="mt-2 fw-bold">Création d'un questionnaire</h3>
+                    <p class="mb-3">Créez de nouveaux questionnaires de notation</p>
+                    <a href="{{ url_for('main.create_questionnaire') }}" class="btn btn-dark btn-sm">
+                        <i class="fas fa-plus me-1"></i>
+                        Créer
+                    </a>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="stats-card text-center">
+                    <div class="stats-icon">
+                        <i class="fas fa-clipboard-check"></i>
+                    </div>
+                    <h3 class="mt-2 fw-bold">Réponse des coureurs</h3>
+                    <p class="mb-3">Consultez les réponses aux questionnaires</p>
+                    <a href="{{ url_for('main.admin_questionnaires') }}" class="btn btn-dark btn-sm">
+                        <i class="fas fa-eye me-1"></i>
+                        Afficher
+                    </a>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="stats-card text-center">
+                    <div class="stats-icon">
+                        <i class="fas fa-chart-bar"></i>
+                    </div>
+                    <h3 class="mt-2 fw-bold">Statistiques des courses</h3>
+                    <p class="mb-3">Analysez les performances par course</p>
+                    <a href="{{ url_for('main.admin_course_statistics') }}" class="btn btn-dark btn-sm">
+                        <i class="fas fa-chart-line me-1"></i>
+                        Afficher le détail
+                    </a>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="stats-card text-center">
+                    <div class="stats-icon">
+                        <i class="fas fa-globe"></i>
+                    </div>
+                    <h3 class="mt-2 fw-bold">Statistiques globales</h3>
+                    <p class="mb-3">Vue d'ensemble de toutes les données</p>
+                    <a href="{{ url_for('main.admin_global_rankings') }}" class="btn btn-dark btn-sm">
+                        <i class="fas fa-globe-americas me-1"></i>
+                        Afficher le détail global
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Actions rapides -->
+        <div class="row">
+            <div class="col-12">
+                <div class="card shadow-sm">
+                    <div class="card-header">
+                        <h5 class="card-title mb-0">
+                            <i class="fas fa-bolt me-2 text-warning"></i>
+                            Actions Rapides
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-4 mb-3">
+                                <div class="d-grid">
+                                    <a href="{{ url_for('main.admin_users') }}" class="btn btn-custom btn-lg">
+                                        <i class="fas fa-users-cog me-2"></i>
+                                        Gérer les Utilisateurs
+                                    </a>
+                                </div>
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <div class="d-grid">
+                                    <a href="{{ url_for('main.register') }}" class="btn btn-outline-warning btn-lg">
+                                        <i class="fas fa-user-plus me-2"></i>
+                                        Créer un Compte
+                                    </a>
+                                </div>
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <div class="d-grid">
+                                    <a href="{{ url_for('main.change_password') }}" class="btn btn-outline-light btn-lg">
+                                        <i class="fas fa-key me-2"></i>
+                                        Changer Mot de Passe
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
 
         <!-- Statistiques -->
-        <div class="row mb-4">
+        <div class="row mb-4 mt-4">
             <div class="col-md-3">
                 <div class="stats-card text-center">
                     <div class="stats-icon">
@@ -125,87 +268,6 @@
                     </div>
                     <h3 class="mt-2">{{ stats.active_users }}</h3>
                     <p class="mb-0">Comptes Actifs</p>
-                </div>
-            </div>
-        </div>
-
-        <!-- Actions rapides -->
-        <div class="row">
-            <div class="col-12">
-                <div class="card shadow-sm">
-                    <div class="card-header bg-white">
-                        <h5 class="card-title mb-0">
-                            <i class="fas fa-bolt me-2 text-warning"></i>
-                            Actions Rapides
-                        </h5>
-                    </div>
-                    <div class="card-body">
-                        <div class="row">
-                            <div class="col-md-4 mb-3">
-                                <div class="d-grid">
-                                    <a href="{{ url_for('main.admin_users') }}" class="btn btn-custom btn-lg">
-                                        <i class="fas fa-users-cog me-2"></i>
-                                        Gérer les Utilisateurs
-                                    </a>
-                                </div>
-                            </div>
-                            <div class="col-md-4 mb-3">
-                                <div class="d-grid">
-                                    <a href="{{ url_for('main.register') }}" class="btn btn-outline-primary btn-lg">
-                                        <i class="fas fa-user-plus me-2"></i>
-                                        Créer un Compte
-                                    </a>
-                                </div>
-                            </div>
-                            <div class="col-md-4 mb-3">
-                                <div class="d-grid">
-                                    <a href="{{ url_for('main.change_password') }}" class="btn btn-outline-secondary btn-lg">
-                                        <i class="fas fa-key me-2"></i>
-                                        Changer Mot de Passe
-                                    </a>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Activités récentes -->
-        <div class="row mt-4">
-            <div class="col-12">
-                <div class="card shadow-sm">
-                    <div class="card-header bg-white">
-                        <h5 class="card-title mb-0">
-                            <i class="fas fa-clock me-2 text-info"></i>
-                            Informations Système
-                        </h5>
-                    </div>
-                    <div class="card-body">
-                        <div class="row">
-                            <div class="col-md-6">
-                                <h6><i class="fas fa-info-circle me-2"></i>État du Système</h6>
-                                <ul class="list-unstyled">
-                                    <li><i class="fas fa-check-circle text-success me-2"></i>Base de données : Connectée</li>
-                                    <li><i class="fas fa-check-circle text-success me-2"></i>Serveur mail : Configuré</li>
-                                    <li><i class="fas fa-check-circle text-success me-2"></i>Sessions : Actives</li>
-                                </ul>
-                            </div>
-                            <div class="col-md-6">
-                                <h6><i class="fas fa-chart-line me-2"></i>Statistiques Rapides</h6>
-                                <div class="progress mb-2">
-                                    <div class="progress-bar" role="progressbar" style="width: {{ (stats.active_users / stats.total_users * 100) if stats.total_users > 0 else 0 }}%">
-                                        Comptes Actifs: {{ "%.1f"|format((stats.active_users / stats.total_users * 100) if stats.total_users > 0 else 0) }}%
-                                    </div>
-                                </div>
-                                <div class="progress">
-                                    <div class="progress-bar bg-info" role="progressbar" style="width: {{ (stats.total_coureurs / stats.total_users * 100) if stats.total_users > 0 else 0 }}%">
-                                        Coureurs: {{ "%.1f"|format((stats.total_coureurs / stats.total_users * 100) if stats.total_users > 0 else 0) }}%
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
                 </div>
             </div>
         </div>

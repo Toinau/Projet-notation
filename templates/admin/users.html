@@ -7,26 +7,41 @@
     <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <style>
+        body {
+            background: #000000;
+            min-height: 100vh;
+            color: #ffffff;
+        }
         .navbar-custom {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: #ffd700;
+            border-bottom: 3px solid #ffed4e;
+        }
+        .navbar-custom .navbar-brand,
+        .navbar-custom .nav-link {
+            color: #000000 !important;
+            font-weight: 600;
+        }
+        .navbar-custom .nav-link:hover {
+            color: #333333 !important;
         }
         .btn-custom {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: #ffd700;
             border: none;
-            color: white;
+            color: #000000;
+            font-weight: 600;
         }
         .btn-custom:hover {
-            background: linear-gradient(135deg, #5a67d8 0%, #6b46c1 100%);
-            color: white;
+            background: #ffed4e;
+            color: #000000;
         }
         .user-card {
             transition: transform 0.2s ease;
             border: none;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            box-shadow: 0 2px 10px rgba(255, 215, 0, 0.1);
         }
         .user-card:hover {
             transform: translateY(-2px);
-            box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+            box-shadow: 0 4px 20px rgba(255, 215, 0, 0.2);
         }
         .role-badge {
             font-size: 0.75rem;
@@ -41,11 +56,60 @@
         .table-actions {
             min-width: 200px;
         }
+        .card {
+            background: #1a1a1a;
+            border: 1px solid #333333;
+        }
+        .card-header {
+            background: #ffd700 !important;
+            color: #000000;
+            border-bottom: 1px solid #ffed4e;
+        }
+        .text-muted {
+            color: #cccccc !important;
+        }
+        .dropdown-menu {
+            background: #1a1a1a;
+            border: 1px solid #333333;
+        }
+        .dropdown-item {
+            color: #ffffff;
+        }
+        .dropdown-item:hover {
+            background: #333333;
+            color: #ffffff;
+        }
+        .table {
+            color: #ffffff;
+        }
+        .table thead th {
+            background: #333333;
+            border-bottom: 1px solid #ffd700;
+            color: #ffffff;
+        }
+        .table tbody tr {
+            border-bottom: 1px solid #333333;
+        }
+        .table tbody tr:hover {
+            background: #333333;
+        }
+        .badge.bg-warning {
+            background: #ffd700 !important;
+            color: #000000;
+        }
+        .badge.bg-primary {
+            background: #ffd700 !important;
+            color: #000000;
+        }
+        .badge.bg-secondary {
+            background: #666666 !important;
+            color: #ffffff;
+        }
     </style>
 </head>
-<body class="bg-light">
+<body>
     <!-- Navigation -->
-    <nav class="navbar navbar-expand-lg navbar-dark navbar-custom">
+    <nav class="navbar navbar-expand-lg navbar-custom shadow-sm">
         <div class="container">
             <a class="navbar-brand" href="{{ url_for('main.admin_dashboard') }}">
                 <i class="fas fa-arrow-left me-2"></i>
@@ -88,7 +152,7 @@
         <div class="row mb-4">
             <div class="col-md-8">
                 <h1 class="display-6">
-                    <i class="fas fa-users-cog me-2 text-primary"></i>
+                    <i class="fas fa-users-cog me-2 text-warning"></i>
                     Gestion des Utilisateurs
                 </h1>
                 <p class="lead text-muted">Gérez tous les comptes de la plateforme</p>
@@ -108,11 +172,11 @@
                     <div class="card-body">
                         <div class="row text-center">
                             <div class="col-md-3">
-                                <h4 class="text-primary">{{ users|length }}</h4>
+                                <h4 class="text-warning">{{ users|length }}</h4>
                                 <small class="text-muted">Total Utilisateurs</small>
                             </div>
                             <div class="col-md-3">
-                                <h4 class="text-success">{{ users|selectattr("role", "equalto", "coureur")|list|length }}</h4>
+                                <h4 class="text-warning">{{ users|selectattr("role", "equalto", "coureur")|list|length }}</h4>
                                 <small class="text-muted">Coureurs</small>
                             </div>
                             <div class="col-md-3">
@@ -120,7 +184,7 @@
                                 <small class="text-muted">Administrateurs</small>
                             </div>
                             <div class="col-md-3">
-                                <h4 class="text-info">{{ users|selectattr("is_active", "equalto", true)|list|length }}</h4>
+                                <h4 class="text-warning">{{ users|selectattr("is_active", "equalto", true)|list|length }}</h4>
                                 <small class="text-muted">Comptes Actifs</small>
                             </div>
                         </div>
@@ -131,7 +195,7 @@
 
         <!-- Table des utilisateurs -->
         <div class="card shadow-sm">
-            <div class="card-header bg-white">
+            <div class="card-header">
                 <h5 class="card-title mb-0">
                     <i class="fas fa-list me-2"></i>
                     Liste des Utilisateurs
@@ -140,7 +204,7 @@
             <div class="card-body p-0">
                 <div class="table-responsive">
                     <table class="table table-hover mb-0">
-                        <thead class="table-light">
+                        <thead>
                             <tr>
                                 <th><i class="fas fa-user me-1"></i>Utilisateur</th>
                                 <th><i class="fas fa-envelope me-1"></i>Email</th>
@@ -159,7 +223,7 @@
                                             {% if user.role == 'admin' %}
                                                 <i class="fas fa-user-shield text-warning"></i>
                                             {% else %}
-                                                <i class="fas fa-running text-primary"></i>
+                                                <i class="fas fa-biking text-warning"></i>
                                             {% endif %}
                                         </div>
                                         <strong>{{ user.username }}</strong>
@@ -173,7 +237,7 @@
                                         </span>
                                     {% else %}
                                         <span class="badge bg-primary role-badge">
-                                            <i class="fas fa-running me-1"></i>Coureur
+                                            <i class="fas fa-biking me-1"></i>Coureur
                                         </span>
                                     {% endif %}
                                 </td>
@@ -210,7 +274,7 @@
                                             </form>
                                         {% elif user.role == 'admin' and user.id != session.user_id %}
                                             <form method="POST" action="{{ url_for('main.demote_user', user_id=user.id) }}" style="display: inline;">
-                                                <button type="submit" class="btn btn-outline-info" title="Rétrograder Coureur">
+                                                <button type="submit" class="btn btn-outline-light" title="Rétrograder Coureur">
                                                     <i class="fas fa-arrow-down"></i>
                                                 </button>
                                             </form>

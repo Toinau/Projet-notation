@@ -39,6 +39,7 @@ subprocess.run(["git", "branch", "-M", BRANCH])
 subprocess.run(["git", "remote", "add", "origin", GITHUB_BACKUP_REPO])
 subprocess.run(["git", "add", "."])
 subprocess.run(["git", "commit", "-m", f"Backup du {timestamp}"])
-subprocess.run(["git", "push", "-u", "origin", BRANCH])
+# Forcer le push
+subprocess.run(["git", "push", "-f", "origin", BRANCH])
 
-print("✅ Backup complet envoyé sur GitHub.")
+print("✅ Backup complet envoyé sur GitHub (push forcé).")

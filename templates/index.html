@@ -1,39 +1,28 @@
 {% extends "base.html" %}
 
+{% block title %}Accueil - Notation coureur{% endblock %}
+
 {% block content %}
-<div class="text-center mt-5">
-    <h1>Bienvenue sur notre Système de notation</h1>
-    <p class="lead mt-4">Un exemple simple de système d'authentification avec Flask</p>
-    
-    {% if 'user_id' in session %}
-    <div class="mt-5">
-        <h2>Bonjour, {{ session['username'] }}!</h2>
-        <p>Vous êtes connecté.</p>
-        <a href="{{ url_for('main.dashboard') }}" class="btn btn-primary">Accéder au tableau de bord</a>
-    </div>
-    {% else %}
-    <div class="mt-5">
-        <div class="row justify-content-center">
-            <div class="col-md-5">
-                <div class="card mb-4">
-                    <div class="card-body">
-                        <h3>Déjà inscrit?</h3>
-                        <p>Connectez-vous pour accéder à votre compte</p>
-                        <a href="{{ url_for('main.login') }}" class="btn btn-primary">Connexion</a>
-                    </div>
-                </div>
+<div class="row justify-content-center align-items-center" style="min-height: 70vh;">
+    <div class="col-md-8 col-lg-6">
+        <div class="card shadow-lg border-0">
+            <div class="card-header text-center" style="background: #ffd700; border-top-left-radius: 0.5rem; border-top-right-radius: 0.5rem;">
+                <h2 class="text-black mb-0">
+                    <i class="fas fa-biking me-2"></i>Bienvenue sur l'application de notation
+                </h2>
             </div>
-            <div class="col-md-5">
-                <div class="card">
-                    <div class="card-body">
-                        <h3>Nouveau utilisateur?</h3>
-                        <p>Créez un compte rapidement et facilement</p>
-                        <a href="{{ url_for('main.register') }}" class="btn btn-success">Inscription</a>
-                    </div>
-                </div>
+            <div class="card-body text-center">
+                <p class="lead text-light mb-4">
+                    Cette plateforme vous permet d'accéder à votre espace personnel, de remplir les questionnaires de notation et de consulter les classements.
+                </p>
+                <a href="{{ url_for('main.login') }}" class="btn btn-custom btn-lg m-2">
+                    <i class="fas fa-sign-in-alt me-1"></i> Se connecter
+                </a>
+                <a href="{{ url_for('main.register') }}" class="btn btn-outline-warning btn-lg m-2">
+                    <i class="fas fa-user-plus me-1"></i> Créer un compte
+                </a>
             </div>
         </div>
     </div>
-    {% endif %}
 </div>
 {% endblock %}

@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Résultats du Questionnaire</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        body {
+            background: #000000;
+            min-height: 100vh;
+            color: #ffffff;
+        }
+        .navbar-custom {
+            background: #ffd700;
+            border-bottom: 3px solid #ffed4e;
+        }
+        .navbar-custom .navbar-brand,
+        .navbar-custom .nav-link {
+            color: #000000 !important;
+            font-weight: 600;
+        }
+        .navbar-custom .nav-link:hover {
+            color: #333333 !important;
+        }
+        .btn-custom {
+            background: #ffd700;
+            border: none;
+            color: #000000;
+            font-weight: 600;
+        }
+        .btn-custom:hover {
+            background: #ffed4e;
+            color: #000000;
+        }
+        .card {
+            background: #1a1a1a;
+            border: 1px solid #333333;
+        }
+        .card-header {
+            background: #ffd700 !important;
+            color: #000000;
+            border-bottom: 1px solid #ffed4e;
+        }
+        .result-card {
+            background: #1a1a1a;
+            border: 1px solid #333333;
+            border-radius: 10px;
+            padding: 1.5rem;
+            margin-bottom: 1rem;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+        .result-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(255, 215, 0, 0.2);
+        }
+        .rating-display {
+            font-size: 1.5rem;
+            font-weight: bold;
+            text-align: center;
+            padding: 0.5rem;
+            border-radius: 8px;
+            background: #333333;
+        }
+        .rating-1-3 { color: #ff6b6b; }
+        .rating-4-6 { color: #ffd93d; }
+        .rating-7-8 { color: #6bcf7f; }
+        .rating-9-10 { color: #4ecdc4; }
+        .dropdown-menu {
+            background: #1a1a1a;
+            border: 1px solid #333333;
+        }
+        .dropdown-item {
+            color: #ffffff;
+        }
+        .dropdown-item:hover {
+            background: #333333;
+            color: #ffffff;
+        }
+        .text-muted {
+            color: #ffffff !important;
+        }
+        .lead.text-muted {
+            color: #ffffff !important;
+        }
+        .card-body {
+            color: #ffffff;
+        }
+        .stat-item small.text-muted {
+            color: #ffffff !important;
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-custom shadow-sm">
+        <div class="container">
+            <a class="navbar-brand" href="{{ url_for('main.coureur_questionnaires') }}">
+                <i class="fas fa-arrow-left me-2"></i>
+                Retour Questionnaires
+            </a>
+            <div class="navbar-nav ms-auto">
+                <div class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
+                        <i class="fas fa-user-circle me-1"></i>
+                        {{ session.username }}
+                    </a>
+                    <ul class="dropdown-menu">
+                        <li><a class="dropdown-item" href="{{ url_for('main.change_password') }}">
+                            <i class="fas fa-key me-2"></i>Changer le mot de passe
+                        </a></li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li><a class="dropdown-item" href="{{ url_for('main.logout') }}">
+                            <i class="fas fa-sign-out-alt me-2"></i>Déconnexion
+                        </a></li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container mt-4">
+        <!-- Messages Flash -->
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ 'danger' if category == 'error' else category }} alert-dismissible fade show" role="alert">
+                        {{ message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        <!-- Header -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <h1 class="display-6">
+                    <i class="fas fa-chart-bar me-2 text-warning"></i>
+                    Mes Évaluations
+                </h1>
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0">
+                            <i class="fas fa-flag-checkered me-2"></i>
+                            {{ questionnaire.course_name }}
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <strong>Date de course:</strong> {{ questionnaire.course_date.strftime('%d/%m/%Y') }}
+                            </div>
+                            <div class="col-md-6">
+                                <strong>Points Direct Vélo:</strong> {{ questionnaire.direct_velo_points }} points
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <p class="lead text-muted mt-3">
+                    <i class="fas fa-info-circle me-2"></i>
+                    Voici les notes que vous avez attribuées à chaque participant
+                </p>
+            </div>
+        </div>
+
+        <!-- Résultats des évaluations -->
+        {% if results %}
+            <div class="row">
+                {% for result in results %}
+                <div class="col-lg-6 mb-3">
+                    <div class="result-card">
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <h6 class="mb-0">
+                                <i class="fas fa-user me-2 text-warning"></i>
+                                {{ result.evaluated_name }}
+                            </h6>
+                            {% if result.evaluated_name == session.username %}
+                                <span class="badge bg-info">Vous</span>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="text-center">
+                            <div class="rating-display 
+                                {% if result.rating <= 3 %}rating-1-3
+                                {% elif result.rating <= 6 %}rating-4-6
+                                {% elif result.rating <= 8 %}rating-7-8
+                                {% else %}rating-9-10{% endif %}">
+                                {{ result.rating }}/10
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        {% else %}
+            <div class="text-center mt-5">
+                <i class="fas fa-exclamation-triangle fa-3x text-muted mb-3"></i>
+                <h4 class="text-muted">Aucun résultat trouvé</h4>
+                <p class="text-muted">Il semble qu'il n'y ait pas encore de réponses pour ce questionnaire.</p>
+            </div>
+        {% endif %}
+
+        <!-- Bouton de retour -->
+        <div class="row mt-4">
+            <div class="col-12 text-center">
+                <a href="{{ url_for('main.coureur_questionnaires') }}" class="btn btn-custom">
+                    <i class="fas fa-arrow-left me-2"></i>
+                    Retour aux Questionnaires
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
+</body>
+</html> 

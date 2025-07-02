@@ -43,4 +43,48 @@ class User(db.Model):
             return False, "Le nom d'utilisateur doit contenir au moins 3 caractères"
         if not re.match(r'^[a-zA-Z0-9_]+$', username):
             return False, "Le nom d'utilisateur ne peut contenir que des lettres, chiffres et underscores"
-        return True, "Nom d'utilisateur valide" 
+        return True, "Nom d'utilisateur valide"
+
+class Questionnaire(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    course_name = db.Column(db.String(200), nullable=False)
+    course_date = db.Column(db.Date, nullable=False)
+    direct_velo_points = db.Column(db.Integer, nullable=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    created_by = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    
+    # Relation avec les participants
+    participants = db.relationship('QuestionnaireParticipant', backref='questionnaire', lazy=True, cascade='all, delete-orphan')
+    # Relation avec les réponses (ajout du cascade)
+    responses = db.relationship('QuestionnaireResponse', backref='questionnaire', lazy=True, cascade='all, delete-orphan')
+    
+    def __repr__(self):
+        return f'<Questionnaire {self.course_name} - {self.course_date}>'
+
+class QuestionnaireParticipant(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    questionnaire_id = db.Column(db.Integer, db.ForeignKey('questionnaire.id'), nullable=False)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    has_responded = db.Column(db.Boolean, default=False, nullable=False)
+    response_date = db.Column(db.DateTime, nullable=True)
+    
+    # Relation avec l'utilisateur
+    user = db.relationship('User', backref='questionnaire_participations')
+    
+    def __repr__(self):
+        return f'<QuestionnaireParticipant {self.questionnaire_id} - {self.user_id}>'
+
+class QuestionnaireResponse(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    questionnaire_id = db.Column(db.Integer, db.ForeignKey('questionnaire.id', ondelete='CASCADE'), nullable=False)
+    evaluator_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)  # Coureur qui évalue
+    evaluated_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)  # Coureur évalué
+    rating = db.Column(db.Integer, nullable=False)  # Note de 1 à 10
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    
+    # Relations
+    evaluator = db.relationship('User', foreign_keys=[evaluator_id], backref='evaluations_given')
+    evaluated = db.relationship('User', foreign_keys=[evaluated_id], backref='evaluations_received')
+    
+    def __repr__(self):
+        return f'<QuestionnaireResponse {self.evaluator_id} -> {self.evaluated_id}: {self.rating}/10>' 

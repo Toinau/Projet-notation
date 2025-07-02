@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Classements globaux</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        body { background: #000; color: #fff; }
+        .navbar-custom {
+            background: #ffd700;
+            border-bottom: 3px solid #ffed4e;
+        }
+        .navbar-custom .navbar-brand,
+        .navbar-custom .nav-link {
+            color: #000000 !important;
+            font-weight: 600;
+        }
+        .navbar-custom .nav-link:hover {
+            color: #333333 !important;
+        }
+        .card { background: #1a1a1a; border: 1px solid #333; }
+        .card-header { background: #ffd700 !important; color: #000; }
+        .table th, .table td { color: #fff; border-color: #333; }
+        .table th { background: #222; }
+        .table td { background: #000; color: #fff; }
+        .btn-custom { background: #ffd700; color: #000; font-weight: 600; }
+        .btn-custom:hover { background: #ffed4e; color: #000; }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-custom shadow-sm">
+        <div class="container">
+            <a class="navbar-brand" href="{{ url_for('main.admin_dashboard') }}">
+                <i class="fas fa-arrow-left me-2"></i>
+                Retour Dashboard
+            </a>
+            <div class="navbar-nav ms-auto">
+                <div class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
+                        <i class="fas fa-user-circle me-1"></i>
+                        {{ session.username }}
+                    </a>
+                    <ul class="dropdown-menu">
+                        <li><a class="dropdown-item" href="{{ url_for('main.change_password') }}">
+                            <i class="fas fa-key me-2"></i>Changer le mot de passe
+                        </a></li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li><a class="dropdown-item" href="{{ url_for('main.logout') }}">
+                            <i class="fas fa-sign-out-alt me-2"></i>Déconnexion
+                        </a></li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </nav>
+    <div class="container mt-4">
+        <h1 class="mb-4"><i class="fas fa-globe-americas text-warning me-2"></i>Classements globaux de la saison {{ season }}</h1>
+        <div class="row mb-4">
+            <div class="col-md-6">
+                <div class="card mb-3">
+                    <div class="card-header d-flex align-items-center">
+                        <i class="fas fa-trophy me-2 text-warning"></i>
+                        <span class="me-3">Classement total de la saison</span>
+                        <form method="get" class="d-inline-flex align-items-center ms-auto" id="season-form" style="margin-bottom:0;">
+                            <label for="season" class="me-2 mb-0">Saison :</label>
+                            <select name="season" id="season" class="form-select form-select-sm w-auto me-2">
+                                {% for option in season_options %}
+                                    <option value="{{ option.year }}" {% if option.selected %}selected{% endif %}>Saison {{ option.year }}</option>
+                                {% endfor %}
+                            </select>
+                            <input type="hidden" name="month" id="season-month" value="{{ selected_month }}">
+                            <input type="hidden" name="year" id="season-year" value="{{ selected_year }}">
+                        </form>
+                    </div>
+                    <div class="card-body p-0">
+                        <table class="table table-striped mb-0">
+                            <thead><tr><th>Rang</th><th>Coureur</th><th>Points</th></tr></thead>
+                            <tbody>
+                            {% for c in saison_points %}
+                            <tr>
+                                <td>{{ loop.index }}</td>
+                                <td>{{ c.username }}</td>
+                                <td><strong>{{ c.points }}</strong></td>
+                            </tr>
+                            {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="card mb-3">
+                    <div class="card-header d-flex align-items-center">
+                        <i class="fas fa-calendar-alt me-2 text-warning"></i>
+                        <form method="get" class="d-inline-flex align-items-center ms-2" id="month-form">
+                            <label for="month" class="me-2 mb-0">Classement du mois :</label>
+                            <select name="month" id="month" class="form-select form-select-sm me-2">
+                                {% for m in months %}
+                                    <option value="{{ m.month }}" {% if m.month == selected_month and m.year == selected_year %}selected{% endif %} data-year="{{ m.year }}">
+                                        {{ ["Janvier", "Février", "Mars", "Avril", "Mai", "Juin", "Juillet", "Août", "Septembre", "Octobre", "Novembre", "Décembre"][m.month-1] }} {{ m.year }}
+                                    </option>
+                                {% endfor %}
+                            </select>
+                            <input type="hidden" name="year" value="{{ selected_year }}">
+                            <input type="hidden" name="season" value="{{ season }}">
+                        </form>
+                    </div>
+                    <div class="card-body p-0">
+                        <table class="table table-striped mb-0">
+                            <thead><tr><th>Rang</th><th>Coureur</th><th>Points</th></tr></thead>
+                            <tbody>
+                            {% for c in mois_points %}
+                            <tr>
+                                <td>{{ loop.index }}</td>
+                                <td>{{ c.username }}</td>
+                                <td><strong>{{ c.points }}</strong></td>
+                            </tr>
+                            {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Met à jour l'année cachée lors du changement de mois et soumet le bon formulaire
+        document.getElementById('month').addEventListener('change', function() {
+            var selected = this.options[this.selectedIndex];
+            var year = selected.getAttribute('data-year');
+            var form = document.getElementById('month-form');
+            form.querySelector('input[name="year"]').value = year;
+            form.submit();
+        });
+        // Lors du changement de saison, on force TOUJOURS le mois à novembre et l'année à saison-1
+        document.getElementById('season').addEventListener('change', function() {
+            var selectedSeason = parseInt(this.value);
+            document.getElementById('season-month').value = 11;
+            document.getElementById('season-year').value = selectedSeason - 1;
+            document.getElementById('season-form').submit();
+        });
+    </script>
+</body>
+</html> 
