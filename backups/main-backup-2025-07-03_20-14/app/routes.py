@@ -17,18 +17,14 @@ def index():
 @main_bp.route('/register', methods=['GET', 'POST'])
 def register():
     if request.method == 'POST':
-        prenom = request.form['prenom'].strip()
-        nom = request.form['nom'].strip()
+        username = request.form['username'].strip()
         email = request.form['email'].strip().lower()
         password = request.form['password']
         role = request.form.get('role', 'coureur')
         errors = []
-        is_valid_prenom, prenom_msg = User.validate_prenom(prenom)
-        if not is_valid_prenom:
-            errors.append(prenom_msg)
-        is_valid_nom, nom_msg = User.validate_nom(nom)
-        if not is_valid_nom:
-            errors.append(nom_msg)
+        is_valid_username, username_msg = User.validate_username(username)
+        if not is_valid_username:
+            errors.append(username_msg)
         if not User.validate_email(email):
             errors.append("Format d'email invalide")
         is_valid_password, password_msg = User.validate_password(password)
@@ -36,6 +32,8 @@ def register():
             errors.append(password_msg)
         if role not in ['coureur', 'admin']:
             role = 'coureur'
+        if User.query.filter_by(username=username).first():
+            errors.append('Nom d\'utilisateur déjà utilisé')
         if User.query.filter_by(email=email).first():
             errors.append('Email déjà utilisé')
         if errors:
@@ -44,7 +42,7 @@ def register():
             return redirect(url_for('main.register'))
         try:
             hashed_password = generate_password_hash(password, method='pbkdf2:sha256')
-            new_user = User(prenom=prenom, nom=nom, email=email, password=hashed_password, role=role)
+            new_user = User(username=username, email=email, password=hashed_password, role=role)
             db.session.add(new_user)
             db.session.commit()
             flash(f'Votre compte {role} a été créé avec succès!', 'success')
@@ -59,10 +57,10 @@ def register():
 @main_bp.route('/login', methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':
-        email = request.form['email'].strip()
+        username = request.form['username'].strip()
         password = request.form['password']
         remember = True if request.form.get('remember') else False
-        user = User.query.filter_by(email=email).first()
+        user = User.query.filter_by(username=username).first()
         if not user or not check_password_hash(user.password, password):
             flash('Veuillez vérifier vos identifiants et réessayer.', 'danger')
             return redirect(url_for('main.login'))
@@ -72,11 +70,10 @@ def login():
         try:
             session.permanent = remember
             session['user_id'] = user.id
-            session['prenom'] = user.prenom
-            session['nom'] = user.nom
+            session['username'] = user.username
             session['role'] = user.role
-            current_app.logger.info(f"Connexion réussie: {user.prenom} {user.nom} ({user.role})")
-            flash(f'Bienvenue, {user.prenom} {user.nom} ({user.role})!', 'success')
+            current_app.logger.info(f"Connexion réussie: {user.username} ({user.role})")
+            flash(f'Bienvenue, {user.username} ({user.role})!', 'success')
             if user.role == 'admin':
                 return redirect(url_for('main.admin_dashboard'))
             else:
@@ -117,7 +114,7 @@ def admin_dashboard():
             'active_users': active_users,
             'inactive_users': inactive_users
         }
-        return render_template('admin/dashboard.html', username=session['prenom'] + ' ' + session['nom'], current_user=current_user, all_users=all_users, stats=stats)
+        return render_template('admin/dashboard.html', username=session['username'], current_user=current_user, all_users=all_users, stats=stats)
     except Exception as e:
         current_app.logger.error(f"Erreur dashboard admin: {e}")
         flash('Erreur lors du chargement du dashboard.', 'danger')
@@ -146,7 +143,7 @@ def toggle_user_status(user_id):
         user.is_active = not user.is_active
         db.session.commit()
         status = 'activé' if user.is_active else 'désactivé'
-        flash(f'Le compte de {user.prenom} {user.nom} a été {status}.', 'success')
+        flash(f'Le compte de {user.username} a été {status}.', 'success')
     except Exception as e:
         db.session.rollback()
         current_app.logger.error(f"Erreur toggle user status: {e}")
@@ -161,7 +158,7 @@ def delete_user(user_id):
         if user.id == session['user_id']:
             flash('Vous ne pouvez pas supprimer votre propre compte.', 'warning')
             return redirect(url_for('main.admin_users'))
-        username = user.prenom + ' ' + user.nom
+        username = user.username
         db.session.delete(user)
         db.session.commit()
         flash(f'Le compte de {username} a été supprimé.', 'success')
@@ -179,9 +176,9 @@ def promote_user(user_id):
         if user.role == 'coureur':
             user.role = 'admin'
             db.session.commit()
-            flash(f'{user.prenom} {user.nom} a été promu administrateur.', 'success')
+            flash(f'{user.username} a été promu administrateur.', 'success')
         else:
-            flash(f'{user.prenom} {user.nom} est déjà administrateur.', 'info')
+            flash(f'{user.username} est déjà administrateur.', 'info')
     except Exception as e:
         db.session.rollback()
         current_app.logger.error(f"Erreur promotion utilisateur: {e}")
@@ -199,9 +196,9 @@ def demote_user(user_id):
         if user.role == 'admin':
             user.role = 'coureur'
             db.session.commit()
-            flash(f'{user.prenom} {user.nom} a été rétrogradé en coureur.', 'success')
+            flash(f'{user.username} a été rétrogradé en coureur.', 'success')
         else:
-            flash(f'{user.prenom} {user.nom} est déjà coureur.', 'info')
+            flash(f'{user.username} est déjà coureur.', 'info')
     except Exception as e:
         db.session.rollback()
         current_app.logger.error(f"Erreur rétrogradation utilisateur: {e}")
@@ -272,7 +269,7 @@ def create_questionnaire():
 def get_coureurs_list():
     """Récupère la liste des coureurs actifs pour l'affichage"""
     try:
-        return User.query.filter_by(role='coureur', is_active=True).order_by(User.prenom).all()
+        return User.query.filter_by(role='coureur', is_active=True).order_by(User.username).all()
     except Exception as e:
         current_app.logger.error(f"Erreur récupération coureurs: {e}")
         return []
@@ -291,7 +288,7 @@ def coureur_dashboard():
         classement_mois, classement_annee = calculate_coureur_ranking(user_id)
         
         return render_template('coureur/dashboard.html', 
-                             username=session['prenom'] + ' ' + session['nom'], 
+                             username=session['username'], 
                              current_user=current_user,
                              nb_questionnaires=nb_questionnaires,
                              classement_mois=classement_mois,
@@ -353,7 +350,7 @@ def calculate_coureur_ranking(user_id):
             
             coureurs_rankings.append({
                 'user_id': coureur.id,
-                'username': coureur.prenom + ' ' + coureur.nom,
+                'username': coureur.username,
                 'annual_points': round(annual_points, 1),
                 'monthly_points': round(monthly_points, 1)
             })
@@ -404,7 +401,7 @@ def debug_user():
         return "Utilisateur non trouvé"
     debug_info = f"""
     <h2>Informations de debug</h2>
-    <p><strong>Username:</strong> {user.prenom} {user.nom}</p>
+    <p><strong>Username:</strong> {user.username}</p>
     <p><strong>Email:</strong> {user.email}</p>
     <p><strong>Role (base):</strong> '{user.role}'</p>
     <p><strong>Role (session):</strong> '{session.get('role', 'Non défini')}'</p>
@@ -432,7 +429,7 @@ def force_admin_role():
         user.is_active = True
         db.session.commit()
         session['role'] = 'admin'
-        flash(f'Rôle admin forcé pour {user.prenom} {user.nom}', 'success')
+        flash(f'Rôle admin forcé pour {user.username}', 'success')
         return redirect(url_for('main.debug_user'))
     except Exception as e:
         db.session.rollback()
@@ -444,8 +441,7 @@ def force_admin_role():
 def logout():
     try:
         session.pop('user_id', None)
-        session.pop('prenom', None)
-        session.pop('nom', None)
+        session.pop('username', None)
         session.pop('role', None)
         flash('Vous avez été déconnecté.', 'info')
     except Exception as e:
@@ -595,14 +591,13 @@ def fill_questionnaire(questionnaire_id):
             for participant in participants:
                 rating_key = f'rating_{participant.user_id}'
                 rating = request.form.get(rating_key, '').strip()
+                
                 if not rating:
-                    errors.append(f"Veuillez noter {participant.user.prenom} {participant.user.nom}")
+                    errors.append(f"Veuillez noter {participant.user.username}")
                 elif not rating.isdigit() or int(rating) < 1 or int(rating) > 10:
-                    errors.append(f"La note pour {participant.user.prenom} {participant.user.nom} doit être entre 1 et 10")
+                    errors.append(f"La note pour {participant.user.username} doit être entre 1 et 10")
                 else:
                     responses[participant.user_id] = int(rating)
-            # Récupérer le commentaire général (facultatif)
-            comment = request.form.get('comment', '').strip()
             
             if errors:
                 for error in errors:
@@ -621,10 +616,10 @@ def fill_questionnaire(questionnaire_id):
                         rating=rating
                     )
                     db.session.add(response)
+                
                 # Marquer le questionnaire comme répondu
                 participation.has_responded = True
                 participation.response_date = datetime.utcnow()
-                participation.comment = comment  # Enregistrer le commentaire général
                 
                 db.session.commit()
                 
@@ -675,15 +670,14 @@ def questionnaire_results(questionnaire_id):
         results = []
         for response in responses:
             results.append({
-                'evaluated_name': response.evaluated.prenom + ' ' + response.evaluated.nom,
+                'evaluated_name': response.evaluated.username,
                 'rating': response.rating,
                 'created_at': response.created_at
             })
         
         return render_template('coureur/questionnaire_results.html', 
                              questionnaire=questionnaire, 
-                             results=results,
-                             comment=participation.comment)
+                             results=results)
         
     except Exception as e:
         current_app.logger.error(f"Erreur résultats questionnaire: {e}")
@@ -746,17 +740,6 @@ def coureur_points_details():
                 QuestionnaireResponse.evaluated_id == user_id
             ).scalar() or 0
             
-            # Calculer la note maximale et minimale personnelles reçues pour cette course
-            note_max_perso = db.session.query(func.max(QuestionnaireResponse.rating)).filter(
-                QuestionnaireResponse.questionnaire_id == questionnaire.id,
-                QuestionnaireResponse.evaluated_id == user_id
-            ).scalar() or 0
-            
-            note_min_perso = db.session.query(func.min(QuestionnaireResponse.rating)).filter(
-                QuestionnaireResponse.questionnaire_id == questionnaire.id,
-                QuestionnaireResponse.evaluated_id == user_id
-            ).scalar() or 0
-            
             # Calculer la note moyenne équipe pour cette course
             note_moyenne_equipe = db.session.query(func.avg(QuestionnaireResponse.rating)).filter(
                 QuestionnaireResponse.questionnaire_id == questionnaire.id
@@ -788,8 +771,6 @@ def coureur_points_details():
                 'course_date': questionnaire.course_date,
                 'direct_velo_points': questionnaire.direct_velo_points,
                 'note_moyenne_perso': round(float(note_moyenne_perso), 1),
-                'note_max_perso': int(note_max_perso) if note_max_perso else 0,
-                'note_min_perso': int(note_min_perso) if note_min_perso else 0,
                 'note_moyenne_equipe': round(float(note_moyenne_equipe), 1),
                 'nb_votants': nb_votants,
                 'has_responded': has_responded
@@ -871,8 +852,7 @@ def admin_questionnaires():
             
             # Récupérer les participants
             participants = db.session.query(
-                User.prenom,
-                User.nom,
+                User.username,
                 QuestionnaireParticipant.has_responded,
                 QuestionnaireParticipant.response_date
             ).join(
@@ -913,11 +893,9 @@ def admin_questionnaire_results(questionnaire_id):
         # Récupérer tous les participants avec leurs IDs
         participants = db.session.query(
             User.id,
-            User.prenom,
-            User.nom,
+            User.username,
             QuestionnaireParticipant.has_responded,
-            QuestionnaireParticipant.response_date,
-            QuestionnaireParticipant.comment
+            QuestionnaireParticipant.response_date
         ).join(
             QuestionnaireParticipant, User.id == QuestionnaireParticipant.user_id
         ).filter(
@@ -929,40 +907,26 @@ def admin_questionnaire_results(questionnaire_id):
             QuestionnaireResponse.evaluator_id,
             QuestionnaireResponse.evaluated_id,
             QuestionnaireResponse.rating,
-            User.prenom.label('evaluator_prenom'),
-            User.nom.label('evaluator_nom')
+            User.username.label('evaluator_name'),
+            User.username.label('evaluated_name')
         ).join(
             User, QuestionnaireResponse.evaluator_id == User.id
         ).filter(
             QuestionnaireResponse.questionnaire_id == questionnaire_id
         ).all()
         
-        # Récupérer les informations des utilisateurs évalués
-        evaluated_users = {}
-        for response in all_responses:
-            if response.evaluated_id not in evaluated_users:
-                evaluated_user = User.query.get(response.evaluated_id)
-                if evaluated_user:
-                    evaluated_users[response.evaluated_id] = {
-                        'prenom': evaluated_user.prenom,
-                        'nom': evaluated_user.nom
-                    }
-        
         # Organiser les données pour l'affichage
         results_data = []
         for participant in participants:
             user_id = participant.id
-            prenom = participant.prenom
-            nom = participant.nom
+            username = participant.username
             
             # Récupérer les notes données par ce participant
             participant_responses = []
             for response in all_responses:
                 if response.evaluator_id == user_id:
-                    evaluated_user_info = evaluated_users.get(response.evaluated_id, {})
-                    evaluated_name = f"{evaluated_user_info.get('prenom', '')} {evaluated_user_info.get('nom', '')}".strip()
                     participant_responses.append({
-                        'evaluated_name': evaluated_name,
+                        'evaluated_name': response.evaluated_name,
                         'rating': response.rating
                     })
             
@@ -978,14 +942,12 @@ def admin_questionnaire_results(questionnaire_id):
                 avg_rating_received = sum(received_ratings) / len(received_ratings)
             
             results_data.append({
-                'prenom': prenom,
-                'nom': nom,
+                'username': username,
                 'has_responded': participant.has_responded,
                 'response_date': participant.response_date,
                 'responses_given': participant_responses,
                 'avg_rating_received': round(avg_rating_received, 1),
-                'nb_ratings_received': len(received_ratings),
-                'comment': participant.comment
+                'nb_ratings_received': len(received_ratings)
             })
         
         return render_template('admin/questionnaire_results.html', 
@@ -1041,7 +1003,7 @@ def debug_ranking():
             })
         
         debug_html = f"""
-        <h2>Debug Classement - {user.prenom} {user.nom}</h2>
+        <h2>Debug Classement - {user.username}</h2>
         <p><strong>Classement du mois:</strong> {classement_mois}</p>
         <p><strong>Classement de l'année:</strong> {classement_annee}</p>
         <p><strong>Total des points:</strong> {round(total_points, 1)}</p>
@@ -1151,7 +1113,7 @@ def coureur_rankings():
 
             coureurs_rankings.append({
                 'user_id': coureur.id,
-                'username': coureur.prenom + ' ' + coureur.nom,
+                'username': coureur.username,
                 'season_points': round(season_points, 1),
                 'monthly_points': round(monthly_points, 1),
                 'selected_month_points': round(selected_month_points, 1)
@@ -1260,8 +1222,7 @@ def admin_course_statistics():
             # Récupérer tous les participants de ce questionnaire
             participants = db.session.query(
                 User.id,
-                User.prenom,
-                User.nom,
+                User.username,
                 QuestionnaireParticipant.has_responded
             ).join(
                 QuestionnaireParticipant, User.id == QuestionnaireParticipant.user_id
@@ -1275,8 +1236,6 @@ def admin_course_statistics():
             
             for participant in participants:
                 user_id = participant.id
-                prenom = participant.prenom
-                nom = participant.nom
                 
                 # Récupérer les notes reçues par ce participant
                 received_ratings = db.session.query(QuestionnaireResponse.rating).filter(
@@ -1299,7 +1258,7 @@ def admin_course_statistics():
                 points = avg_rating * questionnaire.direct_velo_points
                 
                 participant_stats.append({
-                    'username': prenom + ' ' + nom,
+                    'username': participant.username,
                     'avg_rating': round(avg_rating, 1),
                     'min_rating': min_rating,
                     'max_rating': max_rating,
@@ -1451,8 +1410,7 @@ def admin_global_rankings():
                 QuestionnaireResponse.evaluated_id == coureur.id
             ).scalar() or 0
             total_points += questionnaire.direct_velo_points * float(avg_rating)
-        if total_points > 0:  # Ne pas afficher les coureurs avec 0 points
-            saison_points.append({'prenom': coureur.prenom, 'nom': coureur.nom, 'points': round(total_points, 1)})
+        saison_points.append({'username': coureur.username, 'points': round(total_points, 1)})
     saison_points.sort(key=lambda x: x['points'], reverse=True)
     # Classement du mois sélectionné
     mois_points = []
@@ -1471,8 +1429,7 @@ def admin_global_rankings():
                 QuestionnaireResponse.evaluated_id == coureur.id
             ).scalar() or 0
             total_points += questionnaire.direct_velo_points * float(avg_rating)
-        if total_points > 0:  # Ne pas afficher les coureurs avec 0 points
-            mois_points.append({'prenom': coureur.prenom, 'nom': coureur.nom, 'points': round(total_points, 1)})
+        mois_points.append({'username': coureur.username, 'points': round(total_points, 1)})
     mois_points.sort(key=lambda x: x['points'], reverse=True)
     # Pour affichage du mois
     month_names = ["Janvier", "Février", "Mars", "Avril", "Mai", "Juin", "Juillet", "Août", "Septembre", "Octobre", "Novembre", "Décembre"]

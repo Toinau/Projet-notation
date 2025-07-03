@@ -94,7 +94,7 @@
                 <div class="nav-item dropdown">
                     <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
                         <i class="fas fa-user-circle me-1"></i>
-                        {{ session.prenom }} {{ session.nom }}
+                        {{ username }}
                     </a>
                     <ul class="dropdown-menu">
                         <li><a class="dropdown-item" href="{{ url_for('main.change_password') }}">
@@ -130,7 +130,7 @@
                     <i class="fas fa-crown text-warning me-2"></i>
                     Dashboard Administrateur
                 </h1>
-                <p class="lead text-muted">Bienvenue {{ session.prenom }} {{ session.nom }}, gérez votre plateforme de notation</p>
+                <p class="lead text-muted">Bienvenue {{ username }}, gérez votre plateforme de notation</p>
             </div>
         </div>
 

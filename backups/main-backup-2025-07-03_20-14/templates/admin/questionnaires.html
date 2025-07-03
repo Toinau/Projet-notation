@@ -163,7 +163,7 @@
                 <div class="nav-item dropdown">
                     <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
                         <i class="fas fa-user-circle me-1"></i>
-                        {{ session.prenom }} {{ session.nom }}
+                        {{ session.username }}
                     </a>
                     <ul class="dropdown-menu">
                         <li><a class="dropdown-item" href="{{ url_for('main.change_password') }}">
@@ -262,7 +262,7 @@
                             <div class="participants-list">
                                 {% for participant in questionnaire.participants %}
                                 <div class="participant-item d-flex justify-content-between align-items-center">
-                                    <span>{{ participant.prenom }} {{ participant.nom }}</span>
+                                    <span>{{ participant.username }}</span>
                                     {% if participant.has_responded %}
                                         <span class="badge bg-success stats-badge">
                                             <i class="fas fa-check me-1"></i>Répondu

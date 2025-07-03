@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Résultats du Questionnaire</title>
+    <title>Questionnaires Disponibles</title>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <style>
@@ -43,7 +43,7 @@
             color: #000000;
             border-bottom: 1px solid #ffed4e;
         }
-        .result-card {
+        .questionnaire-card {
             background: #1a1a1a;
             border: 1px solid #333333;
             border-radius: 10px;
@@ -51,22 +51,14 @@
             margin-bottom: 1rem;
             transition: transform 0.2s ease, box-shadow 0.2s ease;
         }
-        .result-card:hover {
+        .questionnaire-card:hover {
             transform: translateY(-2px);
             box-shadow: 0 4px 15px rgba(255, 215, 0, 0.2);
         }
-        .rating-display {
-            font-size: 1.5rem;
-            font-weight: bold;
-            text-align: center;
-            padding: 0.5rem;
-            border-radius: 8px;
-            background: #333333;
+        .status-badge {
+            font-size: 0.8rem;
+            padding: 0.3rem 0.6rem;
         }
-        .rating-1-3 { color: #ff6b6b; }
-        .rating-4-6 { color: #ffd93d; }
-        .rating-7-8 { color: #6bcf7f; }
-        .rating-9-10 { color: #4ecdc4; }
         .dropdown-menu {
             background: #1a1a1a;
             border: 1px solid #333333;
@@ -78,16 +70,7 @@
             background: #333333;
             color: #ffffff;
         }
-        .text-muted {
-            color: #ffffff !important;
-        }
-        .lead.text-muted {
-            color: #ffffff !important;
-        }
-        .card-body {
-            color: #ffffff;
-        }
-        .stat-item small.text-muted {
+        .questionnaire-card .text-muted {
             color: #ffffff !important;
         }
     </style>
@@ -96,15 +79,15 @@
     <!-- Navigation -->
     <nav class="navbar navbar-expand-lg navbar-custom shadow-sm">
         <div class="container">
-            <a class="navbar-brand" href="{{ url_for('main.coureur_questionnaires') }}">
+            <a class="navbar-brand" href="{{ url_for('main.coureur_dashboard') }}">
                 <i class="fas fa-arrow-left me-2"></i>
-                Retour Questionnaires
+                Retour Dashboard
             </a>
             <div class="navbar-nav ms-auto">
                 <div class="nav-item dropdown">
                     <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
                         <i class="fas fa-user-circle me-1"></i>
-                        {{ session.prenom }} {{ session.nom }}
+                        {{ session.username }}
                     </a>
                     <ul class="dropdown-menu">
                         <li><a class="dropdown-item" href="{{ url_for('main.change_password') }}">
@@ -137,92 +120,83 @@
         <div class="row mb-4">
             <div class="col-12">
                 <h1 class="display-6">
-                    <i class="fas fa-chart-bar me-2 text-warning"></i>
-                    Mes Évaluations
+                    <i class="fas fa-clipboard-list me-2 text-warning"></i>
+                    Questionnaires Disponibles
                 </h1>
-                <div class="card">
-                    <div class="card-header">
-                        <h5 class="mb-0">
-                            <i class="fas fa-flag-checkered me-2"></i>
-                            {{ questionnaire.course_name }}
-                        </h5>
-                    </div>
-                    <div class="card-body">
-                        <div class="row">
-                            <div class="col-md-6">
-                                <strong>Date de course:</strong> {{ questionnaire.course_date.strftime('%d/%m/%Y') }}
-                            </div>
-                            <div class="col-md-6">
-                                <strong>Points Direct Vélo:</strong> {{ questionnaire.direct_velo_points }} points
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <p class="lead text-muted mt-3">
-                    <i class="fas fa-info-circle me-2"></i>
-                    Voici les notes que vous avez attribuées à chaque participant
-                </p>
             </div>
         </div>
 
-        <!-- Affichage du commentaire général du coureur -->
-        {% if comment %}
-        <div class="row mb-3">
-            <div class="col-12">
-                <strong>Votre commentaire sur ce questionnaire :</strong>
-                <div class="alert alert-secondary mt-1 mb-0" style="background:#222; color:#ffd700; border:none;">
-                    {{ comment }}
-                </div>
-            </div>
-        </div>
-        {% endif %}
-
-        <!-- Résultats des évaluations -->
-        {% if results %}
+        <!-- Liste des questionnaires -->
+        {% if questionnaires %}
             <div class="row">
-                {% for result in results %}
+                {% for questionnaire in questionnaires %}
                 <div class="col-lg-6 mb-3">
-                    <div class="result-card">
-                        <div class="d-flex justify-content-between align-items-center mb-3">
-                            <h6 class="mb-0">
-                                <i class="fas fa-user me-2 text-warning"></i>
-                                {{ result.evaluated_name }}
-                            </h6>
-                            {% if result.evaluated_name == session.username %}
-                                <span class="badge bg-info">Vous</span>
+                    <div class="questionnaire-card">
+                        <div class="d-flex justify-content-between align-items-start mb-3">
+                            <h5 class="mb-0">
+                                <i class="fas fa-flag-checkered me-2 text-warning"></i>
+                                {{ questionnaire.course_name }}
+                            </h5>
+                            {% if questionnaire.has_responded %}
+                                <span class="badge bg-success status-badge">
+                                    <i class="fas fa-check me-1"></i>Répondu
+                                </span>
+                            {% else %}
+                                <span class="badge bg-warning status-badge">
+                                    <i class="fas fa-clock me-1"></i>En attente
+                                </span>
                             {% endif %}
                         </div>
                         
-                        <div class="text-center">
-                            <div class="rating-display 
-                                {% if result.rating <= 3 %}rating-1-3
-                                {% elif result.rating <= 6 %}rating-4-6
-                                {% elif result.rating <= 8 %}rating-7-8
-                                {% else %}rating-9-10{% endif %}">
-                                {{ result.rating }}/10
+                        <div class="row mb-3">
+                            <div class="col-6">
+                                <small class="text-muted">
+                                    <i class="fas fa-calendar me-1"></i>
+                                    Date de course
+                                </small>
+                                <div>{{ questionnaire.course_date.strftime('%d/%m/%Y') }}</div>
+                            </div>
+                            <div class="col-6">
+                                <small class="text-muted">
+                                    <i class="fas fa-star me-1"></i>
+                                    Points Direct Vélo
+                                </small>
+                                <div>{{ questionnaire.direct_velo_points }} points</div>
                             </div>
                         </div>
+
+                        {% if questionnaire.has_responded %}
+                            <div class="mb-3">
+                                <small class="text-success">
+                                    <i class="fas fa-check-circle me-1"></i>
+                                    Répondu le {{ questionnaire.response_date.strftime('%d/%m/%Y à %H:%M') if questionnaire.response_date else 'N/A' }}
+                                </small>
+                            </div>
+                            <a href="{{ url_for('main.questionnaire_results', questionnaire_id=questionnaire.id) }}" class="btn btn-outline-light btn-sm">
+                                <i class="fas fa-eye me-1"></i>
+                                Voir ma réponse
+                            </a>
+                        {% else %}
+                            <a href="{{ url_for('main.fill_questionnaire', questionnaire_id=questionnaire.id) }}" class="btn btn-custom btn-sm">
+                                <i class="fas fa-edit me-1"></i>
+                                Remplir le questionnaire
+                            </a>
+                        {% endif %}
                     </div>
                 </div>
                 {% endfor %}
             </div>
         {% else %}
             <div class="text-center mt-5">
-                <i class="fas fa-exclamation-triangle fa-3x text-muted mb-3"></i>
-                <h4 class="text-muted">Aucun résultat trouvé</h4>
-                <p class="text-muted">Il semble qu'il n'y ait pas encore de réponses pour ce questionnaire.</p>
-            </div>
-        {% endif %}
-
-        <!-- Bouton de retour -->
-        <div class="row mt-4">
-            <div class="col-12 text-center">
-                <a href="{{ url_for('main.coureur_questionnaires') }}" class="btn btn-custom">
+                <i class="fas fa-clipboard-list fa-3x text-white mb-3"></i>
+                <h4 class="text-white">Aucun questionnaire disponible</h4>
+                <p class="text-white">Vous n'avez pas encore de questionnaires assignés pour des courses.</p>
+                <a href="{{ url_for('main.coureur_dashboard') }}" class="btn btn-custom">
                     <i class="fas fa-arrow-left me-2"></i>
-                    Retour aux Questionnaires
+                    Retour au Dashboard
                 </a>
             </div>
-        </div>
+        {% endif %}
     </div>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>

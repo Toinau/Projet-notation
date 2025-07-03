@@ -118,7 +118,7 @@
                 <div class="nav-item dropdown">
                     <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
                         <i class="fas fa-user-circle me-1"></i>
-                        {{ session.prenom }} {{ session.nom }}
+                        {{ session.username }}
                     </a>
                     <ul class="dropdown-menu">
                         <li><a class="dropdown-item" href="{{ url_for('main.change_password') }}">
@@ -257,23 +257,6 @@
                                     Note moyenne équipe
                                 </small>
                                 <div class="h5 mb-0">{{ course.note_moyenne_equipe }}/10</div>
-                            </div>
-                        </div>
-
-                        <div class="row mb-3">
-                            <div class="col-6">
-                                <small class="text-muted">
-                                    <i class="fas fa-arrow-up me-1 text-success"></i>
-                                    Note max perso
-                                </small>
-                                <div class="h5 mb-0 text-success">{{ course.note_max_perso }}/10</div>
-                            </div>
-                            <div class="col-6">
-                                <small class="text-muted">
-                                    <i class="fas fa-arrow-down me-1 text-danger"></i>
-                                    Note min perso
-                                </small>
-                                <div class="h5 mb-0 text-danger">{{ course.note_min_perso }}/10</div>
                             </div>
                         </div>
 

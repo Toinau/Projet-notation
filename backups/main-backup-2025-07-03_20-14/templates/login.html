@@ -7,11 +7,11 @@
             <h2 class="text-center mb-4">Connexion</h2>
             <form method="POST" action="{{ url_for('main.login') }}">
                 <div class="mb-3">
-                    <label for="email" class="form-label">Adresse e-mail</label>
-                    <input type="email" class="form-control" id="email" name="email" required>
+                    <label for="username" class="form-label">Nom d'utilisateur</label>
+                    <input type="text" class="form-control" id="username" name="username" required>
                 </div>
                 <div class="mb-3">
-                    <label for="password" class="form-label mt-2">Mot de passe</label>
+                    <label for="password" class="form-label">Mot de passe</label>
                     <input type="password" class="form-control" id="password" name="password" required>
                 </div>
                 <div class="mb-3 form-check">

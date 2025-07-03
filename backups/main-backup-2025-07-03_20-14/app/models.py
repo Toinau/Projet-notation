@@ -4,8 +4,7 @@ import re
 
 class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    prenom = db.Column(db.String(100), nullable=False)
-    nom = db.Column(db.String(100), nullable=False)
+    username = db.Column(db.String(100), unique=True, nullable=False)
     email = db.Column(db.String(100), unique=True, nullable=False)
     password = db.Column(db.String(200), nullable=False)
     role = db.Column(db.String(20), nullable=False, default='coureur')
@@ -13,7 +12,7 @@ class User(db.Model):
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
     def __repr__(self):
-        return f'<User {self.prenom} {self.nom} - {self.role}>'
+        return f'<User {self.username} - {self.role}>'
 
     def is_admin(self):
         return self.role == 'admin'
@@ -39,20 +38,12 @@ class User(db.Model):
         return True, "Mot de passe valide"
 
     @staticmethod
-    def validate_nom(nom):
-        if len(nom) < 2:
-            return False, "Le nom doit contenir au moins 2 caractères"
-        if not re.match(r'^[a-zA-ZÀ-ÿ\-\s]+$', nom):
-            return False, "Le nom ne peut contenir que des lettres, espaces et tirets"
-        return True, "Nom valide"
-
-    @staticmethod
-    def validate_prenom(prenom):
-        if len(prenom) < 2:
-            return False, "Le prénom doit contenir au moins 2 caractères"
-        if not re.match(r'^[a-zA-ZÀ-ÿ\-\s]+$', prenom):
-            return False, "Le prénom ne peut contenir que des lettres, espaces et tirets"
-        return True, "Prénom valide"
+    def validate_username(username):
+        if len(username) < 3:
+            return False, "Le nom d'utilisateur doit contenir au moins 3 caractères"
+        if not re.match(r'^[a-zA-Z0-9_]+$', username):
+            return False, "Le nom d'utilisateur ne peut contenir que des lettres, chiffres et underscores"
+        return True, "Nom d'utilisateur valide"
 
 class Questionnaire(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -76,7 +67,6 @@ class QuestionnaireParticipant(db.Model):
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     has_responded = db.Column(db.Boolean, default=False, nullable=False)
     response_date = db.Column(db.DateTime, nullable=True)
-    comment = db.Column(db.Text, nullable=True)  # Commentaire facultatif pour la soumission
     
     # Relation avec l'utilisateur
     user = db.relationship('User', backref='questionnaire_participations')

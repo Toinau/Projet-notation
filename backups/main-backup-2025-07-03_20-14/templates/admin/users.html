@@ -226,7 +226,7 @@
                                                 <i class="fas fa-biking text-warning"></i>
                                             {% endif %}
                                         </div>
-                                        <strong>{{ user.prenom }} {{ user.nom }}</strong>
+                                        <strong>{{ user.username }}</strong>
                                     </div>
                                 </td>
                                 <td>{{ user.email }}</td>
@@ -284,7 +284,7 @@
                                         {% if user.id != session.user_id %}
                                             <form method="POST" action="{{ url_for('main.delete_user', user_id=user.id) }}" 
                                                   style="display: inline;" 
-                                                  onsubmit="return confirm('Êtes-vous sûr de vouloir supprimer {{ user.prenom }} {{ user.nom }} ?')">
+                                                  onsubmit="return confirm('Êtes-vous sûr de vouloir supprimer {{ user.username }} ?')">
                                                 <button type="submit" class="btn btn-outline-danger" title="Supprimer">
                                                     <i class="fas fa-trash"></i>
                                                 </button>

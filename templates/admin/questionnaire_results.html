@@ -106,7 +106,7 @@
                 <div class="nav-item dropdown">
                     <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
                         <i class="fas fa-user-circle me-1"></i>
-                        {{ session.username }}
+                        {{ session.prenom }} {{ session.nom }}
                     </a>
                     <ul class="dropdown-menu">
                         <li><a class="dropdown-item" href="{{ url_for('main.change_password') }}">
@@ -182,7 +182,7 @@
                         <div class="d-flex justify-content-between align-items-start mb-3">
                             <h5 class="mb-0">
                                 <i class="fas fa-user me-2 text-warning"></i>
-                                {{ result.username }}
+                                {{ result.prenom }} {{ result.nom }}
                             </h5>
                             {% if result.has_responded %}
                                 <span class="badge bg-success">
@@ -222,6 +222,14 @@
                                     <i class="fas fa-clock me-1"></i>
                                     Répondu le {{ result.response_date.strftime('%d/%m/%Y à %H:%M') }}
                                 </small>
+                            </div>
+                        {% endif %}
+                        {% if result.has_responded and result.comment %}
+                            <div class="mt-2">
+                                <strong>Commentaire :</strong>
+                                <div class="alert alert-secondary mt-1 mb-0" style="background:#222; color:#ffd700; border:none;">
+                                    {{ result.comment }}
+                                </div>
                             </div>
                         {% endif %}
                     </div>

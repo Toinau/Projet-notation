@@ -104,7 +104,7 @@
                 <div class="nav-item dropdown">
                     <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
                         <i class="fas fa-user-circle me-1"></i>
-                        {{ session.prenom }} {{ session.nom }}
+                        {{ session.username }}
                     </a>
                     <ul class="dropdown-menu">
                         <li><a class="dropdown-item" href="{{ url_for('main.change_password') }}">
@@ -164,18 +164,6 @@
                 </p>
             </div>
         </div>
-
-        <!-- Affichage du commentaire général du coureur -->
-        {% if comment %}
-        <div class="row mb-3">
-            <div class="col-12">
-                <strong>Votre commentaire sur ce questionnaire :</strong>
-                <div class="alert alert-secondary mt-1 mb-0" style="background:#222; color:#ffd700; border:none;">
-                    {{ comment }}
-                </div>
-            </div>
-        </div>
-        {% endif %}
 
         <!-- Résultats des évaluations -->
         {% if results %}

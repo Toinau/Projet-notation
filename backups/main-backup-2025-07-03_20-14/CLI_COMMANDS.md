@@ -43,16 +43,15 @@ Affiche le nombre total d'utilisateurs, coureurs, administrateurs, etc.
 ```bash
 flask create-admin
 ```
-Demande interactivement le prénom, nom, email et mot de passe.
+Demande interactivement le nom d'utilisateur, email et mot de passe.
 
 #### Créer un utilisateur avec options
 ```bash
-flask create-user --prenom "Jean" --nom "Dupont" --email "jean.dupont@email.com" --password "motdepasse" --role coureur
+flask create-user --username john --email john@example.com --password secret123 --role admin
 ```
 
 Options disponibles :
-- `--prenom` : Prénom (requis)
-- `--nom` : Nom (requis)
+- `--username` : Nom d'utilisateur (requis)
 - `--email` : Adresse email (requise)
 - `--password` : Mot de passe (requis, masqué lors de la saisie)
 - `--role` : Rôle (coureur ou admin, défaut: coureur)
@@ -65,36 +64,36 @@ Affiche tous les utilisateurs avec leurs détails.
 
 #### Vérifier un utilisateur spécifique
 ```bash
-flask check-user Jean Dupont
+flask check-user username
 ```
 Affiche les détails complets d'un utilisateur.
 
 #### Forcer le rôle admin pour un utilisateur
 ```bash
-flask fix-admin-role Jean Dupont
+flask fix-admin-role username
 ```
 Change le rôle d'un utilisateur en admin et l'active.
 
 #### Supprimer un utilisateur
 ```bash
-flask delete-user Jean Dupont
+flask delete-user username
 ```
 Demande confirmation avant suppression.
 
 Pour forcer sans confirmation :
 ```bash
-flask delete-user Jean Dupont --force
+flask delete-user username --force
 ```
 
 #### Activer/Désactiver un utilisateur
 ```bash
-flask toggle-user-status Jean Dupont
+flask toggle-user-status username
 ```
 Bascule le statut actif/inactif d'un utilisateur.
 
 #### Changer le rôle d'un utilisateur
 ```bash
-flask change-user-role Jean Dupont --role admin
+flask change-user-role username --role admin
 ```
 Change le rôle d'un utilisateur (coureur ou admin).
 
@@ -113,17 +112,17 @@ flask create-admin
 ### Gérer plusieurs utilisateurs
 ```bash
 # Créer des utilisateurs avec des rôles différents
-flask create-user --prenom "Alice" --nom "Dupont" --email "alice.dupont@email.com" --password "pass123" --role coureur
-flask create-user --prenom "Bob" --nom "Dupont" --email "bob.dupont@email.com" --password "pass456" --role admin
+flask create-user --username alice --email alice@example.com --password pass123 --role coureur
+flask create-user --username bob --email bob@example.com --password pass456 --role admin
 
 # Lister tous les utilisateurs
 flask list-users
 
 # Vérifier un utilisateur spécifique
-flask check-user Alice Dupont
+flask check-user alice
 
 # Promouvoir un coureur en admin
-flask change-user-role Alice Dupont --role admin
+flask change-user-role alice --role admin
 ```
 
 ### Maintenance de la base de données
@@ -132,10 +131,10 @@ flask change-user-role Alice Dupont --role admin
 flask db-stats
 
 # Désactiver un utilisateur problématique
-flask toggle-user-status Jean Dupont
+flask toggle-user-status username
 
 # Supprimer un utilisateur
-flask delete-user Jean Dupont
+flask delete-user username
 
 # Réinitialiser complètement (⚠️ ATTENTION)
 flask reset-db --force

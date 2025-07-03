@@ -22,11 +22,9 @@
         }
         .card { background: #1a1a1a; border: 1px solid #333; }
         .card-header { background: #ffd700 !important; color: #000; }
-        .table th, .table td { color: #fff !important; border-color: #333; }
-        .table th { background: #222; color: #fff !important; }
-        .table td { background: #000; color: #fff !important; }
-        .table tbody tr td { color: #fff !important; }
-        .table tbody tr td strong { color: #fff !important; }
+        .table th, .table td { color: #fff; border-color: #333; }
+        .table th { background: #222; }
+        .table td { background: #000; color: #fff; }
         .btn-custom { background: #ffd700; color: #000; font-weight: 600; }
         .btn-custom:hover { background: #ffed4e; color: #000; }
     </style>
@@ -43,7 +41,7 @@
                 <div class="nav-item dropdown">
                     <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
                         <i class="fas fa-user-circle me-1"></i>
-                        {{ session.prenom }} {{ session.nom }}
+                        {{ session.username }}
                     </a>
                     <ul class="dropdown-menu">
                         <li><a class="dropdown-item" href="{{ url_for('main.change_password') }}">
@@ -81,22 +79,13 @@
                         <table class="table table-striped mb-0">
                             <thead><tr><th>Rang</th><th>Coureur</th><th>Points</th></tr></thead>
                             <tbody>
-                            {% if saison_points %}
-                                {% for c in saison_points %}
-                                <tr>
-                                    <td>{{ loop.index }}</td>
-                                    <td>{{ c.prenom }} {{ c.nom }}</td>
-                                    <td><strong>{{ c.points }}</strong></td>
-                                </tr>
-                                {% endfor %}
-                            {% else %}
-                                <tr>
-                                    <td colspan="3" class="text-center text-muted">
-                                        <i class="fas fa-info-circle me-2"></i>
-                                        Aucune course dans la saison {{ season }}
-                                    </td>
-                                </tr>
-                            {% endif %}
+                            {% for c in saison_points %}
+                            <tr>
+                                <td>{{ loop.index }}</td>
+                                <td>{{ c.username }}</td>
+                                <td><strong>{{ c.points }}</strong></td>
+                            </tr>
+                            {% endfor %}
                             </tbody>
                         </table>
                     </div>
@@ -123,22 +112,13 @@
                         <table class="table table-striped mb-0">
                             <thead><tr><th>Rang</th><th>Coureur</th><th>Points</th></tr></thead>
                             <tbody>
-                            {% if mois_points %}
-                                {% for c in mois_points %}
-                                <tr>
-                                    <td>{{ loop.index }}</td>
-                                    <td>{{ c.prenom }} {{ c.nom }}</td>
-                                    <td><strong>{{ c.points }}</strong></td>
-                                </tr>
-                                {% endfor %}
-                            {% else %}
-                                <tr>
-                                    <td colspan="3" class="text-center text-muted">
-                                        <i class="fas fa-info-circle me-2"></i>
-                                        Aucune course en {{ selected_month_name }} {{ selected_year }}
-                                    </td>
-                                </tr>
-                            {% endif %}
+                            {% for c in mois_points %}
+                            <tr>
+                                <td>{{ loop.index }}</td>
+                                <td>{{ c.username }}</td>
+                                <td><strong>{{ c.points }}</strong></td>
+                            </tr>
+                            {% endfor %}
                             </tbody>
                         </table>
                     </div>

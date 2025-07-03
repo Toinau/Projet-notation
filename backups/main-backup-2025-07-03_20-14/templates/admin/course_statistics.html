@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Statistiques des Courses</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        body {
+            background: #000000;
+            min-height: 100vh;
+            color: #ffffff;
+        }
+        .navbar-custom {
+            background: #ffd700;
+            border-bottom: 3px solid #ffed4e;
+        }
+        .navbar-custom .navbar-brand,
+        .navbar-custom .nav-link {
+            color: #000000 !important;
+            font-weight: 600;
+        }
+        .navbar-custom .nav-link:hover {
+            color: #333333 !important;
+        }
+        .btn-custom {
+            background: #ffd700;
+            border: none;
+            color: #000000;
+            font-weight: 600;
+        }
+        .btn-custom:hover {
+            background: #ffed4e;
+            color: #000000;
+        }
+        .card {
+            background: #1a1a1a;
+            border: 1px solid #333333;
+            margin-bottom: 2rem;
+        }
+        .card-header {
+            background: #ffd700 !important;
+            color: #000000;
+            border-bottom: 1px solid #ffed4e;
+        }
+        .course-card {
+            background: #1a1a1a;
+            border: 1px solid #333333;
+            border-radius: 10px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+        .course-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(255, 215, 0, 0.2);
+        }
+        .stats-badge {
+            font-size: 0.9rem;
+            padding: 0.4rem 0.8rem;
+        }
+        .rating-display {
+            font-size: 1.1rem;
+            font-weight: bold;
+            padding: 0.3rem 0.6rem;
+            border-radius: 5px;
+            background: #333333;
+            display: inline-block;
+            margin: 0.2rem;
+        }
+        .rating-1-3 { color: #ff6b6b; }
+        .rating-4-6 { color: #ffd93d; }
+        .rating-7-8 { color: #6bcf7f; }
+        .rating-9-10 { color: #4ecdc4; }
+        .team-avg {
+            background: #ffd700;
+            color: #000000;
+            font-weight: bold;
+            padding: 0.5rem 1rem;
+            border-radius: 5px;
+            display: inline-block;
+        }
+        .dropdown-menu {
+            background: #1a1a1a;
+            border: 1px solid #333333;
+        }
+        .dropdown-item {
+            color: #ffffff;
+        }
+        .dropdown-item:hover {
+            background: #333333;
+            color: #ffffff;
+        }
+        .text-muted {
+            color: #cccccc !important;
+        }
+        .lead.text-muted {
+            color: #cccccc !important;
+        }
+        .table {
+            color: #ffffff;
+        }
+        .table th {
+            color: #ffffff;
+            border-color: #333333;
+        }
+        .table td {
+            border-color: #333333;
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-custom shadow-sm">
+        <div class="container">
+            <a class="navbar-brand" href="{{ url_for('main.admin_dashboard') }}">
+                <i class="fas fa-arrow-left me-2"></i>
+                Retour Dashboard
+            </a>
+            <div class="navbar-nav ms-auto">
+                <div class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
+                        <i class="fas fa-user-circle me-1"></i>
+                        {{ session.username }}
+                    </a>
+                    <ul class="dropdown-menu">
+                        <li><a class="dropdown-item" href="{{ url_for('main.change_password') }}">
+                            <i class="fas fa-key me-2"></i>Changer le mot de passe
+                        </a></li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li><a class="dropdown-item" href="{{ url_for('main.logout') }}">
+                            <i class="fas fa-sign-out-alt me-2"></i>Déconnexion
+                        </a></li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container mt-4">
+        <!-- Messages Flash -->
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ 'danger' if category == 'error' else category }} alert-dismissible fade show" role="alert">
+                        {{ message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        <!-- Header -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <h1 class="display-6">
+                    <i class="fas fa-chart-bar me-2 text-warning"></i>
+                    Statistiques des Courses
+                </h1>
+                <p class="lead text-muted">
+                    <i class="fas fa-info-circle me-2"></i>
+                    Analyse des performances par course avec notes moyennes et points
+                </p>
+                
+                <!-- Sélecteur de mois -->
+                <div class="card mt-3">
+                    <div class="card-body">
+                        <div class="row align-items-center">
+                            <div class="col-md-4">
+                                <h6 class="mb-0 text-white">
+                                    <i class="fas fa-calendar-alt me-2 text-warning"></i>
+                                    Courses de {{ selected_month_name }} {{ selected_year }}
+                                </h6>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label text-white mb-1">Saison :</label>
+                                <form method="GET" class="d-flex">
+                                    <select name="season" class="form-select me-2" onchange="this.form.submit()">
+                                        {% for option in season_options %}
+                                            <option value="{{ option.year }}" 
+                                                    {% if option.selected %}selected{% endif %}>
+                                                Saison {{ option.year }}
+                                            </option>
+                                        {% endfor %}
+                                    </select>
+                                    <input type="hidden" name="month" value="{{ selected_month }}">
+                                    <input type="hidden" name="year" value="{{ selected_year }}">
+                                </form>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label text-white mb-1">Mois :</label>
+                                <form method="GET" class="d-flex">
+                                    <select name="month" class="form-select me-2" onchange="this.form.submit()">
+                                        {% for option in month_options %}
+                                            <option value="{{ option.month }}" 
+                                                    data-year="{{ option.year }}"
+                                                    {% if option.selected %}selected{% endif %}>
+                                                {% set month_names = ["Janvier", "Février", "Mars", "Avril", "Mai", "Juin", "Juillet", "Août", "Septembre", "Octobre", "Novembre", "Décembre"] %}
+                                                {{ month_names[option.month - 1] }} {{ option.year }}
+                                            </option>
+                                        {% endfor %}
+                                    </select>
+                                    <input type="hidden" name="year" id="selected-year" value="{{ selected_year }}">
+                                    <input type="hidden" name="season" value="{{ selected_season }}">
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Statistiques par course -->
+        {% if course_stats %}
+            {% for course in course_stats %}
+            <div class="course-card">
+                <div class="d-flex justify-content-between align-items-start mb-3">
+                    <div>
+                        <h4 class="mb-1">
+                            <i class="fas fa-flag-checkered me-2 text-warning"></i>
+                            {{ course.questionnaire.course_name }}
+                        </h4>
+                        <p class="text-muted mb-0">
+                            <i class="fas fa-calendar me-1"></i>
+                            {{ course.questionnaire.course_date.strftime('%d/%m/%Y') }}
+                        </p>
+                    </div>
+                    <div class="text-end">
+                        <div class="team-avg mb-2">
+                            <i class="fas fa-users me-1"></i>
+                            Note équipe: {{ course.team_avg_rating }}/10
+                        </div>
+                        <small class="text-muted">
+                            <i class="fas fa-star me-1"></i>
+                            {{ course.questionnaire.direct_velo_points }} pts Direct Vélo
+                        </small>
+                    </div>
+                </div>
+                
+                <!-- Tableau des participants -->
+                <div class="table-responsive">
+                    <table class="table table-dark table-striped">
+                        <thead>
+                            <tr>
+                                <th>Coureur</th>
+                                <th>Note moyenne</th>
+                                <th>Note mini</th>
+                                <th>Note maxi</th>
+                                <th>Points gagnés</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for participant in course.participants %}
+                            <tr>
+                                <td>
+                                    <i class="fas fa-user me-2 text-warning"></i>
+                                    {{ participant.username }}
+                                </td>
+                                <td>
+                                    <span class="rating-display 
+                                        {% if participant.avg_rating <= 3 %}rating-1-3
+                                        {% elif participant.avg_rating <= 6 %}rating-4-6
+                                        {% elif participant.avg_rating <= 8 %}rating-7-8
+                                        {% else %}rating-9-10{% endif %}">
+                                        {{ participant.avg_rating }}/10
+                                    </span>
+                                </td>
+                                <td>
+                                    {% if participant.min_rating is not none %}
+                                        <span class="rating-display">{{ participant.min_rating }}/10</span>
+                                    {% else %}
+                                        <span class="text-muted">-</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if participant.max_rating is not none %}
+                                        <span class="rating-display">{{ participant.max_rating }}/10</span>
+                                    {% else %}
+                                        <span class="text-muted">-</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <strong>{{ participant.points }} pts</strong>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            {% endfor %}
+        {% else %}
+            <div class="text-center mt-5">
+                <i class="fas fa-calendar-times fa-3x text-muted mb-3"></i>
+                <h4 class="text-muted">Aucune course en {{ selected_month_name }} {{ selected_year }}</h4>
+                <p class="text-muted">Il n'y a pas de courses programmées pour cette période.</p>
+            </div>
+        {% endif %}
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Gérer le changement d'année automatiquement
+        document.querySelector('select[name="month"]').addEventListener('change', function() {
+            const selectedOption = this.options[this.selectedIndex];
+            const year = selectedOption.getAttribute('data-year');
+            document.getElementById('selected-year').value = year;
+            this.form.submit();
+        });
+        
+        // Gérer le changement de saison
+        document.querySelector('select[name="season"]').addEventListener('change', function() {
+            this.form.submit();
+        });
+    </script>
+</body>
+</html> 

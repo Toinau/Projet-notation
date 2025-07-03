@@ -106,7 +106,7 @@
                 <div class="nav-item dropdown">
                     <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
                         <i class="fas fa-user-circle me-1"></i>
-                        {{ session.prenom }} {{ session.nom }}
+                        {{ session.username }}
                     </a>
                     <ul class="dropdown-menu">
                         <li><a class="dropdown-item" href="{{ url_for('main.change_password') }}">
@@ -208,7 +208,7 @@
                                                                value="{{ coureur.id }}">
                                                         <label class="form-check-label" for="coureur_{{ coureur.id }}">
                                                             <i class="fas fa-biking me-1 text-warning"></i>
-                                                            {{ coureur.prenom }} {{ coureur.nom }}
+                                                            {{ coureur.username }}
                                                         </label>
                                                     </div>
                                                 </div>

@@ -7,19 +7,15 @@
             <h2 class="text-center mb-4">Inscription</h2>
             <form method="POST" action="{{ url_for('main.register') }}">
                 <div class="mb-3">
-                    <label for="prenom" class="form-label">Prénom</label>
-                    <input type="text" class="form-control" id="prenom" name="prenom" required>
+                    <label for="username" class="form-label">Nom d'utilisateur</label>
+                    <input type="text" class="form-control" id="username" name="username" required>
                 </div>
                 <div class="mb-3">
-                    <label for="nom" class="form-label mt-2">Nom</label>
-                    <input type="text" class="form-control" id="nom" name="nom" required>
-                </div>
-                <div class="mb-3">
-                    <label for="email" class="form-label mt-2">Adresse e-mail</label>
+                    <label for="email" class="form-label">Adresse e-mail</label>
                     <input type="email" class="form-control" id="email" name="email" required>
                 </div>
                 <div class="mb-3">
-                    <label for="password" class="form-label mt-2">Mot de passe</label>
+                    <label for="password" class="form-label">Mot de passe</label>
                     <input type="password" class="form-control" id="password" name="password" required>
                     <div class="form-text">Le mot de passe doit contenir au moins 8 caractères.</div>
                 </div>
