@@ -1,0 +1,35 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="32" height="32">
+  <defs>
+    <linearGradient id="gold" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#ffd700;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#ffed4e;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+  
+  <!-- Fond noir -->
+  <rect width="32" height="32" fill="#000000" rx="4"/>
+  
+  <!-- Vélo stylisé -->
+  <g fill="url(#gold)" stroke="#000000" stroke-width="0.5">
+    <!-- Roue avant -->
+    <circle cx="12" cy="20" r="6"/>
+    <!-- Roue arrière -->
+    <circle cx="24" cy="20" r="6"/>
+    <!-- Cadre du vélo -->
+    <path d="M 12 14 L 18 10 L 24 14 L 24 20 L 18 24 L 12 20 Z"/>
+    <!-- Guidon -->
+    <path d="M 10 12 L 8 10 L 10 8 L 12 10 Z"/>
+    <!-- Selle -->
+    <path d="M 20 12 L 22 10 L 24 12 L 22 14 Z"/>
+  </g>
+  
+  <!-- Rayons des roues -->
+  <g stroke="url(#gold)" stroke-width="0.8" fill="none">
+    <!-- Roue avant -->
+    <line x1="12" y1="14" x2="12" y2="26"/>
+    <line x1="6" y1="20" x2="18" y2="20"/>
+    <!-- Roue arrière -->
+    <line x1="24" y1="14" x2="24" y2="26"/>
+    <line x1="18" y1="20" x2="30" y2="20"/>
+  </g>
+</svg> 

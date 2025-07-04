@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Création d'un Questionnaire</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        body {
+            background: #000000;
+            min-height: 100vh;
+            color: #ffffff;
+        }
+        .navbar-custom {
+            background: #ffd700;
+            border-bottom: 3px solid #ffed4e;
+        }
+        .navbar-custom .navbar-brand,
+        .navbar-custom .nav-link {
+            color: #000000 !important;
+            font-weight: 600;
+        }
+        .navbar-custom .nav-link:hover {
+            color: #333333 !important;
+        }
+        .btn-custom {
+            background: #ffd700;
+            border: none;
+            color: #000000;
+            font-weight: 600;
+        }
+        .btn-custom:hover {
+            background: #ffed4e;
+            color: #000000;
+        }
+        .card {
+            background: #1a1a1a;
+            border: 1px solid #333333;
+        }
+        .card-header {
+            background: #ffd700 !important;
+            color: #000000;
+            border-bottom: 1px solid #ffed4e;
+        }
+        .form-control, .form-select {
+            background: #333333;
+            border: 1px solid #555555;
+            color: #ffffff;
+        }
+        .form-control:focus, .form-select:focus {
+            background: #444444;
+            border-color: #ffd700;
+            color: #ffffff;
+            box-shadow: 0 0 0 0.2rem rgba(255, 215, 0, 0.25);
+        }
+        .form-control::placeholder {
+            color: #ffffff !important;
+            opacity: 0.7;
+        }
+        .form-label {
+            color: #ffffff;
+            font-weight: 600;
+        }
+        .form-text {
+            color: #cccccc;
+        }
+        .form-check-label {
+            color: #ffffff;
+        }
+        .dropdown-menu {
+            background: #1a1a1a;
+            border: 1px solid #333333;
+        }
+        .dropdown-item {
+            color: #ffffff;
+        }
+        .dropdown-item:hover {
+            background: #333333;
+            color: #ffffff;
+        }
+        .question-section {
+            background: #222222;
+            border: 1px solid #444444;
+            border-radius: 8px;
+            padding: 1rem;
+            margin-bottom: 1rem;
+        }
+        .question-header {
+            background: #333333;
+            padding: 0.5rem;
+            border-radius: 5px;
+            margin-bottom: 1rem;
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-custom shadow-sm">
+        <div class="container">
+            <a class="navbar-brand" href="{{ url_for('main.admin_dashboard') }}">
+                <i class="fas fa-arrow-left me-2"></i>
+                Retour Dashboard
+            </a>
+            <div class="navbar-nav ms-auto">
+                <div class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
+                        <i class="fas fa-user-circle me-1"></i>
+                        {{ session.prenom }} {{ session.nom }}
+                    </a>
+                    <ul class="dropdown-menu">
+                        <li><a class="dropdown-item" href="{{ url_for('main.change_password') }}">
+                            <i class="fas fa-key me-2"></i>Changer le mot de passe
+                        </a></li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li><a class="dropdown-item" href="{{ url_for('main.logout') }}">
+                            <i class="fas fa-sign-out-alt me-2"></i>Déconnexion
+                        </a></li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container mt-4">
+        <!-- Messages Flash -->
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ 'danger' if category == 'error' else category }} alert-dismissible fade show" role="alert">
+                        {{ message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        <!-- Header -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <h1 class="display-6">
+                    <i class="fas fa-edit me-2 text-warning"></i>
+                    Création d'un Questionnaire
+                </h1>
+            </div>
+        </div>
+
+        <!-- Formulaire de création -->
+        <div class="row">
+            <div class="col-lg-8 mx-auto">
+                <div class="card shadow-lg">
+                    <div class="card-header">
+                        <h5 class="card-title mb-0">
+                            <i class="fas fa-clipboard-list me-2"></i>
+                            Paramètres du Questionnaire
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <form method="POST">
+                            <!-- Informations de la course -->
+                            <div class="row mb-4">
+                                <div class="col-12">
+                                    <label for="course_name" class="form-label">
+                                        <i class="fas fa-flag-checkered me-1"></i>Nom de la course *
+                                    </label>
+                                    <input type="text" class="form-control" id="course_name" name="course_name" required 
+                                           placeholder="Ex: GP de Moyon">
+                                </div>
+                            </div>
+
+                            <div class="row mb-4">
+                                <div class="col-12">
+                                    <label for="course_date" class="form-label">
+                                        <i class="fas fa-calendar me-1"></i>Date de la course *
+                                    </label>
+                                    <input type="date" class="form-control" id="course_date" name="course_date" required>
+                                </div>
+                            </div>
+
+                            <!-- Points Direct Vélo -->
+                            <div class="row mb-4">
+                                <div class="col-12">
+                                    <label for="direct_velo_points" class="form-label">
+                                        <i class="fas fa-star me-1"></i>Nombre de points Direct Vélo *
+                                    </label>
+                                    <input type="number" class="form-control" id="direct_velo_points" name="direct_velo_points" 
+                                           required min="0" placeholder="Ex: 10">
+                                </div>
+                            </div>
+
+                            <!-- Sélection des coureurs présents -->
+                            <div class="row mb-4">
+                                <div class="col-12">
+                                    <label class="form-label">
+                                        <i class="fas fa-users me-1"></i>Sélectionner les coureurs présents *
+                                    </label>
+                                    <div class="form-text mb-3">Cochez les coureurs qui participent à cette course</div>
+                                    
+                                    {% if coureurs %}
+                                        <div class="coureurs-list" style="max-height: 300px; overflow-y: auto; border: 1px solid #444444; border-radius: 8px; padding: 1rem; background: #222222;">
+                                            <div class="row">
+                                                {% for coureur in coureurs %}
+                                                <div class="col-12 mb-2">
+                                                    <div class="form-check">
+                                                        <input class="form-check-input" type="checkbox" 
+                                                               id="coureur_{{ coureur.id }}" 
+                                                               name="present_coureurs" 
+                                                               value="{{ coureur.id }}">
+                                                        <label class="form-check-label" for="coureur_{{ coureur.id }}">
+                                                            <i class="fas fa-biking me-1 text-warning"></i>
+                                                            {{ coureur.prenom }} {{ coureur.nom }}
+                                                        </label>
+                                                    </div>
+                                                </div>
+                                                {% endfor %}
+                                            </div>
+                                        </div>
+                                    {% else %}
+                                        <div class="alert alert-warning">
+                                            <i class="fas fa-exclamation-triangle me-2"></i>
+                                            Aucun coureur disponible. Créez d'abord des comptes coureurs.
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+
+                            <!-- Boutons d'action -->
+                            <div class="row mt-4">
+                                <div class="col-12 text-center">
+                                    <button type="submit" class="btn btn-custom btn-lg me-3" {% if not coureurs %}disabled{% endif %}>
+                                        <i class="fas fa-save me-2"></i>
+                                        Créer le Questionnaire
+                                    </button>
+                                    <a href="{{ url_for('main.admin_dashboard') }}" class="btn btn-outline-light btn-lg">
+                                        <i class="fas fa-times me-2"></i>
+                                        Annuler
+                                    </a>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
+</body>
+</html> 

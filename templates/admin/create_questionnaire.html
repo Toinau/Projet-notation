@@ -106,7 +106,7 @@
                 <div class="nav-item dropdown">
                     <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
                         <i class="fas fa-user-circle me-1"></i>
-                        {{ session.prenom }} {{ session.nom }}
+                        {{ current_user.prenom }} {{ current_user.nom }}
                     </a>
                     <ul class="dropdown-menu">
                         <li><a class="dropdown-item" href="{{ url_for('main.change_password') }}">
@@ -188,6 +188,21 @@
                                 </div>
                             </div>
 
+                            <!-- Sélection de l'équipe -->
+                            <div class="row mb-4">
+                                <div class="col-12">
+                                    <label for="team_id" class="form-label">
+                                        <i class="fas fa-people-group me-1"></i>Choisir l'équipe *
+                                    </label>
+                                    <select class="form-select" id="team_id" name="team_id">
+                                        <option value="">-- Sélectionner une équipe --</option>
+                                        {% for equipe in equipes %}
+                                            <option value="{{ equipe.id }}" {% if selected_team_id and selected_team_id|int == equipe.id %}selected{% endif %}>{{ equipe.nom }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                            </div>
+
                             <!-- Sélection des coureurs présents -->
                             <div class="row mb-4">
                                 <div class="col-12">
@@ -195,39 +210,35 @@
                                         <i class="fas fa-users me-1"></i>Sélectionner les coureurs présents *
                                     </label>
                                     <div class="form-text mb-3">Cochez les coureurs qui participent à cette course</div>
-                                    
-                                    {% if coureurs %}
-                                        <div class="coureurs-list" style="max-height: 300px; overflow-y: auto; border: 1px solid #444444; border-radius: 8px; padding: 1rem; background: #222222;">
-                                            <div class="row">
+                                    <div id="coureurs-dyn-list">
+                                        {% if not selected_team_id %}
+                                            <div class="alert alert-warning">Veuillez d'abord sélectionner une équipe.</div>
+                                        {% elif coureurs %}
+                                            <div class="mb-2">
+                                                <button type="button" class="btn btn-sm btn-outline-light" id="select-all-btn">Tout sélectionner</button>
+                                                <button type="button" class="btn btn-sm btn-outline-light ms-2" id="deselect-all-btn">Tout désélectionner</button>
+                                            </div>
+                                            <div class="coureurs-list" id="coureurs-list-html" style="max-height: 300px; overflow-y: auto; border: 1px solid #444444; border-radius: 8px; padding: 1rem; background: #222222;">
                                                 {% for coureur in coureurs %}
-                                                <div class="col-12 mb-2">
-                                                    <div class="form-check">
-                                                        <input class="form-check-input" type="checkbox" 
-                                                               id="coureur_{{ coureur.id }}" 
-                                                               name="present_coureurs" 
-                                                               value="{{ coureur.id }}">
-                                                        <label class="form-check-label" for="coureur_{{ coureur.id }}">
-                                                            <i class="fas fa-biking me-1 text-warning"></i>
-                                                            {{ coureur.prenom }} {{ coureur.nom }}
+                                                    <div class="form-check mb-2">
+                                                        <input class="form-check-input" type="checkbox" name="present_coureurs" value="{{ coureur.id }}" id="coureur{{ coureur.id }}">
+                                                        <label class="form-check-label" for="coureur{{ coureur.id }}">
+                                                            {{ coureur.prenom }} {{ coureur.nom }} ({{ coureur.email }})
                                                         </label>
                                                     </div>
-                                                </div>
                                                 {% endfor %}
                                             </div>
-                                        </div>
-                                    {% else %}
-                                        <div class="alert alert-warning">
-                                            <i class="fas fa-exclamation-triangle me-2"></i>
-                                            Aucun coureur disponible. Créez d'abord des comptes coureurs.
-                                        </div>
-                                    {% endif %}
+                                        {% else %}
+                                            <div class="alert alert-info">Aucun coureur dans cette équipe.</div>
+                                        {% endif %}
+                                    </div>
                                 </div>
                             </div>
 
                             <!-- Boutons d'action -->
                             <div class="row mt-4">
                                 <div class="col-12 text-center">
-                                    <button type="submit" class="btn btn-custom btn-lg me-3" {% if not coureurs %}disabled{% endif %}>
+                                    <button type="submit" class="btn btn-custom btn-lg me-3" id="btn-creer-questionnaire" {% if not selected_team_id %}disabled{% endif %}>
                                         <i class="fas fa-save me-2"></i>
                                         Créer le Questionnaire
                                     </button>
@@ -245,5 +256,74 @@
     </div>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
+    <script>
+    function addSelectAllListeners() {
+        const selectAllBtn = document.getElementById('select-all-btn');
+        const deselectAllBtn = document.getElementById('deselect-all-btn');
+        const list = document.getElementById('coureurs-list-html');
+        if (selectAllBtn && deselectAllBtn && list) {
+            selectAllBtn.onclick = function() {
+                list.querySelectorAll('input[type="checkbox"]').forEach(cb => cb.checked = true);
+            };
+            deselectAllBtn.onclick = function() {
+                list.querySelectorAll('input[type="checkbox"]').forEach(cb => cb.checked = false);
+            };
+        }
+    }
+    document.addEventListener('DOMContentLoaded', function() {
+        const teamSelect = document.getElementById('team_id');
+        const coureursListDiv = document.getElementById('coureurs-dyn-list');
+        const creerBtn = document.getElementById('btn-creer-questionnaire');
+        teamSelect.addEventListener('change', function() {
+            const teamId = this.value;
+            coureursListDiv.innerHTML = '<div class="text-center text-muted py-3"><span class="spinner-border spinner-border-sm"></span> Chargement...</div>';
+            if (!teamId) {
+                coureursListDiv.innerHTML = '<div class="alert alert-warning">Veuillez d\'abord sélectionner une équipe.</div>';
+                if (creerBtn) {
+                    creerBtn.disabled = true;
+                }
+                return;
+            }
+            fetch(`/admin/api/coureurs_par_equipe/${teamId}`)
+                .then(resp => resp.json())
+                .then(data => {
+                    if (data.length === 0) {
+                        coureursListDiv.innerHTML = '<div class="alert alert-info">Aucun coureur dans cette équipe.</div>';
+                        if (creerBtn) {
+                            creerBtn.disabled = true;
+                        }
+                    } else {
+                        let html = '<div class="mb-2">';
+                        html += '<button type="button" class="btn btn-sm btn-outline-light" id="select-all-btn">Tout sélectionner</button>';
+                        html += '<button type="button" class="btn btn-sm btn-outline-light ms-2" id="deselect-all-btn">Tout désélectionner</button>';
+                        html += '</div>';
+                        html += '<div class="coureurs-list" id="coureurs-list-html" style="max-height: 300px; overflow-y: auto; border: 1px solid #444444; border-radius: 8px; padding: 1rem; background: #222222;">';
+                        data.forEach(coureur => {
+                            html += `<div class=\"form-check mb-2\">` +
+                                `<input class=\"form-check-input\" type=\"checkbox\" name=\"present_coureurs\" value=\"${coureur.id}\" id=\"coureur${coureur.id}\">` +
+                                `<label class=\"form-check-label\" for=\"coureur${coureur.id}\">${coureur.prenom} ${coureur.nom} (${coureur.email})</label>` +
+                                `</div>`;
+                        });
+                        html += '</div>';
+                        coureursListDiv.innerHTML = html;
+                        if (creerBtn) {
+                            creerBtn.disabled = false;
+                        }
+                        addSelectAllListeners();
+                    }
+                })
+                .catch(() => {
+                    coureursListDiv.innerHTML = '<div class="alert alert-danger">Erreur lors du chargement des coureurs.</div>';
+                    if (creerBtn) {
+                        creerBtn.disabled = true;
+                    }
+                });
+        });
+        if (creerBtn) {
+            creerBtn.disabled = !teamSelect.value;
+        }
+        addSelectAllListeners();
+    });
+    </script>
 </body>
 </html> 

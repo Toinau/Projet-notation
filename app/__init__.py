@@ -4,6 +4,7 @@ from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
 from flask_mail import Mail
 from itsdangerous import URLSafeTimedSerializer
+from flask_login import LoginManager
 
 db = SQLAlchemy()
 migrate = Migrate()
@@ -28,6 +29,15 @@ def create_app():
     mail.init_app(app)
     global serializer
     serializer = URLSafeTimedSerializer(app.config['SECRET_KEY'])
+
+    # Initialisation Flask-Login
+    login_manager = LoginManager()
+    login_manager.init_app(app)
+    login_manager.login_view = 'main.login'
+    from app.models import User
+    @login_manager.user_loader
+    def load_user(user_id):
+        return User.query.get(int(user_id))
 
     from .routes import main_bp
     app.register_blueprint(main_bp)

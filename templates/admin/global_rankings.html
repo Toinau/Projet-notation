@@ -43,7 +43,7 @@
                 <div class="nav-item dropdown">
                     <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
                         <i class="fas fa-user-circle me-1"></i>
-                        {{ session.prenom }} {{ session.nom }}
+                        {{ current_user.prenom }} {{ current_user.nom }}
                     </a>
                     <ul class="dropdown-menu">
                         <li><a class="dropdown-item" href="{{ url_for('main.change_password') }}">
@@ -59,6 +59,17 @@
         </div>
     </nav>
     <div class="container mt-4">
+        <form method="get" class="mb-3">
+            <div class="input-group">
+                <select class="form-select" name="team_id" onchange="this.form.submit()">
+                    <option value="">Toutes les équipes</option>
+                    {% for team in teams %}
+                    <option value="{{ team.id }}" {% if request.args.get('team_id', type=int) == team.id %}selected{% endif %}>{{ team.nom }}</option>
+                    {% endfor %}
+                </select>
+                <button class="btn btn-outline-secondary" type="submit">Filtrer</button>
+            </div>
+        </form>
         <h1 class="mb-4"><i class="fas fa-globe-americas text-warning me-2"></i>Classements globaux de la saison {{ season }}</h1>
         <div class="row mb-4">
             <div class="col-md-6">

@@ -23,6 +23,14 @@
                     <input type="password" class="form-control" id="password" name="password" required>
                     <div class="form-text">Le mot de passe doit contenir au moins 8 caractères.</div>
                 </div>
+                <div class="mb-3">
+                    <label for="team_id" class="form-label mt-2">Équipe</label>
+                    <select class="form-control" id="team_id" name="team_id" required>
+                        {% for team in teams %}
+                        <option value="{{ team.id }}">{{ team.nom }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
                 <div class="d-grid gap-2">
                     <button type="submit" class="btn btn-success">Créer un compte</button>
                 </div>

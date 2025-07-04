@@ -163,49 +163,43 @@
                     Analyse des performances par course avec notes moyennes et points
                 </p>
                 
-                <!-- Sélecteur de mois -->
+                <!-- Sélecteurs Saison, Mois, Équipe alignés -->
                 <div class="card mt-3">
                     <div class="card-body">
-                        <div class="row align-items-center">
-                            <div class="col-md-4">
-                                <h6 class="mb-0 text-white">
-                                    <i class="fas fa-calendar-alt me-2 text-warning"></i>
-                                    Courses de {{ selected_month_name }} {{ selected_year }}
-                                </h6>
-                            </div>
-                            <div class="col-md-4">
-                                <label class="form-label text-white mb-1">Saison :</label>
-                                <form method="GET" class="d-flex">
-                                    <select name="season" class="form-select me-2" onchange="this.form.submit()">
+                        <form method="GET">
+                            <div class="row g-2 align-items-end">
+                                <div class="col-md-4 col-12">
+                                    <label class="form-label text-white mb-1" for="select-season"><i class="fas fa-calendar-alt me-1 text-warning"></i>Saison</label>
+                                    <select id="select-season" name="season" class="form-select" onchange="this.form.submit()">
                                         {% for option in season_options %}
-                                            <option value="{{ option.year }}" 
-                                                    {% if option.selected %}selected{% endif %}>
-                                                Saison {{ option.year }}
-                                            </option>
+                                            <option value="{{ option.year }}" {% if option.selected %}selected{% endif %}>Saison {{ option.year }}</option>
                                         {% endfor %}
                                     </select>
-                                    <input type="hidden" name="month" value="{{ selected_month }}">
-                                    <input type="hidden" name="year" value="{{ selected_year }}">
-                                </form>
-                            </div>
-                            <div class="col-md-4">
-                                <label class="form-label text-white mb-1">Mois :</label>
-                                <form method="GET" class="d-flex">
-                                    <select name="month" class="form-select me-2" onchange="this.form.submit()">
+                                </div>
+                                <div class="col-md-4 col-12">
+                                    <label class="form-label text-white mb-1" for="select-month"><i class="fas fa-calendar me-1 text-warning"></i>Mois</label>
+                                    <select id="select-month" name="month" class="form-select" onchange="this.form.submit()">
                                         {% for option in month_options %}
-                                            <option value="{{ option.month }}" 
-                                                    data-year="{{ option.year }}"
-                                                    {% if option.selected %}selected{% endif %}>
+                                            <option value="{{ option.month }}" data-year="{{ option.year }}" {% if option.selected %}selected{% endif %}>
                                                 {% set month_names = ["Janvier", "Février", "Mars", "Avril", "Mai", "Juin", "Juillet", "Août", "Septembre", "Octobre", "Novembre", "Décembre"] %}
                                                 {{ month_names[option.month - 1] }} {{ option.year }}
                                             </option>
                                         {% endfor %}
                                     </select>
                                     <input type="hidden" name="year" id="selected-year" value="{{ selected_year }}">
-                                    <input type="hidden" name="season" value="{{ selected_season }}">
-                                </form>
+                                </div>
+                                <div class="col-md-4 col-12">
+                                    <label class="form-label text-white mb-1" for="select-team"><i class="fas fa-users me-1 text-warning"></i>Équipe</label>
+                                    <select id="select-team" name="team_id" class="form-select" onchange="this.form.submit()">
+                                        <option value="">Toutes les équipes</option>
+                                        {% for team in teams %}
+                                        <option value="{{ team.id }}" {% if selected_team_id == team.id %}selected{% endif %}>{{ team.nom }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
                             </div>
-                        </div>
+                            <input type="hidden" name="season" value="{{ selected_season }}">
+                        </form>
                     </div>
                 </div>
             </div>

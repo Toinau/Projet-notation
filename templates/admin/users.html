@@ -264,7 +264,6 @@
                                                 <i class="fas fa-{{ 'pause' if user.is_active else 'play' }}"></i>
                                             </button>
                                         </form>
-
                                         <!-- Promote/Demote -->
                                         {% if user.role == 'coureur' %}
                                             <form method="POST" action="{{ url_for('main.promote_user', user_id=user.id) }}" style="display: inline;">
@@ -279,7 +278,6 @@
                                                 </button>
                                             </form>
                                         {% endif %}
-
                                         <!-- Delete -->
                                         {% if user.id != session.user_id %}
                                             <form method="POST" action="{{ url_for('main.delete_user', user_id=user.id) }}" 

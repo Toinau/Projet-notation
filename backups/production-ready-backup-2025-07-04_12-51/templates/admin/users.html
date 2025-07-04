@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestion des Utilisateurs</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        body {
+            background: #000000;
+            min-height: 100vh;
+            color: #ffffff;
+        }
+        .navbar-custom {
+            background: #ffd700;
+            border-bottom: 3px solid #ffed4e;
+        }
+        .navbar-custom .navbar-brand,
+        .navbar-custom .nav-link {
+            color: #000000 !important;
+            font-weight: 600;
+        }
+        .navbar-custom .nav-link:hover {
+            color: #333333 !important;
+        }
+        .btn-custom {
+            background: #ffd700;
+            border: none;
+            color: #000000;
+            font-weight: 600;
+        }
+        .btn-custom:hover {
+            background: #ffed4e;
+            color: #000000;
+        }
+        .user-card {
+            transition: transform 0.2s ease;
+            border: none;
+            box-shadow: 0 2px 10px rgba(255, 215, 0, 0.1);
+        }
+        .user-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 20px rgba(255, 215, 0, 0.2);
+        }
+        .role-badge {
+            font-size: 0.75rem;
+            padding: 0.25rem 0.5rem;
+        }
+        .status-active {
+            color: #28a745;
+        }
+        .status-inactive {
+            color: #dc3545;
+        }
+        .table-actions {
+            min-width: 200px;
+        }
+        .card {
+            background: #1a1a1a;
+            border: 1px solid #333333;
+        }
+        .card-header {
+            background: #ffd700 !important;
+            color: #000000;
+            border-bottom: 1px solid #ffed4e;
+        }
+        .text-muted {
+            color: #cccccc !important;
+        }
+        .dropdown-menu {
+            background: #1a1a1a;
+            border: 1px solid #333333;
+        }
+        .dropdown-item {
+            color: #ffffff;
+        }
+        .dropdown-item:hover {
+            background: #333333;
+            color: #ffffff;
+        }
+        .table {
+            color: #ffffff;
+        }
+        .table thead th {
+            background: #333333;
+            border-bottom: 1px solid #ffd700;
+            color: #ffffff;
+        }
+        .table tbody tr {
+            border-bottom: 1px solid #333333;
+        }
+        .table tbody tr:hover {
+            background: #333333;
+        }
+        .badge.bg-warning {
+            background: #ffd700 !important;
+            color: #000000;
+        }
+        .badge.bg-primary {
+            background: #ffd700 !important;
+            color: #000000;
+        }
+        .badge.bg-secondary {
+            background: #666666 !important;
+            color: #ffffff;
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-custom shadow-sm">
+        <div class="container">
+            <a class="navbar-brand" href="{{ url_for('main.admin_dashboard') }}">
+                <i class="fas fa-arrow-left me-2"></i>
+                Retour Dashboard
+            </a>
+            <div class="navbar-nav ms-auto">
+                <div class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
+                        <i class="fas fa-user-circle me-1"></i>
+                        Admin
+                    </a>
+                    <ul class="dropdown-menu">
+                        <li><a class="dropdown-item" href="{{ url_for('main.change_password') }}">
+                            <i class="fas fa-key me-2"></i>Changer le mot de passe
+                        </a></li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li><a class="dropdown-item" href="{{ url_for('main.logout') }}">
+                            <i class="fas fa-sign-out-alt me-2"></i>Déconnexion
+                        </a></li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container mt-4">
+        <!-- Messages Flash -->
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ 'danger' if category == 'error' else category }} alert-dismissible fade show" role="alert">
+                        {{ message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        <!-- Header -->
+        <div class="row mb-4">
+            <div class="col-md-8">
+                <h1 class="display-6">
+                    <i class="fas fa-users-cog me-2 text-warning"></i>
+                    Gestion des Utilisateurs
+                </h1>
+                <p class="lead text-muted">Gérez tous les comptes de la plateforme</p>
+            </div>
+            <div class="col-md-4 text-end">
+                <a href="{{ url_for('main.register') }}" class="btn btn-custom btn-lg">
+                    <i class="fas fa-user-plus me-2"></i>
+                    Nouveau Compte
+                </a>
+            </div>
+        </div>
+
+        <!-- Statistiques rapides -->
+        <div class="row mb-4">
+            <div class="col-md-12">
+                <div class="card">
+                    <div class="card-body">
+                        <div class="row text-center">
+                            <div class="col-md-3">
+                                <h4 class="text-warning">{{ users|length }}</h4>
+                                <small class="text-muted">Total Utilisateurs</small>
+                            </div>
+                            <div class="col-md-3">
+                                <h4 class="text-warning">{{ users|selectattr("role", "equalto", "coureur")|list|length }}</h4>
+                                <small class="text-muted">Coureurs</small>
+                            </div>
+                            <div class="col-md-3">
+                                <h4 class="text-warning">{{ users|selectattr("role", "equalto", "admin")|list|length }}</h4>
+                                <small class="text-muted">Administrateurs</small>
+                            </div>
+                            <div class="col-md-3">
+                                <h4 class="text-warning">{{ users|selectattr("is_active", "equalto", true)|list|length }}</h4>
+                                <small class="text-muted">Comptes Actifs</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Table des utilisateurs -->
+        <div class="card shadow-sm">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-list me-2"></i>
+                    Liste des Utilisateurs
+                </h5>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0">
+                        <thead>
+                            <tr>
+                                <th><i class="fas fa-user me-1"></i>Utilisateur</th>
+                                <th><i class="fas fa-envelope me-1"></i>Email</th>
+                                <th><i class="fas fa-user-tag me-1"></i>Rôle</th>
+                                <th><i class="fas fa-toggle-on me-1"></i>Statut</th>
+                                <th><i class="fas fa-calendar me-1"></i>Créé le</th>
+                                <th class="table-actions"><i class="fas fa-cogs me-1"></i>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for user in users %}
+                            <tr>
+                                <td>
+                                    <div class="d-flex align-items-center">
+                                        <div class="avatar-circle me-2">
+                                            {% if user.role == 'admin' %}
+                                                <i class="fas fa-user-shield text-warning"></i>
+                                            {% else %}
+                                                <i class="fas fa-biking text-warning"></i>
+                                            {% endif %}
+                                        </div>
+                                        <strong>{{ user.prenom }} {{ user.nom }}</strong>
+                                    </div>
+                                </td>
+                                <td>{{ user.email }}</td>
+                                <td>
+                                    {% if user.role == 'admin' %}
+                                        <span class="badge bg-warning role-badge">
+                                            <i class="fas fa-crown me-1"></i>Administrateur
+                                        </span>
+                                    {% else %}
+                                        <span class="badge bg-primary role-badge">
+                                            <i class="fas fa-biking me-1"></i>Coureur
+                                        </span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if user.is_active %}
+                                        <i class="fas fa-circle status-active me-1"></i>
+                                        <span class="text-success">Actif</span>
+                                    {% else %}
+                                        <i class="fas fa-circle status-inactive me-1"></i>
+                                        <span class="text-danger">Inactif</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <small class="text-muted">
+                                        {{ user.created_at.strftime('%d/%m/%Y') if user.created_at else 'N/A' }}
+                                    </small>
+                                </td>
+                                <td>
+                                    <div class="btn-group btn-group-sm" role="group">
+                                        <!-- Toggle Status -->
+                                        <form method="POST" action="{{ url_for('main.toggle_user_status', user_id=user.id) }}" style="display: inline;">
+                                            <button type="submit" class="btn btn-outline-{{ 'warning' if user.is_active else 'success' }}" 
+                                                    title="{{ 'Désactiver' if user.is_active else 'Activer' }}">
+                                                <i class="fas fa-{{ 'pause' if user.is_active else 'play' }}"></i>
+                                            </button>
+                                        </form>
+
+                                        <!-- Promote/Demote -->
+                                        {% if user.role == 'coureur' %}
+                                            <form method="POST" action="{{ url_for('main.promote_user', user_id=user.id) }}" style="display: inline;">
+                                                <button type="submit" class="btn btn-outline-warning" title="Promouvoir Admin">
+                                                    <i class="fas fa-arrow-up"></i>
+                                                </button>
+                                            </form>
+                                        {% elif user.role == 'admin' and user.id != session.user_id %}
+                                            <form method="POST" action="{{ url_for('main.demote_user', user_id=user.id) }}" style="display: inline;">
+                                                <button type="submit" class="btn btn-outline-light" title="Rétrograder Coureur">
+                                                    <i class="fas fa-arrow-down"></i>
+                                                </button>
+                                            </form>
+                                        {% endif %}
+
+                                        <!-- Delete -->
+                                        {% if user.id != session.user_id %}
+                                            <form method="POST" action="{{ url_for('main.delete_user', user_id=user.id) }}" 
+                                                  style="display: inline;" 
+                                                  onsubmit="return confirm('Êtes-vous sûr de vouloir supprimer {{ user.prenom }} {{ user.nom }} ?')">
+                                                <button type="submit" class="btn btn-outline-danger" title="Supprimer">
+                                                    <i class="fas fa-trash"></i>
+                                                </button>
+                                            </form>
+                                        {% else %}
+                                            <span class="badge bg-secondary">Vous</span>
+                                        {% endif %}
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        {% if not users %}
+        <div class="text-center mt-5">
+            <i class="fas fa-users fa-3x text-muted mb-3"></i>
+            <h4 class="text-muted">Aucun utilisateur trouvé</h4>
+            <p class="text-muted">Créez le premier compte pour commencer.</p>
+            <a href="{{ url_for('main.register') }}" class="btn btn-custom">
+                <i class="fas fa-user-plus me-2"></i>
+                Créer un Compte
+            </a>
+        </div>
+        {% endif %}
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

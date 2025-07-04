@@ -149,7 +149,7 @@
                 <div class="nav-item dropdown">
                     <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
                         <i class="fas fa-user-circle me-1"></i>
-                        {{ session.prenom }} {{ session.nom }}
+                        {{ current_user.prenom }} {{ current_user.nom }}
                     </a>
                     <ul class="dropdown-menu">
                         <li><a class="dropdown-item" href="{{ url_for('main.change_password') }}">

@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard Coureur</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        body {
+            background: #000000;
+            min-height: 100vh;
+            color: #ffffff;
+        }
+        .navbar-custom {
+            background: #ffd700;
+            border-bottom: 3px solid #ffed4e;
+        }
+        .navbar-custom .navbar-brand,
+        .navbar-custom .nav-link {
+            color: #000000 !important;
+            font-weight: 600;
+        }
+        .navbar-custom .nav-link:hover {
+            color: #333333 !important;
+        }
+        .btn-custom {
+            background: #ffd700;
+            border: none;
+            color: #000000;
+            font-weight: 600;
+        }
+        .btn-custom:hover {
+            background: #ffed4e;
+            color: #000000;
+        }
+        .feature-card {
+            background: #ffd700;
+            color: #000000;
+            border-radius: 15px;
+            padding: 2rem;
+            margin-bottom: 1.5rem;
+            box-shadow: 0 6px 20px rgba(255, 215, 0, 0.3);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        .feature-card:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 10px 30px rgba(255, 215, 0, 0.4);
+        }
+        .feature-icon {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+            opacity: 0.9;
+        }
+        .welcome-banner {
+            background: #ffd700;
+            color: #000000;
+            border-radius: 20px;
+            padding: 3rem 2rem;
+            text-align: center;
+            margin-bottom: 2rem;
+            box-shadow: 0 8px 25px rgba(255, 215, 0, 0.3);
+        }
+        .stats-mini {
+            background: #1a1a1a;
+            border: 1px solid #333333;
+            border-radius: 10px;
+            padding: 1.5rem;
+            box-shadow: 0 2px 10px rgba(255, 215, 0, 0.1);
+            text-align: center;
+            transition: transform 0.2s ease;
+        }
+        .stats-mini:hover {
+            transform: translateY(-3px);
+        }
+        .quick-actions {
+            background: #1a1a1a;
+            border: 1px solid #333333;
+            border-radius: 15px;
+            padding: 1.5rem;
+            box-shadow: 0 4px 15px rgba(255, 215, 0, 0.1);
+        }
+        .dropdown-menu {
+            background: #1a1a1a;
+            border: 1px solid #333333;
+        }
+        .dropdown-item {
+            color: #ffffff;
+        }
+        .dropdown-item:hover {
+            background: #333333;
+            color: #ffffff;
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-custom shadow-sm">
+        <div class="container">
+            <a class="navbar-brand" href="#">
+                <i class="fas fa-biking me-2"></i>
+                Espace Coureur
+            </a>
+            <div class="navbar-nav ms-auto">
+                <div class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
+                        <i class="fas fa-user-circle me-1"></i>
+                        {{ session.prenom }} {{ session.nom }}
+                    </a>
+                    <ul class="dropdown-menu">
+                        <li><a class="dropdown-item" href="{{ url_for('main.change_password') }}">
+                            <i class="fas fa-key me-2"></i>Changer le mot de passe
+                        </a></li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li><a class="dropdown-item" href="{{ url_for('main.logout') }}">
+                            <i class="fas fa-sign-out-alt me-2"></i>Déconnexion
+                        </a></li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container mt-4">
+        <!-- Messages Flash -->
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ 'danger' if category == 'error' else category }} alert-dismissible fade show" role="alert">
+                        {{ message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        <!-- Bannière de bienvenue -->
+        <div class="welcome-banner">
+            <h1 class="display-4 mb-3">
+                <i class="fas fa-medal me-3"></i>
+                Bienvenue {{ session.prenom }} {{ session.nom }} !
+            </h1>
+            <p class="lead mb-4">Votre espace personnel pour suivre vos performances et remplir les questionnaires de notation</p>
+            <div class="row mt-4">
+                <div class="col-md-4">
+                    <div class="d-flex align-items-center justify-content-center">
+                        <i class="fas fa-clipboard-list fa-2x me-3 text-black"></i>
+                        <div class="text-start">
+                            <h4 class="mb-0 text-black">{{ nb_questionnaires }}</h4>
+                            <small class="text-black">Questionnaires à remplir</small>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="d-flex align-items-center justify-content-center">
+                        <i class="fas fa-award fa-2x me-3"></i>
+                        <div class="text-start">
+                            <h4 class="mb-0">{{ classement_mois }}</h4>
+                            <small>Classement du mois</small>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="d-flex align-items-center justify-content-center">
+                        <i class="fas fa-trophy fa-2x me-3"></i>
+                        <div class="text-start">
+                            <h4 class="mb-0">{{ classement_annee }}</h4>
+                            <small>Classement de l'année</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Fonctionnalités principales -->
+        <div class="row">
+            <div class="col-md-4">
+                <div class="feature-card text-center">
+                    <div class="feature-icon">
+                        <i class="fas fa-clipboard-list"></i>
+                    </div>
+                    <h4>Questionnaires Disponibles</h4>
+                    <p class="mb-3">Accédez aux questionnaires de notation</p>
+                    <a href="{{ url_for('main.coureur_questionnaires') }}" class="btn btn-dark btn-lg">
+                        <i class="fas fa-edit me-2"></i>
+                        Remplir Questionnaires
+                    </a>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="feature-card text-center">
+                    <div class="feature-icon">
+                        <i class="fas fa-chart-line"></i>
+                    </div>
+                    <h4>Statistiques Courses</h4>
+                    <p class="mb-3">Consultez vos statistiques de courses</p>
+                    <a href="{{ url_for('main.coureur_points_details') }}" class="btn btn-dark btn-lg">
+                        <i class="fas fa-analytics me-2"></i>
+                        Mes Statistiques
+                    </a>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="feature-card text-center">
+                    <div class="feature-icon">
+                        <i class="fas fa-trophy"></i>
+                    </div>
+                    <h4>Classements</h4>
+                    <p class="mb-3">Consultez les classements et vos positions</p>
+                    <a href="{{ url_for('main.coureur_rankings') }}" class="btn btn-dark btn-lg">
+                        <i class="fas fa-medal me-2"></i>
+                        Voir Classements
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

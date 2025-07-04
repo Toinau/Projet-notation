@@ -163,7 +163,7 @@
                 <div class="nav-item dropdown">
                     <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
                         <i class="fas fa-user-circle me-1"></i>
-                        {{ session.prenom }} {{ session.nom }}
+                        {{ current_user.prenom }} {{ current_user.nom }}
                     </a>
                     <ul class="dropdown-menu">
                         <li><a class="dropdown-item" href="{{ url_for('main.change_password') }}">
@@ -180,6 +180,32 @@
     </nav>
 
     <div class="container mt-4">
+        <!-- Filtre équipe amélioré -->
+        <div class="row mb-4 align-items-center justify-content-between">
+            <div class="col-md-7 col-12">
+                <h1 class="display-6 mb-0">
+                    <i class="fas fa-clipboard-list me-2 text-warning"></i>
+                    Gestion des Questionnaires
+                </h1>
+                <p class="lead text-muted mb-0">Visualisez tous les questionnaires créés et les réponses des coureurs</p>
+            </div>
+            <div class="col-md-5 col-12 mt-3 mt-md-0 d-flex justify-content-md-end justify-content-center">
+                <div class="card mb-0" style="max-width: 350px; min-width: 220px;">
+                    <div class="card-body py-2 px-3">
+                        <form method="get" class="d-flex align-items-center gap-2 mb-0">
+                            <label for="team_id" class="form-label mb-0 me-2"><i class="fas fa-users me-1 text-warning"></i>Équipe</label>
+                            <select class="form-select w-auto" name="team_id" id="team_id" onchange="this.form.submit()">
+                                <option value="">Toutes les équipes</option>
+                                {% for team in teams %}
+                                <option value="{{ team.id }}" {% if selected_team_id == team.id %}selected{% endif %}>{{ team.nom }}</option>
+                                {% endfor %}
+                            </select>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <!-- Messages Flash -->
         {% with messages = get_flashed_messages(with_categories=true) %}
             {% if messages %}
@@ -191,17 +217,6 @@
                 {% endfor %}
             {% endif %}
         {% endwith %}
-
-        <!-- Header -->
-        <div class="row mb-4">
-            <div class="col-12">
-                <h1 class="display-6">
-                    <i class="fas fa-clipboard-list me-2 text-warning"></i>
-                    Gestion des Questionnaires
-                </h1>
-                <p class="lead text-muted">Visualisez tous les questionnaires créés et les réponses des coureurs</p>
-            </div>
-        </div>
 
         <!-- Liste des questionnaires -->
         {% if questionnaires %}
@@ -257,10 +272,10 @@
                         <div class="mb-3">
                             <h6 class="mb-2">
                                 <i class="fas fa-users me-1"></i>
-                                Participants ({{ questionnaire.participants|length }})
+                                Participants ({{ participants_map[questionnaire.id]|length }})
                             </h6>
                             <div class="participants-list">
-                                {% for participant in questionnaire.participants %}
+                                {% for participant in participants_map[questionnaire.id] %}
                                 <div class="participant-item d-flex justify-content-between align-items-center">
                                     <span>{{ participant.prenom }} {{ participant.nom }}</span>
                                     {% if participant.has_responded %}

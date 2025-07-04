@@ -1,8 +1,10 @@
 from . import db
 from datetime import datetime
 import re
+from sqlalchemy.orm import relationship
+from flask_login import UserMixin
 
-class User(db.Model):
+class User(UserMixin, db.Model):
     id = db.Column(db.Integer, primary_key=True)
     prenom = db.Column(db.String(100), nullable=False)
     nom = db.Column(db.String(100), nullable=False)
@@ -11,6 +13,8 @@ class User(db.Model):
     role = db.Column(db.String(20), nullable=False, default='coureur')
     is_active = db.Column(db.Boolean, default=True, nullable=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    team_id = db.Column(db.Integer, db.ForeignKey('team.id'))
+    team = relationship('Team', back_populates='users')
 
     def __repr__(self):
         return f'<User {self.prenom} {self.nom} - {self.role}>'
@@ -53,6 +57,9 @@ class User(db.Model):
         if not re.match(r'^[a-zA-ZÀ-ÿ\-\s]+$', prenom):
             return False, "Le prénom ne peut contenir que des lettres, espaces et tirets"
         return True, "Prénom valide"
+
+    def get_id(self):
+        return str(self.id)
 
 class Questionnaire(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -97,4 +104,16 @@ class QuestionnaireResponse(db.Model):
     evaluated = db.relationship('User', foreign_keys=[evaluated_id], backref='evaluations_received')
     
     def __repr__(self):
-        return f'<QuestionnaireResponse {self.evaluator_id} -> {self.evaluated_id}: {self.rating}/10>' 
+        return f'<QuestionnaireResponse {self.evaluator_id} -> {self.evaluated_id}: {self.rating}/10>'
+
+class Team(db.Model):
+    __tablename__ = 'team'
+    id = db.Column(db.Integer, primary_key=True)
+    nom = db.Column(db.String(64), nullable=False, unique=True)
+    description = db.Column(db.String(256))
+    couleur = db.Column(db.String(16))
+    actif = db.Column(db.Boolean, default=True)
+    users = relationship('User', back_populates='team')
+
+    def __repr__(self):
+        return f'<Team {self.nom}>' 

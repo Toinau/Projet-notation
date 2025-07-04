@@ -105,7 +105,7 @@
                 <div class="nav-item dropdown">
                     <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
                         <i class="fas fa-user-circle me-1"></i>
-                        {{ session.prenom }} {{ session.nom }}
+                        {{ current_user.prenom }} {{ current_user.nom }}
                     </a>
                     <ul class="dropdown-menu">
                         <li><a class="dropdown-item" href="{{ url_for('main.change_password') }}">
@@ -138,7 +138,7 @@
         <div class="welcome-banner">
             <h1 class="display-4 mb-3">
                 <i class="fas fa-medal me-3"></i>
-                Bienvenue {{ session.prenom }} {{ session.nom }} !
+                Bienvenue {{ current_user.prenom }} {{ current_user.nom }} !
             </h1>
             <p class="lead mb-4">Votre espace personnel pour suivre vos performances et remplir les questionnaires de notation</p>
             <div class="row mt-4">
