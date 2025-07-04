@@ -1,4 +1,4 @@
-from flask import Blueprint, render_template, redirect, url_for, request, flash, session, abort, current_app
+from flask import Blueprint, render_template, redirect, url_for, request, flash, session, abort, current_app, send_from_directory
 from werkzeug.security import generate_password_hash, check_password_hash
 from app.models import User, Questionnaire, QuestionnaireParticipant, QuestionnaireResponse
 from app.decorators import login_required, admin_required, coureur_required
@@ -7,12 +7,18 @@ from flask_mail import Message
 from itsdangerous import SignatureExpired, BadSignature
 from datetime import datetime
 from sqlalchemy import func, case
+import os
 
 main_bp = Blueprint('main', __name__)
 
 @main_bp.route('/')
 def index():
     return render_template('index.html')
+
+@main_bp.route('/favicon.ico')
+def favicon():
+    """Route spéciale pour servir le favicon"""
+    return send_from_directory(os.path.join(os.getcwd(), 'static'), 'favicon.ico')
 
 @main_bp.route('/register', methods=['GET', 'POST'])
 def register():

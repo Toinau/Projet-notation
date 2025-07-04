@@ -11,10 +11,11 @@ mail = Mail()
 serializer = None
 
 def create_app():
-    # Forcer le chemin du dossier templates à la racine du projet
+    # Forcer le chemin du dossier templates et static à la racine du projet
     BASE_DIR = os.path.abspath(os.path.dirname(os.path.dirname(__file__)))
     template_dir = os.path.join(BASE_DIR, 'templates')
-    app = Flask(__name__, template_folder=template_dir)
+    static_dir = os.path.join(BASE_DIR, 'static')
+    app = Flask(__name__, template_folder=template_dir, static_folder=static_dir)
 
     app.config.from_object('config.Config')
     
