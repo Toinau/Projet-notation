@@ -9,9 +9,12 @@ class User(UserMixin, db.Model):
     prenom = db.Column(db.String(100), nullable=False)
     nom = db.Column(db.String(100), nullable=False)
     email = db.Column(db.String(100), unique=True, nullable=False)
+    telephone = db.Column(db.String(20), nullable=True)  # Nouveau champ pour SMS
     password = db.Column(db.String(200), nullable=False)
     role = db.Column(db.String(20), nullable=False, default='coureur')
     is_active = db.Column(db.Boolean, default=True, nullable=False)
+    notifications_sms = db.Column(db.Boolean, default=True, nullable=False)  # Préférence SMS
+    notifications_email = db.Column(db.Boolean, default=True, nullable=False)  # Préférence Email
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     team_id = db.Column(db.Integer, db.ForeignKey('team.id'))
     team = relationship('Team', back_populates='users')
@@ -29,6 +32,17 @@ class User(UserMixin, db.Model):
     def validate_email(email):
         pattern = r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'
         return re.match(pattern, email) is not None
+
+    @staticmethod
+    def validate_telephone(telephone):
+        """Valide le format du numéro de téléphone français"""
+        if not telephone:
+            return True, "Numéro de téléphone optionnel"
+        # Format français : 06 12 34 56 78 ou 0612345678
+        pattern = r'^(?:(?:\+|00)33|0)\s*[1-9](?:[\s.-]*\d{2}){4}$'
+        if re.match(pattern, telephone):
+            return True, "Numéro de téléphone valide"
+        return False, "Format de numéro de téléphone invalide (format français attendu)"
 
     @staticmethod
     def validate_password(password):

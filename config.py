@@ -44,3 +44,20 @@ class Config:
     MAIL_USERNAME = os.environ.get('MAIL_USERNAME')
     MAIL_PASSWORD = os.environ.get('MAIL_PASSWORD')
     MAIL_DEFAULT_SENDER = os.environ.get('MAIL_DEFAULT_SENDER')
+    
+    # Configuration Twilio pour SMS
+    TWILIO_ACCOUNT_SID = os.environ.get('TWILIO_ACCOUNT_SID')
+    TWILIO_AUTH_TOKEN = os.environ.get('TWILIO_AUTH_TOKEN')
+    TWILIO_PHONE_NUMBER = os.environ.get('TWILIO_PHONE_NUMBER')
+
+    # Configuration Free Mobile pour SMS
+    FREE_MOBILE_USER = os.environ.get('FREE_MOBILE_USER')
+    FREE_MOBILE_API_KEY = os.environ.get('FREE_MOBILE_API_KEY')
+    
+    # Configuration WhatsApp Business API
+    WHATSAPP_PHONE_NUMBER_ID = os.environ.get('WHATSAPP_PHONE_NUMBER_ID')
+    WHATSAPP_ACCESS_TOKEN = os.environ.get('WHATSAPP_ACCESS_TOKEN')
+    WHATSAPP_PHONE_NUMBER = os.environ.get('WHATSAPP_PHONE_NUMBER')
+    
+    # Configuration de l'URL de l'application pour les liens dans les emails
+    APP_URL = os.environ.get('APP_URL', 'http://localhost:5000')

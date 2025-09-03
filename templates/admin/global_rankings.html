@@ -71,6 +71,9 @@
             </div>
         </form>
         <h1 class="mb-4"><i class="fas fa-globe-americas text-warning me-2"></i>Classements globaux de la saison {{ season }}</h1>
+        
+        <!-- Classements par Points -->
+        <h2 class="mb-3"><i class="fas fa-star text-warning me-2"></i>Classements par Points</h2>
         <div class="row mb-4">
             <div class="col-md-6">
                 <div class="card mb-3">
@@ -156,6 +159,94 @@
                 </div>
             </div>
         </div>
+        
+        <!-- Classements par Notes Moyennes -->
+        <h2 class="mb-3"><i class="fas fa-chart-line text-warning me-2"></i>Classements par Notes Moyennes</h2>
+        <div class="row mb-4">
+            <div class="col-md-6">
+                <div class="card mb-3">
+                    <div class="card-header d-flex align-items-center">
+                        <i class="fas fa-trophy me-2 text-warning"></i>
+                        <span class="me-3">Notes moyennes de la saison</span>
+                        <form method="get" class="d-inline-flex align-items-center ms-auto" id="season-notes-form" style="margin-bottom:0;">
+                            <label for="season-notes" class="me-2 mb-0">Saison :</label>
+                            <select name="season" id="season-notes" class="form-select form-select-sm w-auto me-2">
+                                {% for option in season_options %}
+                                    <option value="{{ option.year }}" {% if option.selected %}selected{% endif %}>Saison {{ option.year }}</option>
+                                {% endfor %}
+                            </select>
+                            <input type="hidden" name="month" id="season-notes-month" value="{{ selected_month }}">
+                            <input type="hidden" name="year" id="season-notes-year" value="{{ selected_year }}">
+                        </form>
+                    </div>
+                    <div class="card-body p-0">
+                        <table class="table table-striped mb-0">
+                            <thead><tr><th>Rang</th><th>Coureur</th><th>Note Moyenne</th></tr></thead>
+                            <tbody>
+                            {% if saison_notes %}
+                                {% for c in saison_notes %}
+                                <tr>
+                                    <td>{{ loop.index }}</td>
+                                    <td>{{ c.prenom }} {{ c.nom }}</td>
+                                    <td><strong>{{ c.note }}/10</strong></td>
+                                </tr>
+                                {% endfor %}
+                            {% else %}
+                                <tr>
+                                    <td colspan="3" class="text-center text-muted">
+                                        <i class="fas fa-info-circle me-2"></i>
+                                        Aucune note dans la saison {{ season }}
+                                    </td>
+                                </tr>
+                            {% endif %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="card mb-3">
+                    <div class="card-header d-flex align-items-center">
+                        <i class="fas fa-calendar-alt me-2 text-warning"></i>
+                        <form method="get" class="d-inline-flex align-items-center ms-2" id="month-notes-form">
+                            <label for="month-notes" class="me-2 mb-0">Notes moyennes du mois :</label>
+                            <select name="month" id="month-notes" class="form-select form-select-sm me-2">
+                                {% for m in months %}
+                                    <option value="{{ m.month }}" {% if m.month == selected_month and m.year == selected_year %}selected{% endif %} data-year="{{ m.year }}">
+                                        {{ ["Janvier", "Février", "Mars", "Avril", "Mai", "Juin", "Juillet", "Août", "Septembre", "Octobre", "Novembre", "Décembre"][m.month-1] }} {{ m.year }}
+                                    </option>
+                                {% endfor %}
+                            </select>
+                            <input type="hidden" name="year" value="{{ selected_year }}">
+                            <input type="hidden" name="season" value="{{ season }}">
+                        </form>
+                    </div>
+                    <div class="card-body p-0">
+                        <table class="table table-striped mb-0">
+                            <thead><tr><th>Rang</th><th>Coureur</th><th>Note Moyenne</th></tr></thead>
+                            <tbody>
+                            {% if mois_notes %}
+                                {% for c in mois_notes %}
+                                <tr>
+                                    <td>{{ loop.index }}</td>
+                                    <td>{{ c.prenom }} {{ c.nom }}</td>
+                                    <td><strong>{{ c.note }}/10</strong></td>
+                                </tr>
+                                {% endfor %}
+                            {% else %}
+                                <tr>
+                                    <td colspan="3" class="text-center text-muted">
+                                        <i class="fas fa-info-circle me-2"></i>
+                                        Aucune note en {{ selected_month_name }} {{ selected_year }}
+                                    </td>
+                                </tr>
+                            {% endif %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
     <script>
@@ -173,6 +264,22 @@
             document.getElementById('season-month').value = 11;
             document.getElementById('season-year').value = selectedSeason - 1;
             document.getElementById('season-form').submit();
+        });
+        
+        // Gestion des formulaires pour les notes moyennes
+        document.getElementById('month-notes').addEventListener('change', function() {
+            var selected = this.options[this.selectedIndex];
+            var year = selected.getAttribute('data-year');
+            var form = document.getElementById('month-notes-form');
+            form.querySelector('input[name="year"]').value = year;
+            form.submit();
+        });
+        
+        document.getElementById('season-notes').addEventListener('change', function() {
+            var selectedSeason = parseInt(this.value);
+            document.getElementById('season-notes-month').value = 11;
+            document.getElementById('season-notes-year').value = selectedSeason - 1;
+            document.getElementById('season-notes-form').submit();
         });
     </script>
 </body>

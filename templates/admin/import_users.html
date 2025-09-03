@@ -1,0 +1,373 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Importer des Utilisateurs</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        body {
+            background: #000000;
+            min-height: 100vh;
+            color: #ffffff;
+        }
+        .navbar-custom {
+            background: #ffd700;
+            border-bottom: 3px solid #ffed4e;
+        }
+        .navbar-custom .navbar-brand,
+        .navbar-custom .nav-link {
+            color: #000000 !important;
+            font-weight: 600;
+        }
+        .navbar-custom .nav-link:hover {
+            color: #333333 !important;
+        }
+        .btn-custom {
+            background: #ffd700;
+            border: none;
+            color: #000000;
+            font-weight: 600;
+        }
+        .btn-custom:hover {
+            background: #ffed4e;
+            color: #000000;
+        }
+        .card {
+            background: #1a1a1a;
+            border: 1px solid #333333;
+        }
+        .card-header {
+            background: #ffd700 !important;
+            color: #000000;
+            border-bottom: 1px solid #ffed4e;
+        }
+        .text-muted {
+            color: #cccccc !important;
+        }
+        .form-control, .form-select {
+            background: #333333;
+            border: 1px solid #555555;
+            color: #ffffff;
+        }
+        .form-control:focus, .form-select:focus {
+            background: #444444;
+            border-color: #ffd700;
+            color: #ffffff;
+            box-shadow: 0 0 0 0.2rem rgba(255, 215, 0, 0.25);
+        }
+        .form-control::placeholder {
+            color: #aaaaaa;
+        }
+        .alert {
+            border: 1px solid #333333;
+        }
+        .table {
+            color: #ffffff;
+        }
+        .table thead th {
+            background: #333333;
+            border-bottom: 1px solid #ffd700;
+            color: #ffffff;
+        }
+        .table tbody tr {
+            border-bottom: 1px solid #333333;
+        }
+        .table tbody tr:hover {
+            background: #333333;
+        }
+        .badge.bg-success {
+            background: #28a745 !important;
+        }
+        .badge.bg-danger {
+            background: #dc3545 !important;
+        }
+        .badge.bg-warning {
+            background: #ffc107 !important;
+            color: #000000;
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-custom shadow-sm">
+        <div class="container">
+            <a class="navbar-brand" href="{{ url_for('main.admin_users') }}">
+                <i class="fas fa-arrow-left me-2"></i>
+                Retour Utilisateurs
+            </a>
+            <div class="navbar-nav ms-auto">
+                <div class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
+                        <i class="fas fa-user-circle me-1"></i>
+                        Admin
+                    </a>
+                    <ul class="dropdown-menu">
+                        <li><a class="dropdown-item" href="{{ url_for('main.change_password') }}">
+                            <i class="fas fa-key me-2"></i>Changer le mot de passe
+                        </a></li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li><a class="dropdown-item" href="{{ url_for('main.logout') }}">
+                            <i class="fas fa-sign-out-alt me-2"></i>Déconnexion
+                        </a></li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container mt-4">
+        <!-- Messages Flash -->
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ 'danger' if category == 'error' else category }} alert-dismissible fade show" role="alert">
+                        {{ message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        <!-- Header -->
+        <div class="row mb-4">
+            <div class="col-md-8">
+                <h1 class="display-6">
+                    <i class="fas fa-upload me-2 text-info"></i>
+                    Importer des Utilisateurs
+                </h1>
+                <p class="lead text-muted">Importez plusieurs utilisateurs depuis un fichier CSV</p>
+            </div>
+            <div class="col-md-4 text-end">
+                <a href="{{ url_for('main.export_users_csv', template='true') }}" class="btn btn-outline-warning btn-lg">
+                    <i class="fas fa-download me-2"></i>
+                    Télécharger Template
+                </a>
+            </div>
+        </div>
+
+        <div class="row">
+            <!-- Formulaire d'import -->
+            <div class="col-md-6">
+                <div class="card shadow-sm">
+                    <div class="card-header">
+                        <h5 class="card-title mb-0">
+                            <i class="fas fa-file-upload me-2"></i>
+                            Upload du fichier CSV
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <form method="POST" enctype="multipart/form-data">
+                            <div class="mb-3">
+                                <label for="csv_file" class="form-label text-white">Sélectionner le fichier CSV</label>
+                                <input type="file" class="form-control" id="csv_file" name="csv_file" accept=".csv" required>
+                                <div class="form-text text-muted">
+                                    Format accepté : CSV avec séparateur point-virgule (;)
+                                </div>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="default_role" class="form-label text-white">Rôle par défaut</label>
+                                <select class="form-select" id="default_role" name="default_role">
+                                    <option value="coureur">Coureur</option>
+                                    <option value="admin">Administrateur</option>
+                                </select>
+                                <div class="form-text text-muted">
+                                    Rôle appliqué si non spécifié dans le CSV
+                                </div>
+                            </div>
+
+                            <div class="mb-3">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="skip_duplicates" name="skip_duplicates" checked>
+                                    <label class="form-check-label text-white" for="skip_duplicates">
+                                        Ignorer les doublons (email existant)
+                                    </label>
+                                </div>
+                            </div>
+
+                            <div class="mb-3">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="send_notifications" name="send_notifications">
+                                    <label class="form-check-label text-white" for="send_notifications">
+                                        Activer les notifications SMS par défaut
+                                    </label>
+                                </div>
+                            </div>
+
+                            <button type="submit" class="btn btn-custom btn-lg w-100">
+                                <i class="fas fa-upload me-2"></i>
+                                Importer les Utilisateurs
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Instructions -->
+            <div class="col-md-6">
+                <div class="card shadow-sm">
+                    <div class="card-header">
+                        <h5 class="card-title mb-0">
+                            <i class="fas fa-info-circle me-2"></i>
+                            Instructions
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <h6 class="text-warning">Format du fichier CSV :</h6>
+                        <p class="text-muted">Votre fichier doit contenir les colonnes suivantes (séparées par des points-virgules) :</p>
+                        
+                        <div class="table-responsive">
+                            <table class="table table-sm">
+                                <thead>
+                                    <tr>
+                                        <th>Colonne</th>
+                                        <th>Obligatoire</th>
+                                        <th>Description</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td><code>prenom</code></td>
+                                        <td><span class="badge bg-danger">Oui</span></td>
+                                        <td>Prénom de l'utilisateur</td>
+                                    </tr>
+                                    <tr>
+                                        <td><code>nom</code></td>
+                                        <td><span class="badge bg-danger">Oui</span></td>
+                                        <td>Nom de famille</td>
+                                    </tr>
+                                    <tr>
+                                        <td><code>email</code></td>
+                                        <td><span class="badge bg-danger">Oui</span></td>
+                                        <td>Adresse email (unique)</td>
+                                    </tr>
+                                    <tr>
+                                        <td><code>telephone</code></td>
+                                        <td><span class="badge bg-warning">Recommandé</span></td>
+                                        <td>Numéro de téléphone</td>
+                                    </tr>
+                                    <tr>
+                                        <td><code>role</code></td>
+                                        <td><span class="badge bg-success">Non</span></td>
+                                        <td>coureur ou admin</td>
+                                    </tr>
+                                    <tr>
+                                        <td><code>equipe</code></td>
+                                        <td><span class="badge bg-success">Non</span></td>
+                                        <td>Nom de l'équipe</td>
+                                    </tr>
+                                    <tr>
+                                        <td><code>notifications_sms</code></td>
+                                        <td><span class="badge bg-success">Non</span></td>
+                                        <td>true/false</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <h6 class="text-warning mt-3">Exemple de contenu :</h6>
+                        <pre class="bg-dark p-3 rounded text-white"><code>prenom;nom;email;telephone;role;equipe;notifications_sms
+Jean;Dupont;jean.dupont@email.com;0123456789;coureur;Équipe A;true
+Marie;Martin;marie.martin@email.com;0987654321;admin;;false</code></pre>
+
+                        <div class="alert alert-info mt-3">
+                            <i class="fas fa-lightbulb me-2"></i>
+                            <strong>Conseil :</strong> Utilisez le bouton "Télécharger Template" pour obtenir un fichier d'exemple avec la structure correcte.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Résultats de l'import -->
+        {% if import_results %}
+        <div class="row mt-4">
+            <div class="col-12">
+                <div class="card shadow-sm">
+                    <div class="card-header">
+                        <h5 class="card-title mb-0">
+                            <i class="fas fa-chart-bar me-2"></i>
+                            Résultats de l'import
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row text-center mb-3">
+                            <div class="col-md-3">
+                                <h4 class="text-success">{{ import_results.success_count }}</h4>
+                                <small class="text-muted">Importés avec succès</small>
+                            </div>
+                            <div class="col-md-3">
+                                <h4 class="text-danger">{{ import_results.error_count }}</h4>
+                                <small class="text-muted">Erreurs</small>
+                            </div>
+                            <div class="col-md-3">
+                                <h4 class="text-warning">{{ import_results.skipped_count }}</h4>
+                                <small class="text-muted">Ignorés (doublons)</small>
+                            </div>
+                            <div class="col-md-3">
+                                <h4 class="text-info">{{ import_results.total_count }}</h4>
+                                <small class="text-muted">Total traité</small>
+                            </div>
+                        </div>
+
+                        {% if import_results.errors %}
+                        <h6 class="text-danger">Erreurs rencontrées :</h6>
+                        <div class="table-responsive">
+                            <table class="table table-sm">
+                                <thead>
+                                    <tr>
+                                        <th>Ligne</th>
+                                        <th>Email</th>
+                                        <th>Erreur</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for error in import_results.errors %}
+                                    <tr>
+                                        <td>{{ error.line }}</td>
+                                        <td>{{ error.email }}</td>
+                                        <td>{{ error.message }}</td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                        {% endif %}
+
+                        {% if import_results.success %}
+                        <h6 class="text-success">Utilisateurs importés avec succès :</h6>
+                        <div class="table-responsive">
+                            <table class="table table-sm">
+                                <thead>
+                                    <tr>
+                                        <th>Prénom</th>
+                                        <th>Nom</th>
+                                        <th>Email</th>
+                                        <th>Rôle</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for user in import_results.success %}
+                                    <tr>
+                                        <td>{{ user.prenom }}</td>
+                                        <td>{{ user.nom }}</td>
+                                        <td>{{ user.email }}</td>
+                                        <td><span class="badge bg-{{ 'warning' if user.role == 'admin' else 'primary' }}">{{ user.role }}</span></td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

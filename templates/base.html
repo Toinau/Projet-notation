@@ -83,14 +83,20 @@
                     <li class="nav-item">
                         <a class="nav-link" href="/dashboard">Tableau de bord</a>
                     </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="/logout">Déconnexion</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link d-flex align-items-center" href="#">
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle d-flex align-items-center" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
                             <i class="fas fa-user-circle me-2" style="font-size: 1.2em;"></i>
                             <span>{{ current_user.prenom }} {{ current_user.nom }}</span>
                         </a>
+                        <ul class="dropdown-menu" aria-labelledby="navbarDropdown">
+                            <li><a class="dropdown-item" href="/profile">
+                                <i class="fas fa-user-edit me-2"></i>Mon Profil
+                            </a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item" href="/logout">
+                                <i class="fas fa-sign-out-alt me-2"></i>Déconnexion
+                            </a></li>
+                        </ul>
                     </li>
                     {% else %}
                     <li class="nav-item">

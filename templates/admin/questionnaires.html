@@ -180,8 +180,8 @@
     </nav>
 
     <div class="container mt-4">
-        <!-- Filtre équipe amélioré -->
-        <div class="row mb-4 align-items-center justify-content-between">
+        <!-- Filtres améliorés -->
+        <div class="row mb-4">
             <div class="col-md-7 col-12">
                 <h1 class="display-6 mb-0">
                     <i class="fas fa-clipboard-list me-2 text-warning"></i>
@@ -189,17 +189,46 @@
                 </h1>
                 <p class="lead text-muted mb-0">Visualisez tous les questionnaires créés et les réponses des coureurs</p>
             </div>
-            <div class="col-md-5 col-12 mt-3 mt-md-0 d-flex justify-content-md-end justify-content-center">
-                <div class="card mb-0" style="max-width: 350px; min-width: 220px;">
-                    <div class="card-body py-2 px-3">
-                        <form method="get" class="d-flex align-items-center gap-2 mb-0">
-                            <label for="team_id" class="form-label mb-0 me-2"><i class="fas fa-users me-1 text-warning"></i>Équipe</label>
-                            <select class="form-select w-auto" name="team_id" id="team_id" onchange="this.form.submit()">
-                                <option value="">Toutes les équipes</option>
-                                {% for team in teams %}
-                                <option value="{{ team.id }}" {% if selected_team_id == team.id %}selected{% endif %}>{{ team.nom }}</option>
-                                {% endfor %}
-                            </select>
+            <div class="col-md-5 col-12 mt-3 mt-md-0">
+                <div class="card">
+                    <div class="card-body py-3 px-3">
+                        <form method="get" class="row g-2">
+                            <!-- Filtre Équipe -->
+                            <div class="col-12 mb-2">
+                                <label for="team_id" class="form-label mb-1"><i class="fas fa-users me-1 text-warning"></i>Équipe</label>
+                                <select class="form-select" name="team_id" id="team_id">
+                                    <option value="">Toutes les équipes</option>
+                                    {% for team in teams %}
+                                    <option value="{{ team.id }}" {% if selected_team_id == team.id %}selected{% endif %}>{{ team.nom }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            
+                            <!-- Filtre Saison -->
+                            <div class="col-6 mb-2">
+                                <label for="season" class="form-label mb-1"><i class="fas fa-calendar-alt me-1 text-warning"></i>Saison</label>
+                                <select class="form-select" name="season" id="season" onchange="updateMonthOptions()">
+                                    {% for season in season_options %}
+                                    <option value="{{ season.year }}" {% if season.selected %}selected{% endif %}>{{ season.year }}-{{ season.year + 1 }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            
+                            <!-- Filtre Mois -->
+                            <div class="col-6 mb-2">
+                                <label for="month" class="form-label mb-1"><i class="fas fa-calendar me-1 text-warning"></i>Mois</label>
+                                <select class="form-select" name="month" id="month">
+                                    <option value="">Tous les mois</option>
+                                    {% for month_option in month_options %}
+                                    <option value="{{ month_option.month }}" {% if month_option.selected %}selected{% endif %}>
+                                        {% set month_names = ["Janvier", "Février", "Mars", "Avril", "Mai", "Juin", "Juillet", "Août", "Septembre", "Octobre", "Novembre", "Décembre"] %}
+                                        {{ month_names[month_option.month - 1] }} {{ month_option.year }}
+                                    </option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            
+
                         </form>
                     </div>
                 </div>
@@ -217,6 +246,8 @@
                 {% endfor %}
             {% endif %}
         {% endwith %}
+
+
 
         <!-- Liste des questionnaires -->
         {% if questionnaires %}
@@ -293,11 +324,16 @@
                         </div>
                         
                         <!-- Actions -->
-                        <div class="text-center">
+                        <div class="text-center d-flex justify-content-center gap-2">
                             <a href="{{ url_for('main.admin_questionnaire_results', questionnaire_id=questionnaire.id) }}" class="btn btn-custom btn-sm">
                                 <i class="fas fa-eye me-1"></i>
                                 Voir les résultats
                             </a>
+                            <form method="POST" action="{{ url_for('main.delete_questionnaire', questionnaire_id=questionnaire.id) }}" style="display:inline;" onsubmit="return confirm('Êtes-vous sûr de vouloir supprimer ce questionnaire ? Cette action est irréversible.');">
+                                <button type="submit" class="btn btn-danger btn-sm" title="Supprimer le questionnaire">
+                                    <i class="fas fa-trash-alt"></i>
+                                </button>
+                            </form>
                         </div>
                     </div>
                 </div>
@@ -317,5 +353,37 @@
     </div>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Fonction pour mettre à jour les options de mois quand la saison change
+        function updateMonthOptions() {
+            const seasonSelect = document.getElementById('season');
+            const monthSelect = document.getElementById('month');
+            const selectedSeason = seasonSelect.value;
+            
+            if (selectedSeason) {
+                // Ici on pourrait faire une requête AJAX pour récupérer les mois disponibles
+                // Pour l'instant, on recharge la page avec la nouvelle saison
+                const currentUrl = new URL(window.location);
+                currentUrl.searchParams.set('season', selectedSeason);
+                currentUrl.searchParams.delete('month'); // Reset le mois quand on change de saison
+                window.location.href = currentUrl.toString();
+            }
+        }
+        
+        // Auto-submit du formulaire quand on change les filtres (sauf pour le bouton réinitialiser)
+        document.addEventListener('DOMContentLoaded', function() {
+            const form = document.querySelector('form[method="get"]');
+            const selects = form.querySelectorAll('select');
+            
+            selects.forEach(select => {
+                select.addEventListener('change', function() {
+                    // Ne pas auto-submit si c'est le select de réinitialisation
+                    if (this.id !== 'reset_select') {
+                        form.submit();
+                    }
+                });
+            });
+        });
+    </script>
 </body>
 </html> 

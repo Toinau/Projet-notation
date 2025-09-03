@@ -1,0 +1,105 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mt-4">
+    <!-- Messages Flash -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <div class="alert alert-{{ 'danger' if category == 'error' else category }} alert-dismissible fade show" role="alert">
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+
+    <div class="row">
+        <div class="col-md-8 mx-auto">
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="mb-0">
+                        <i class="fas fa-user-edit text-primary me-2"></i>
+                        Mon Profil
+                    </h3>
+                </div>
+                <div class="card-body">
+                    <form method="POST" action="{{ url_for('main.edit_profile') }}">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="prenom" class="form-label">Prénom</label>
+                                    <input type="text" class="form-control" id="prenom" name="prenom" value="{{ current_user.prenom }}" required>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="nom" class="form-label">Nom</label>
+                                    <input type="text" class="form-control" id="nom" name="nom" value="{{ current_user.nom }}" required>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="email" class="form-label">Adresse e-mail</label>
+                            <input type="email" class="form-control" id="email" name="email" value="{{ current_user.email }}" required>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="telephone" class="form-label">Numéro de téléphone</label>
+                            <input type="tel" class="form-control" id="telephone" name="telephone" value="{{ current_user.telephone or '' }}" placeholder="06 12 34 56 78" required>
+                            <div class="form-text">Pour recevoir les notifications SMS des nouveaux questionnaires</div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="notifications_sms" name="notifications_sms" 
+                                       {% if current_user.notifications_sms %}checked{% endif %}>
+                                <label class="form-check-label" for="notifications_sms">
+                                    Recevoir les notifications SMS
+                                </label>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="team_id" class="form-label">Équipe</label>
+                            <select class="form-control" id="team_id" name="team_id" required>
+                                <option value="">Sélectionnez une équipe</option>
+                                {% for team in teams %}
+                                <option value="{{ team.id }}" {% if current_user.team_id == team.id %}selected{% endif %}>
+                                    {{ team.nom }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save me-2"></i>
+                                Sauvegarder les modifications
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+            
+            <!-- Section changement de mot de passe -->
+            <div class="card mt-4">
+                <div class="card-header">
+                    <h4 class="mb-0">
+                        <i class="fas fa-lock text-warning me-2"></i>
+                        Changer mon mot de passe
+                    </h4>
+                </div>
+                <div class="card-body">
+                    <p class="text-muted">Pour changer votre mot de passe, utilisez le lien ci-dessous :</p>
+                    <a href="{{ url_for('main.change_password') }}" class="btn btn-outline-warning">
+                        <i class="fas fa-key me-2"></i>
+                        Changer le mot de passe
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

@@ -9,6 +9,12 @@ from datetime import datetime
 from sqlalchemy import func, case
 import os
 
+def get_current_date():
+    """
+    Retourne la date actuelle réelle
+    """
+    return datetime.utcnow()
+
 main_bp = Blueprint('main', __name__)
 
 month_names = [
@@ -35,10 +41,14 @@ def register():
         prenom = request.form['prenom'].strip()
         nom = request.form['nom'].strip()
         email = request.form['email'].strip().lower()
+        telephone = request.form.get('telephone', '').strip()
+        notifications_sms = request.form.get('notifications_sms') == 'on'
         password = request.form['password']
         team_id = request.form.get('team_id')
         role = request.form.get('role', 'coureur')
         errors = []
+        if not telephone:
+            errors.append("Le numéro de téléphone est obligatoire.")
         is_valid_prenom, prenom_msg = User.validate_prenom(prenom)
         if not is_valid_prenom:
             errors.append(prenom_msg)
@@ -47,6 +57,9 @@ def register():
             errors.append(nom_msg)
         if not User.validate_email(email):
             errors.append("Format d'email invalide")
+        is_valid_telephone, telephone_msg = User.validate_telephone(telephone)
+        if not is_valid_telephone:
+            errors.append(telephone_msg)
         is_valid_password, password_msg = User.validate_password(password)
         if not is_valid_password:
             errors.append(password_msg)
@@ -60,7 +73,16 @@ def register():
             return render_template('register.html', teams=teams)
         try:
             hashed_password = generate_password_hash(password, method='pbkdf2:sha256')
-            new_user = User(prenom=prenom, nom=nom, email=email, password=hashed_password, role=role, team_id=team_id)
+            new_user = User(
+                prenom=prenom, 
+                nom=nom, 
+                email=email, 
+                telephone=telephone,
+                notifications_sms=notifications_sms,
+                password=hashed_password, 
+                role=role, 
+                team_id=team_id
+            )
             db.session.add(new_user)
             db.session.commit()
             flash(f'Votre compte {role} a été créé avec succès!', 'success')
@@ -158,6 +180,275 @@ def admin_users():
         current_app.logger.error(f"Erreur liste utilisateurs: {e}")
         flash('Erreur lors du chargement des utilisateurs.', 'danger')
         return redirect(url_for('main.admin_dashboard'))
+
+@main_bp.route('/admin/users/export-csv')
+@login_required
+def export_users_csv():
+    user = current_user
+    if not user.is_admin():
+        flash('Accès interdit. Privilèges administrateur requis.', 'danger')
+        return redirect(url_for('main.dashboard'))
+    try:
+        from io import StringIO
+        import csv
+        from flask import Response
+        
+        # Vérifier si c'est un template d'import (pas d'utilisateurs existants)
+        template_mode = request.args.get('template', 'false').lower() == 'true'
+        
+        if template_mode:
+            # Créer un template d'import
+            output = StringIO()
+            writer = csv.writer(output, delimiter=';', quoting=csv.QUOTE_ALL)
+            
+            # En-têtes pour l'import
+            writer.writerow([
+                'prenom', 'nom', 'email', 'telephone', 'role', 'equipe', 'notifications_sms'
+            ])
+            
+            # Exemples de données
+            writer.writerow([
+                'Jean', 'Dupont', 'jean.dupont@email.com', '0123456789', 'coureur', 'Équipe A', 'true'
+            ])
+            writer.writerow([
+                'Marie', 'Martin', 'marie.martin@email.com', '0987654321', 'admin', '', 'false'
+            ])
+            
+            output.seek(0)
+            csv_content = output.getvalue()
+            
+            response = Response(csv_content, mimetype='text/csv; charset=utf-8')
+            response.headers['Content-Disposition'] = 'attachment; filename=template_import_utilisateurs.csv'
+            
+            return response
+        else:
+            # Export normal des utilisateurs existants
+            users = User.query.order_by(User.nom, User.prenom).all()
+            
+            # Créer le contenu CSV
+            output = StringIO()
+            writer = csv.writer(output, delimiter=';', quoting=csv.QUOTE_ALL)
+            
+            # En-têtes
+            writer.writerow([
+                'ID', 'Prénom', 'Nom', 'Email', 'Téléphone', 'Rôle', 
+                'Statut', 'Équipe', 'Notifications SMS', 'Date de création'
+            ])
+            
+            # Données des utilisateurs
+            for user in users:
+                team_name = user.team.nom if user.team else 'Aucune équipe'
+                status = 'Actif' if user.is_active else 'Inactif'
+                notifications = 'Oui' if user.notifications_sms else 'Non'
+                created_date = user.created_at.strftime('%d/%m/%Y %H:%M') if user.created_at else ''
+                
+                writer.writerow([
+                    user.id,
+                    user.prenom,
+                    user.nom,
+                    user.email,
+                    user.telephone or '',
+                    user.role,
+                    status,
+                    team_name,
+                    notifications,
+                    created_date
+                ])
+            
+            # Préparer la réponse
+            output.seek(0)
+            csv_content = output.getvalue()
+            
+            # Créer la réponse avec les headers appropriés
+            response = Response(csv_content, mimetype='text/csv; charset=utf-8')
+            response.headers['Content-Disposition'] = 'attachment; filename=utilisateurs_export.csv'
+            
+            return response
+        
+    except Exception as e:
+        current_app.logger.error(f"Erreur export CSV utilisateurs: {e}")
+        flash('Erreur lors de l\'export CSV.', 'danger')
+        return redirect(url_for('main.admin_users'))
+
+@main_bp.route('/admin/users/import-csv', methods=['GET', 'POST'])
+@login_required
+def import_users_csv():
+    user = current_user
+    if not user.is_admin():
+        flash('Accès interdit. Privilèges administrateur requis.', 'danger')
+        return redirect(url_for('main.dashboard'))
+    
+    if request.method == 'POST':
+        try:
+            if 'csv_file' not in request.files:
+                flash('Aucun fichier sélectionné.', 'danger')
+                return render_template('admin/import_users.html')
+            
+            file = request.files['csv_file']
+            if file.filename == '':
+                flash('Aucun fichier sélectionné.', 'danger')
+                return render_template('admin/import_users.html')
+            
+            if not file.filename.endswith('.csv'):
+                flash('Le fichier doit être au format CSV.', 'danger')
+                return render_template('admin/import_users.html')
+            
+            # Lire le fichier CSV
+            import csv
+            from io import StringIO
+            
+            # Lire le contenu du fichier
+            content = file.read().decode('utf-8')
+            csv_reader = csv.DictReader(StringIO(content), delimiter=';')
+            
+            # Options d'import
+            default_role = request.form.get('default_role', 'coureur')
+            skip_duplicates = request.form.get('skip_duplicates') == 'on'
+            send_notifications = request.form.get('send_notifications') == 'on'
+            
+            # Résultats de l'import
+            import_results = {
+                'success': [],
+                'errors': [],
+                'skipped': [],
+                'success_count': 0,
+                'error_count': 0,
+                'skipped_count': 0,
+                'total_count': 0
+            }
+            
+            # Traiter chaque ligne
+            for line_num, row in enumerate(csv_reader, start=2):  # Commencer à 2 car ligne 1 = en-têtes
+                import_results['total_count'] += 1
+                
+                try:
+                    # Validation des champs obligatoires
+                    if not row.get('prenom') or not row.get('nom') or not row.get('email'):
+                        import_results['errors'].append({
+                            'line': line_num,
+                            'email': row.get('email', 'N/A'),
+                            'message': 'Prénom, nom et email sont obligatoires'
+                        })
+                        import_results['error_count'] += 1
+                        continue
+                    
+                    # Nettoyer les données
+                    prenom = row['prenom'].strip()
+                    nom = row['nom'].strip()
+                    email = row['email'].strip().lower()
+                    telephone = row.get('telephone', '').strip()
+                    role = row.get('role', default_role).strip()
+                    equipe_nom = row.get('equipe', '').strip()
+                    notifications_sms = row.get('notifications_sms', str(send_notifications)).strip().lower()
+                    
+                    # Validation du format email
+                    if not User.validate_email(email):
+                        import_results['errors'].append({
+                            'line': line_num,
+                            'email': email,
+                            'message': 'Format d\'email invalide'
+                        })
+                        import_results['error_count'] += 1
+                        continue
+                    
+                    # Validation du téléphone
+                    if telephone:
+                        is_valid_telephone, telephone_msg = User.validate_telephone(telephone)
+                        if not is_valid_telephone:
+                            import_results['errors'].append({
+                                'line': line_num,
+                                'email': email,
+                                'message': telephone_msg
+                            })
+                            import_results['error_count'] += 1
+                            continue
+                    
+                    # Validation du rôle
+                    if role not in ['coureur', 'admin']:
+                        role = default_role
+                    
+                    # Vérifier si l'email existe déjà
+                    existing_user = User.query.filter_by(email=email).first()
+                    if existing_user:
+                        if skip_duplicates:
+                            import_results['skipped'].append({
+                                'line': line_num,
+                                'email': email,
+                                'message': 'Email déjà existant'
+                            })
+                            import_results['skipped_count'] += 1
+                            continue
+                        else:
+                            import_results['errors'].append({
+                                'line': line_num,
+                                'email': email,
+                                'message': 'Email déjà existant'
+                            })
+                            import_results['error_count'] += 1
+                            continue
+                    
+                    # Trouver l'équipe si spécifiée
+                    team_id = None
+                    if equipe_nom:
+                        team = Team.query.filter_by(nom=equipe_nom, actif=True).first()
+                        if team:
+                            team_id = team.id
+                    
+                    # Convertir notifications_sms en booléen
+                    notifications_bool = notifications_sms in ['true', '1', 'oui', 'yes', 'on']
+                    
+                    # Créer l'utilisateur
+                    new_user = User(
+                        prenom=prenom,
+                        nom=nom,
+                        email=email,
+                        telephone=telephone,
+                        notifications_sms=notifications_bool,
+                        password=generate_password_hash('changeme123', method='pbkdf2:sha256'),  # Mot de passe temporaire
+                        role=role,
+                        team_id=team_id
+                    )
+                    
+                    db.session.add(new_user)
+                    db.session.flush()  # Pour obtenir l'ID
+                    
+                    import_results['success'].append({
+                        'prenom': prenom,
+                        'nom': nom,
+                        'email': email,
+                        'role': role
+                    })
+                    import_results['success_count'] += 1
+                    
+                except Exception as e:
+                    import_results['errors'].append({
+                        'line': line_num,
+                        'email': row.get('email', 'N/A'),
+                        'message': f'Erreur: {str(e)}'
+                    })
+                    import_results['error_count'] += 1
+                    continue
+            
+            # Commit final
+            db.session.commit()
+            
+            # Message de succès
+            if import_results['success_count'] > 0:
+                flash(f'{import_results["success_count"]} utilisateur(s) importé(s) avec succès !', 'success')
+            if import_results['error_count'] > 0:
+                flash(f'{import_results["error_count"]} erreur(s) lors de l\'import.', 'warning')
+            if import_results['skipped_count'] > 0:
+                flash(f'{import_results["skipped_count"]} utilisateur(s) ignoré(s) (doublons).', 'info')
+            
+            return render_template('admin/import_users.html', import_results=import_results)
+            
+        except Exception as e:
+            db.session.rollback()
+            current_app.logger.error(f"Erreur import CSV utilisateurs: {e}")
+            flash(f'Erreur lors de l\'import CSV: {str(e)}', 'danger')
+            return render_template('admin/import_users.html')
+    
+    return render_template('admin/import_users.html')
 
 @main_bp.route('/admin/users/<int:user_id>/edit', methods=['POST'])
 @login_required
@@ -314,8 +605,40 @@ def create_questionnaire():
                 )
                 db.session.add(participant)
             db.session.commit()
+            
+            # Envoyer les notifications WhatsApp aux coureurs
+            from app.whatsapp_service import WhatsAppService
+            
+            whatsapp_service = WhatsAppService()
+            whatsapp_sent = 0
+            whatsapp_errors = 0
+            
+            for coureur_id in present_coureurs:
+                coureur = User.query.get(int(coureur_id))
+                if coureur and coureur.telephone and coureur.notifications_sms:
+                    clean_number = whatsapp_service._clean_phone_number(coureur.telephone)
+                    date_str = questionnaire.course_date.strftime('%d/%m/%Y')
+                    success, message = whatsapp_service.send_questionnaire_template(
+                        clean_number,
+                        coureur.prenom,
+                        questionnaire.course_name,
+                        date_str
+                    )
+                    if success:
+                        whatsapp_sent += 1
+                    else:
+                        whatsapp_errors += 1
+                        current_app.logger.warning(f"Erreur WhatsApp pour {coureur.prenom} {coureur.nom}: {message}")
+            
             nb_coureurs = len(present_coureurs)
-            flash(f'Questionnaire créé avec succès pour la course "{course_name}" avec {nb_coureurs} coureurs et {direct_velo_points} points Direct Vélo!', 'success')
+            flash_message = f'Questionnaire créé avec succès pour la course "{course_name}" avec {nb_coureurs} coureurs et {direct_velo_points} points Direct Vélo!'
+            
+            if whatsapp_sent > 0:
+                flash_message += f' {whatsapp_sent} notification(s) WhatsApp envoyée(s).'
+            if whatsapp_errors > 0:
+                flash_message += f' {whatsapp_errors} erreur(s) WhatsApp.'
+                
+            flash(flash_message, 'success')
             return redirect(url_for('main.admin_dashboard'))
         except Exception as e:
             db.session.rollback()
@@ -372,7 +695,7 @@ def calculate_coureur_ranking(user_id):
         from sqlalchemy import func
         
         # Obtenir la date actuelle
-        now = datetime.utcnow()
+        now = get_current_date()
         start_of_month = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
         start_of_year = now.replace(month=1, day=1, hour=0, minute=0, second=0, microsecond=0)
         
@@ -708,7 +1031,7 @@ def fill_questionnaire(questionnaire_id):
                     db.session.add(response)
                 # Marquer le questionnaire comme répondu
                 participation.has_responded = True
-                participation.response_date = datetime.utcnow()
+                participation.response_date = get_current_date()
                 participation.comment = comment  # Enregistrer le commentaire général
                 
                 db.session.commit()
@@ -778,7 +1101,7 @@ def questionnaire_results(questionnaire_id):
 @main_bp.route('/coureur/points-details')
 @login_required
 def coureur_points_details():
-    now = datetime.utcnow()
+    now = get_current_date()
     
     # Calculer le début du mois actuel
     start_of_current_month = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
@@ -795,6 +1118,10 @@ def coureur_points_details():
         selected_year = int(year_raw)
     else:
         selected_year = now.year
+    
+    # Redirection si la date sélectionnée est dans le futur
+    if selected_year > now.year or (selected_year == now.year and selected_month > now.month):
+        return redirect(url_for('main.coureur_points_details', month=now.month, year=now.year))
         
     current_month_name = month_names[now.month - 1]
     selected_month_name = month_names[selected_month - 1]
@@ -870,9 +1197,12 @@ def coureur_points_details():
                     QuestionnaireResponse.evaluated_id == user_id
                 ).scalar() or 0
                 
-                # Calculer la note moyenne équipe pour cette course
+                # Récupérer les IDs des membres de l'équipe
+                equipe_user_ids = [u.id for u in User.query.filter_by(team_id=user_team_id).all()]
+                # Calculer la note moyenne équipe pour cette course (moyenne des notes reçues par les membres de l'équipe)
                 note_moyenne_equipe = db.session.query(func.avg(QuestionnaireResponse.rating)).filter(
-                    QuestionnaireResponse.questionnaire_id == questionnaire.id
+                    QuestionnaireResponse.questionnaire_id == questionnaire.id,
+                    QuestionnaireResponse.evaluated_id.in_(equipe_user_ids)
                 ).scalar() or 0
                 
                 # Calculer le nombre de votants pour cette course
@@ -952,23 +1282,128 @@ def admin_questionnaires():
     try:
         if not user.is_authenticated:
             return redirect(url_for('main.login'))
+        
+        from datetime import datetime
+        now = get_current_date()
+        
+        # Récupération des paramètres de filtrage
         team_id = request.args.get('team_id', type=int)
+        season_raw = request.args.get('season')
+        month_raw = request.args.get('month')
+        year_raw = request.args.get('year')
+        
+        # Traitement des paramètres de saison
+        if season_raw is not None and str(season_raw).isdigit():
+            selected_season = int(season_raw)
+        else:
+            # Calcul de la saison courante selon la logique du site
+            if now.month >= 11:
+                selected_season = now.year + 1
+            else:
+                selected_season = now.year
+
+        # Traitement des paramètres de mois
+        if month_raw is not None and str(month_raw).isdigit():
+            selected_month = int(month_raw)
+        else:
+            selected_month = now.month
+            
+        if year_raw is not None and str(year_raw).isdigit():
+            selected_year = int(year_raw)
+        else:
+            selected_year = now.year
+        
+        # Validation des paramètres de date
+        if selected_year > 2030 or selected_month > 12 or selected_month < 1:
+            selected_month = now.month
+            selected_year = now.year
+        
+        # Construction de la requête de base
+        query = Questionnaire.query
+        
+        # Filtrage par équipe
         if team_id:
-            questionnaires = (db.session.query(Questionnaire)
+            query = (query
                 .join(QuestionnaireParticipant, Questionnaire.id == QuestionnaireParticipant.questionnaire_id)
                 .join(User, QuestionnaireParticipant.user_id == User.id)
                 .filter(User.team_id == team_id)
-                .order_by(Questionnaire.course_date.desc())
-                .distinct()
-                .all())
-        else:
-            questionnaires = Questionnaire.query.order_by(Questionnaire.course_date.desc()).all()
+                .distinct())
+        
+        # Filtrage par saison
+        if selected_season:
+            season_start = datetime(selected_season - 1, 11, 1).date()
+            season_end = datetime(selected_season, 10, 31).date()
+            query = query.filter(
+                Questionnaire.course_date >= season_start,
+                Questionnaire.course_date <= season_end
+            )
+        
+        # Filtrage par mois spécifique
+        if selected_month and selected_year:
+            month_start = datetime(selected_year, selected_month, 1).date()
+            if selected_month < 12:
+                month_end = datetime(selected_year, selected_month + 1, 1).date()
+            else:
+                month_end = datetime(selected_year + 1, 1, 1).date()
+            query = query.filter(
+                Questionnaire.course_date >= month_start,
+                Questionnaire.course_date < month_end
+            )
+        
+        questionnaires = query.order_by(Questionnaire.course_date.desc()).all()
+        
+        # Récupération des équipes
         teams = Team.query.filter_by(actif=True).all()
+        
+        # Génération des options de saison
+        all_course_dates = db.session.query(Questionnaire.course_date).distinct().all()
+        available_seasons = set()
+        for course_date in all_course_dates:
+            course_year = course_date[0].year
+            course_month = course_date[0].month
+            if course_month >= 11:
+                season_val = course_year + 1
+            else:
+                season_val = course_year
+            available_seasons.add(season_val)
+        
+        season_options = []
+        for s in sorted(available_seasons, reverse=True):
+            season_options.append({'year': s, 'selected': s == selected_season})
+        
+        # Génération des options de mois pour la saison sélectionnée
+        month_options = []
+        season_start_year = selected_season - 1
+        current_year = now.year
+        current_month = now.month
+        for year in [season_start_year, selected_season]:
+            start_month = 11 if year == season_start_year else 1
+            end_month = 12 if year == season_start_year else 10
+            for month in range(start_month, end_month + 1):
+                if (selected_season == (current_year if current_month < 11 else current_year+1)) and (year == current_year and month > current_month):
+                    continue
+                month_options.append({
+                    'year': year,
+                    'month': month,
+                    'selected': year == selected_year and month == selected_month
+                })
+        
+        # Calcul des statistiques pour chaque questionnaire
         participants_map = {}
         for q in questionnaires:
             participants = db.session.query(User.prenom, User.nom, QuestionnaireParticipant.has_responded).join(QuestionnaireParticipant, User.id == QuestionnaireParticipant.user_id).filter(QuestionnaireParticipant.questionnaire_id == q.id).all()
             participants_map[q.id] = [{'prenom': p[0], 'nom': p[1], 'has_responded': p[2]} for p in participants]
-        return render_template('admin/questionnaires.html', questionnaires=questionnaires, teams=teams, participants_map=participants_map, selected_team_id=team_id)
+        
+        return render_template('admin/questionnaires.html', 
+                             questionnaires=questionnaires, 
+                             teams=teams, 
+                             participants_map=participants_map, 
+                             selected_team_id=team_id,
+                             season_options=season_options,
+                             month_options=month_options,
+                             selected_season=selected_season,
+                             selected_month=selected_month,
+                             selected_year=selected_year)
     except Exception as e:
         current_app.logger.error(f"Erreur liste questionnaires: {e}")
         flash('Erreur lors du chargement des questionnaires.', 'danger')
@@ -1176,7 +1611,7 @@ def coureur_rankings():
         from sqlalchemy import func
         
         # Obtenir la date actuelle et le mois sélectionné
-        now = datetime.utcnow()
+        now = get_current_date()
         
         # Sécurisation des conversions en int
         month_raw = request.args.get('month')
@@ -1190,6 +1625,10 @@ def coureur_rankings():
             selected_year = int(year_raw)
         else:
             selected_year = now.year
+        
+        # Redirection si la date sélectionnée est dans le futur
+        if selected_year > now.year or (selected_year == now.year and selected_month > now.month):
+            return redirect(url_for('main.coureur_rankings', month=now.month, year=now.year))
         
         # Calculer la date de début du mois sélectionné
         start_of_selected_month = datetime(selected_year, selected_month, 1)
@@ -1321,7 +1760,7 @@ def admin_course_statistics():
             return redirect(url_for('main.login'))
         from sqlalchemy import func
         from datetime import datetime
-        now = datetime.utcnow()
+        now = get_current_date()
         
         # Sécurisation des conversions en int
         month_raw = request.args.get('month')
@@ -1348,13 +1787,28 @@ def admin_course_statistics():
         else:
             selected_team_id = None
         
+        # Redirection si la date sélectionnée est dans le futur
+        if selected_year > now.year or (selected_year == now.year and selected_month > now.month):
+            return redirect(url_for('main.admin_course_statistics', month=now.month, year=now.year, season=selected_season, team_id=selected_team_id))
+        
+        # Validation supplémentaire pour éviter les erreurs SQL
+        if selected_year > 2030 or selected_month > 12 or selected_month < 1:
+            return redirect(url_for('main.admin_course_statistics', month=now.month, year=now.year, season=selected_season, team_id=selected_team_id))
+        
         # Récupérer la liste des équipes actives
         teams = Team.query.filter_by(actif=True).order_by(Team.nom).all()
+        
+        # Créer les dates de début et fin du mois de manière sécurisée
+        month_start_date = datetime(selected_year, selected_month, 1).date()
+        if selected_month < 12:
+            month_end_date = datetime(selected_year, selected_month + 1, 1).date()
+        else:
+            month_end_date = datetime(selected_year + 1, 1, 1).date()
+        
         # Récupérer les questionnaires du mois sélectionné
         questionnaires = Questionnaire.query.filter(
-            Questionnaire.course_date >= datetime(selected_year, selected_month, 1).date(),
-            Questionnaire.course_date < datetime(selected_year, selected_month + 1, 1).date() if selected_month < 12 
-            else datetime(selected_year + 1, 1, 1).date()
+            Questionnaire.course_date >= month_start_date,
+            Questionnaire.course_date < month_end_date
         ).order_by(Questionnaire.course_date.desc()).all()
         course_stats = []
         for questionnaire in questionnaires:
@@ -1432,11 +1886,13 @@ def admin_course_statistics():
         # Générer les options de mois pour la saison sélectionnée
         month_options = []
         season_start_year = season - 1
+        current_year = now.year
+        current_month = now.month
         for year in [season_start_year, season]:
             start_month = 11 if year == season_start_year else 1
             end_month = 12 if year == season_start_year else 10
             for month in range(start_month, end_month + 1):
-                if (season == (now.year if now.month < 11 else now.year+1)) and (year == now.year and month > now.month):
+                if (season == (current_year if current_month < 11 else current_year+1)) and (year == current_year and month > current_month):
                     continue
                 month_options.append({
                     'year': year,
@@ -1480,7 +1936,7 @@ def admin_global_rankings():
             team_id = None
         from datetime import datetime
         from sqlalchemy import func
-        now = datetime.utcnow()
+        now = get_current_date()
         # Générer la liste des saisons disponibles (celles où il y a au moins une course)
         all_course_dates = db.session.query(Questionnaire.course_date).distinct().all()
         available_seasons = set()
@@ -1526,6 +1982,15 @@ def admin_global_rankings():
             selected_year = int(year_raw)
         else:
             selected_year = now.year
+        
+        # Redirection si la date sélectionnée est dans le futur
+        if selected_year > now.year or (selected_year == now.year and selected_month > now.month):
+            return redirect(url_for('main.admin_global_rankings', month=now.month, year=now.year, season=season, team_id=team_id))
+        
+        # Validation supplémentaire pour éviter les erreurs SQL
+        if selected_year > 2030 or selected_month > 12 or selected_month < 1:
+            return redirect(url_for('main.admin_global_rankings', month=now.month, year=now.year, season=season, team_id=team_id))
+        
         # Classement du mois sélectionné
         month_start = datetime(selected_year, selected_month, 1)
         if selected_month < 12:
@@ -1574,6 +2039,56 @@ def admin_global_rankings():
             if total_points > 0:  # Ne pas afficher les coureurs avec 0 points
                 mois_points.append({'prenom': coureur.prenom, 'nom': coureur.nom, 'points': round(total_points, 1), 'team_id': coureur.team_id})
         mois_points.sort(key=lambda x: x['points'], reverse=True)
+        
+        # Classement des notes moyennes de la saison
+        saison_notes = []
+        for coureur in coureurs:
+            participations = db.session.query(QuestionnaireParticipant, Questionnaire).join(
+                Questionnaire, QuestionnaireParticipant.questionnaire_id == Questionnaire.id
+            ).filter(
+                QuestionnaireParticipant.user_id == coureur.id,
+                Questionnaire.course_date >= season_start.date(),
+                Questionnaire.course_date <= season_end.date()
+            ).all()
+            total_rating = 0
+            nb_courses_avec_notes = 0
+            for participation, questionnaire in participations:
+                avg_rating = db.session.query(func.avg(QuestionnaireResponse.rating)).filter(
+                    QuestionnaireResponse.questionnaire_id == questionnaire.id,
+                    QuestionnaireResponse.evaluated_id == coureur.id
+                ).scalar() or 0
+                if float(avg_rating) > 0:
+                    total_rating += float(avg_rating)
+                    nb_courses_avec_notes += 1
+            if nb_courses_avec_notes > 0:
+                avg_rating_season = round(total_rating / nb_courses_avec_notes, 1)
+                saison_notes.append({'prenom': coureur.prenom, 'nom': coureur.nom, 'note': avg_rating_season, 'team_id': coureur.team_id})
+        saison_notes.sort(key=lambda x: x['note'], reverse=True)
+        
+        # Classement des notes moyennes du mois sélectionné
+        mois_notes = []
+        for coureur in coureurs:
+            participations = db.session.query(QuestionnaireParticipant, Questionnaire).join(
+                Questionnaire, QuestionnaireParticipant.questionnaire_id == Questionnaire.id
+            ).filter(
+                QuestionnaireParticipant.user_id == coureur.id,
+                Questionnaire.course_date >= month_start.date(),
+                Questionnaire.course_date < month_end.date()
+            ).all()
+            total_rating = 0
+            nb_courses_avec_notes = 0
+            for participation, questionnaire in participations:
+                avg_rating = db.session.query(func.avg(QuestionnaireResponse.rating)).filter(
+                    QuestionnaireResponse.questionnaire_id == questionnaire.id,
+                    QuestionnaireResponse.evaluated_id == coureur.id
+                ).scalar() or 0
+                if float(avg_rating) > 0:
+                    total_rating += float(avg_rating)
+                    nb_courses_avec_notes += 1
+            if nb_courses_avec_notes > 0:
+                avg_rating_month = round(total_rating / nb_courses_avec_notes, 1)
+                mois_notes.append({'prenom': coureur.prenom, 'nom': coureur.nom, 'note': avg_rating_month, 'team_id': coureur.team_id})
+        mois_notes.sort(key=lambda x: x['note'], reverse=True)
         # Pour affichage du mois
         month_names = ["Janvier", "Février", "Mars", "Avril", "Mai", "Juin", "Juillet", "Août", "Septembre", "Octobre", "Novembre", "Décembre"]
         selected_month_name = month_names[selected_month-1]
@@ -1595,11 +2110,13 @@ def admin_global_rankings():
         # Générer les options de mois pour la saison sélectionnée
         month_options = []
         season_start_year = season - 1
+        current_year = now.year
+        current_month = now.month
         for year in [season_start_year, season]:
             start_month = 11 if year == season_start_year else 1
             end_month = 12 if year == season_start_year else 10
             for month in range(start_month, end_month + 1):
-                if (season == (now.year if now.month < 11 else now.year+1)) and (year == now.year and month > now.month):
+                if (season == (current_year if current_month < 11 else current_year+1)) and (year == current_year and month > current_month):
                     continue
                 month_options.append({
                     'year': year,
@@ -1615,10 +2132,14 @@ def admin_global_rankings():
             # Filtrer les classements pour ne prendre que les membres de l'équipe sélectionnée
             saison_points = [c for c in saison_points if c['team_id'] == team_id]
             mois_points = [c for c in mois_points if c['team_id'] == team_id]
+            saison_notes = [c for c in saison_notes if c['team_id'] == team_id]
+            mois_notes = [c for c in mois_notes if c['team_id'] == team_id]
         teams = Team.query.filter_by(actif=True).all()
         return render_template('admin/global_rankings.html',
             saison_points=saison_points,
             mois_points=mois_points,
+            saison_notes=saison_notes,
+            mois_notes=mois_notes,
             season=season,
             season_options=season_options,
             months=months,
@@ -1771,3 +2292,76 @@ def api_coureurs_par_equipe(team_id):
         } for c in coureurs
     ]
     return jsonify(data)
+
+@main_bp.route('/profile')
+@login_required
+def profile():
+    """Affiche la page de profil utilisateur"""
+    user = current_user
+    from app.models import Team
+    teams = Team.query.filter_by(actif=True).order_by(Team.nom).all()
+    return render_template('coureur/profile.html', current_user=user, teams=teams)
+
+@main_bp.route('/edit-profile', methods=['POST'])
+@login_required
+def edit_profile():
+    """Modifie le profil utilisateur"""
+    user = current_user
+    try:
+        # Récupération des données du formulaire
+        prenom = request.form['prenom'].strip()
+        nom = request.form['nom'].strip()
+        email = request.form['email'].strip().lower()
+        telephone = request.form.get('telephone', '').strip()
+        notifications_sms = request.form.get('notifications_sms') == 'on'
+        team_id = request.form.get('team_id')
+        
+        # Validation des données
+        errors = []
+        if not telephone:
+            errors.append("Le numéro de téléphone est obligatoire.")
+        
+        is_valid_prenom, prenom_msg = User.validate_prenom(prenom)
+        if not is_valid_prenom:
+            errors.append(prenom_msg)
+        
+        is_valid_nom, nom_msg = User.validate_nom(nom)
+        if not is_valid_nom:
+            errors.append(nom_msg)
+        
+        if not User.validate_email(email):
+            errors.append("Format d'email invalide")
+        
+        is_valid_telephone, telephone_msg = User.validate_telephone(telephone)
+        if not is_valid_telephone:
+            errors.append(telephone_msg)
+        
+        # Vérifier si l'email est déjà utilisé par un autre utilisateur
+        existing_user = User.query.filter_by(email=email).first()
+        if existing_user and existing_user.id != user.id:
+            errors.append('Email déjà utilisé par un autre utilisateur')
+        
+        if errors:
+            for error in errors:
+                flash(error, 'danger')
+            from app.models import Team
+            teams = Team.query.filter_by(actif=True).order_by(Team.nom).all()
+            return render_template('coureur/profile.html', current_user=user, teams=teams)
+        
+        # Mise à jour du profil
+        user.prenom = prenom
+        user.nom = nom
+        user.email = email
+        user.telephone = telephone
+        user.notifications_sms = True
+        user.team_id = team_id if team_id else None
+        
+        db.session.commit()
+        flash('Profil mis à jour avec succès !', 'success')
+        
+    except Exception as e:
+        db.session.rollback()
+        current_app.logger.error(f"Erreur modification profil: {e}")
+        flash('Erreur lors de la modification du profil.', 'danger')
+    
+    return redirect(url_for('main.profile'))

@@ -5,7 +5,7 @@
     <div class="col-md-8">
         <div class="form-container">
             <h2 class="text-center mb-4">Inscription</h2>
-            <form method="POST" action="{{ url_for('main.register') }}">
+            <form method="POST" action="{{ url_for('main.register') }}" id="registerForm">
                 <div class="mb-3">
                     <label for="prenom" class="form-label">Prénom</label>
                     <input type="text" class="form-control" id="prenom" name="prenom" required>
@@ -19,17 +19,16 @@
                     <input type="email" class="form-control" id="email" name="email" required>
                 </div>
                 <div class="mb-3">
+                    <label for="telephone" class="form-label mt-2">Numéro de téléphone</label>
+                    <input type="tel" class="form-control" id="telephone" name="telephone" 
+                           placeholder="06 12 34 56 78" pattern="^(?:(?:\+|00)33|0)\s*[1-9](?:[\s.-]*\d{2}){4}$" required>
+                    <div class="form-text">Format français : 06 12 34 56 78 ou 0612345678</div>
+                </div>
+
+                <div class="mb-3">
                     <label for="password" class="form-label mt-2">Mot de passe</label>
                     <input type="password" class="form-control" id="password" name="password" required>
                     <div class="form-text">Le mot de passe doit contenir au moins 8 caractères.</div>
-                </div>
-                <div class="mb-3">
-                    <label for="team_id" class="form-label mt-2">Équipe</label>
-                    <select class="form-control" id="team_id" name="team_id" required>
-                        {% for team in teams %}
-                        <option value="{{ team.id }}">{{ team.nom }}</option>
-                        {% endfor %}
-                    </select>
                 </div>
                 <div class="d-grid gap-2">
                     <button type="submit" class="btn btn-success">Créer un compte</button>
@@ -41,4 +40,17 @@
         </div>
     </div>
 </div>
+
+<script>
+document.getElementById('registerForm').addEventListener('submit', function(e) {
+    const telephone = document.getElementById('telephone').value;
+    const phonePattern = /^(?:(?:\+|00)33|0)\s*[1-9](?:[\s.-]*\d{2}){4}$/;
+    
+    if (!phonePattern.test(telephone)) {
+        e.preventDefault();
+        alert('Veuillez saisir un numéro de téléphone français valide (ex: 06 12 34 56 78)');
+        return false;
+    }
+});
+</script>
 {% endblock %}
