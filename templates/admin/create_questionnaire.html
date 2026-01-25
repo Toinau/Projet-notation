@@ -58,6 +58,15 @@
             color: #ffffff !important;
             opacity: 0.7;
         }
+        /* Style pour le bouton du calendrier de la date */
+        input[type="date"]::-webkit-calendar-picker-indicator {
+            filter: invert(1);
+            cursor: pointer;
+        }
+        input[type="date"]::-moz-calendar-picker-indicator {
+            filter: invert(1);
+            cursor: pointer;
+        }
         .form-label {
             color: #ffffff;
             font-weight: 600;
@@ -161,17 +170,17 @@
                             <div class="row mb-4">
                                 <div class="col-12">
                                     <label for="course_name" class="form-label">
-                                        <i class="fas fa-flag-checkered me-1"></i>Nom de la course *
+                                        <i class="fas fa-flag-checkered me-1"></i>Nom de l'évènement *
                                     </label>
                                     <input type="text" class="form-control" id="course_name" name="course_name" required 
-                                           placeholder="Ex: GP de Moyon">
+                                           placeholder="Ex: Gala du club">
                                 </div>
                             </div>
 
                             <div class="row mb-4">
                                 <div class="col-12">
                                     <label for="course_date" class="form-label">
-                                        <i class="fas fa-calendar me-1"></i>Date de la course *
+                                        <i class="fas fa-calendar me-1"></i>Date de l'évènement *
                                     </label>
                                     <input type="date" class="form-control" id="course_date" name="course_date" required>
                                 </div>
@@ -209,11 +218,9 @@
                                     <label class="form-label">
                                         <i class="fas fa-users me-1"></i>Sélectionner les coureurs présents *
                                     </label>
-                                    <div class="form-text mb-3">Cochez les coureurs qui participent à cette course</div>
+                                    <div class="form-text mb-3">Cochez les coureurs qui participent à cet évènement</div>
                                     <div id="coureurs-dyn-list">
-                                        {% if not selected_team_id %}
-                                            <div class="alert alert-warning">Veuillez d'abord sélectionner une équipe.</div>
-                                        {% elif coureurs %}
+                                        {% if coureurs %}
                                             <div class="mb-2">
                                                 <button type="button" class="btn btn-sm btn-outline-light" id="select-all-btn">Tout sélectionner</button>
                                                 <button type="button" class="btn btn-sm btn-outline-light ms-2" id="deselect-all-btn">Tout désélectionner</button>
@@ -229,7 +236,7 @@
                                                 {% endfor %}
                                             </div>
                                         {% else %}
-                                            <div class="alert alert-info">Aucun coureur dans cette équipe.</div>
+                                            <div class="alert alert-info">Aucun coureur disponible.</div>
                                         {% endif %}
                                     </div>
                                 </div>
@@ -238,7 +245,7 @@
                             <!-- Boutons d'action -->
                             <div class="row mt-4">
                                 <div class="col-12 text-center">
-                                    <button type="submit" class="btn btn-custom btn-lg me-3" id="btn-creer-questionnaire" {% if not selected_team_id %}disabled{% endif %}>
+                                    <button type="submit" class="btn btn-custom btn-lg me-3" id="btn-creer-questionnaire">
                                         <i class="fas fa-save me-2"></i>
                                         Créer le Questionnaire
                                     </button>
@@ -277,18 +284,12 @@
         teamSelect.addEventListener('change', function() {
             const teamId = this.value;
             coureursListDiv.innerHTML = '<div class="text-center text-muted py-3"><span class="spinner-border spinner-border-sm"></span> Chargement...</div>';
-            if (!teamId) {
-                coureursListDiv.innerHTML = '<div class="alert alert-warning">Veuillez d\'abord sélectionner une équipe.</div>';
-                if (creerBtn) {
-                    creerBtn.disabled = true;
-                }
-                return;
-            }
-            fetch(`/admin/api/coureurs_par_equipe/${teamId}`)
+            const url = teamId ? `/admin/api/coureurs_par_equipe/${teamId}` : '/admin/api/coureurs_tous';
+            fetch(url)
                 .then(resp => resp.json())
                 .then(data => {
                     if (data.length === 0) {
-                        coureursListDiv.innerHTML = '<div class="alert alert-info">Aucun coureur dans cette équipe.</div>';
+                        coureursListDiv.innerHTML = '<div class="alert alert-info">Aucun coureur disponible.</div>';
                         if (creerBtn) {
                             creerBtn.disabled = true;
                         }
@@ -320,7 +321,8 @@
                 });
         });
         if (creerBtn) {
-            creerBtn.disabled = !teamSelect.value;
+            // Si des coureurs sont déjà affichés côté serveur, permettre la création
+            creerBtn.disabled = false;
         }
         addSelectAllListeners();
     });

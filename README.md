@@ -78,13 +78,26 @@ cp env.example .env
 ```
 
 ### Configuration
-Créer un fichier `.env` avec :
+
+1. Créer un fichier `.env` à partir de `env.example` :
+```bash
+cp env.example .env
+```
+
+2. Configurer les variables d'environnement dans `.env` :
 ```env
 SECRET_KEY=votre-clé-secrète-très-sécurisée
 MAIL_USERNAME=votre-email@gmail.com
 MAIL_PASSWORD=votre-mot-de-passe-app
 MAIL_DEFAULT_SENDER=votre-email@gmail.com
 ```
+
+3. Pour configurer Gmail automatiquement :
+```bash
+python scripts/configure_gmail.py
+```
+
+📧 **Note** : Consultez `GUIDE_CONFIGURATION_GMAIL.md` pour la configuration détaillée de Gmail.
 
 ## 🎯 Utilisation
 

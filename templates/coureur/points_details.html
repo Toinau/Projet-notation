@@ -152,9 +152,9 @@
             <div class="col-12">
                 <h1 class="display-6">
                     <i class="fas fa-chart-line me-2 text-warning"></i>
-                    Mes Statistiques par Course
+                    Mes statistiques
                 </h1>
-                <p class="lead text-muted">Détail de vos performances et des statistiques d'équipe par course</p>
+                <p class="lead text-muted">Détail de vos performances et des statistiques d'équipe par évènement</p>
             </div>
         </div>
 
@@ -264,16 +264,16 @@
                             <div class="col-6">
                                 <small class="text-muted">
                                     <i class="fas fa-arrow-up me-1 text-success"></i>
-                                    Note max perso
+                                    Note max équipe
                                 </small>
-                                <div class="h5 mb-0 text-success">{{ course.note_max_perso }}/10</div>
+                                <div class="h5 mb-0 text-success">{{ course.note_max_equipe }}/10</div>
                             </div>
                             <div class="col-6">
                                 <small class="text-muted">
                                     <i class="fas fa-arrow-down me-1 text-danger"></i>
-                                    Note min perso
+                                    Note mini équipe
                                 </small>
-                                <div class="h5 mb-0 text-danger">{{ course.note_min_perso }}/10</div>
+                                <div class="h5 mb-0 text-danger">{{ course.note_min_equipe }}/10</div>
                             </div>
                         </div>
 
@@ -283,7 +283,7 @@
                                     <i class="fas fa-vote-yea me-1"></i>
                                     Nombre de votants
                                 </small>
-                                <div class="h5 mb-0">{{ course.nb_votants }} votants</div>
+                                <div class="h5 mb-0">{{ course.nb_repondus }} / {{ course.nb_total_participants }} votants</div>
                             </div>
                         </div>
                     </div>

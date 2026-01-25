@@ -1,13 +1,7 @@
 import os
 from flask import current_app, render_template
-from flask_mail import Mail, Message
-
-# Initialisation de Flask-Mail
-mail = Mail()
-
-def init_mail(app):
-    """Initialise Flask-Mail avec l'application Flask"""
-    mail.init_app(app)
+from flask_mail import Message
+from app import mail
 
 def send_questionnaire_notification_email(user, questionnaire):
     """
@@ -138,9 +132,15 @@ def send_questionnaire_notification_email(user, questionnaire):
         Merci de votre participation !
         """
         
+        # Récupération de l'expéditeur depuis la configuration
+        sender = current_app.config.get('MAIL_DEFAULT_SENDER') or current_app.config.get('MAIL_USERNAME')
+        if not sender:
+            return False, "Configuration email manquante : MAIL_DEFAULT_SENDER ou MAIL_USERNAME requis"
+        
         # Création du message
         msg = Message(
             subject=subject,
+            sender=sender,
             recipients=[user.email],
             body=text_content,
             html=html_content

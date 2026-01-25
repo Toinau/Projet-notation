@@ -11,7 +11,7 @@ BRANCH = "main"
 timestamp = datetime.now().strftime('%Y-%m-%d_%H-%M')
 backup_dir = f"backups/main-backup-{timestamp}"
 
-print(f"🗂️ Création du dossier de backup : {backup_dir}")
+print(f"Creation du dossier de backup : {backup_dir}")
 os.makedirs(backup_dir, exist_ok=True)
 
 # === Fichiers à exclure ===
@@ -32,7 +32,7 @@ for root, dirs, files in os.walk("."):
                 shutil.copy2(src_path, dst_path)
 
 # === Initialiser Git dans le dossier backup ===
-print("🚀 Initialisation du dépôt Git dans le dossier de backup")
+print("Initialisation du depot Git dans le dossier de backup")
 os.chdir(backup_dir)
 subprocess.run(["git", "init"])
 subprocess.run(["git", "branch", "-M", BRANCH])
@@ -42,4 +42,4 @@ subprocess.run(["git", "commit", "-m", f"Backup du {timestamp}"])
 # Forcer le push
 subprocess.run(["git", "push", "-f", "origin", BRANCH])
 
-print("✅ Backup complet envoyé sur GitHub (push forcé).")
+print("Backup complet envoye sur GitHub (push force).")

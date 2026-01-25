@@ -135,7 +135,7 @@
         </div>
 
         <!-- Fonctionnalités principales -->
-        <div class="row mb-4">
+        <div class="row mb-4 justify-content-center">
             <div class="col-md-3">
                 <div class="stats-card text-center">
                     <div class="stats-icon">
@@ -146,19 +146,6 @@
                     <a href="{{ url_for('main.create_questionnaire') }}" class="btn btn-dark btn-sm">
                         <i class="fas fa-plus me-1"></i>
                         Créer
-                    </a>
-                </div>
-            </div>
-            <div class="col-md-3">
-                <div class="stats-card text-center">
-                    <div class="stats-icon">
-                        <i class="fas fa-clipboard-check"></i>
-                    </div>
-                    <h3 class="mt-2 fw-bold">Réponse des coureurs</h3>
-                    <p class="mb-3">Consultez les réponses aux questionnaires</p>
-                    <a href="{{ url_for('main.admin_questionnaires') }}" class="btn btn-dark btn-sm">
-                        <i class="fas fa-eye me-1"></i>
-                        Afficher
                     </a>
                 </div>
             </div>
@@ -227,12 +214,8 @@
                                 </div>
                             </div>
                             <div class="col-md-4 mb-3">
-                                <div class="d-grid gap-2 d-md-flex justify-content-md-start">
-                                    <button class="btn btn-success btn-lg me-2" data-bs-toggle="modal" data-bs-target="#createTeamModal">
-                                        <i class="fas fa-users me-2"></i>
-                                        Créer une équipe
-                                    </button>
-                                    <a href="{{ url_for('main.admin_teams') }}" class="btn btn-outline-warning btn-lg">
+                                <div class="d-grid">
+                                    <a href="{{ url_for('main.admin_teams') }}" class="btn btn-custom btn-lg">
                                         <i class="fas fa-cogs me-2"></i>
                                         Gérer les équipes
                                     </a>
@@ -244,105 +227,9 @@
             </div>
         </div>
 
-        <!-- Statistiques -->
-        <div class="row mb-4 mt-4">
-            <div class="col-md-3">
-                <div class="stats-card text-center">
-                    <div class="stats-icon">
-                        <i class="fas fa-users"></i>
-                    </div>
-                    <h3 class="mt-2">{{ stats.total_users }}</h3>
-                    <p class="mb-0">Utilisateurs Total</p>
-                </div>
-            </div>
-            <div class="col-md-3">
-                <div class="stats-card text-center">
-                    <div class="stats-icon">
-                        <i class="fas fa-running"></i>
-                    </div>
-                    <h3 class="mt-2">{{ stats.total_coureurs }}</h3>
-                    <p class="mb-0">Coureurs</p>
-                </div>
-            </div>
-            <div class="col-md-3">
-                <div class="stats-card text-center">
-                    <div class="stats-icon">
-                        <i class="fas fa-user-shield"></i>
-                    </div>
-                    <h3 class="mt-2">{{ stats.total_admins }}</h3>
-                    <p class="mb-0">Administrateurs</p>
-                </div>
-            </div>
-            <div class="col-md-3">
-                <div class="stats-card text-center">
-                    <div class="stats-icon">
-                        <i class="fas fa-user-check"></i>
-                    </div>
-                    <h3 class="mt-2">{{ stats.active_users }}</h3>
-                    <p class="mb-0">Comptes Actifs</p>
-                </div>
-            </div>
-        </div>
+        
     </div>
 
-    <!-- Modal Création d'équipe -->
-    <div class="modal fade" id="createTeamModal" tabindex="-1" aria-labelledby="createTeamModalLabel" aria-hidden="true">
-        <div class="modal-dialog">
-            <div class="modal-content" style="background: #1a1a1a; color: #fff; border-radius: 15px; border: 2px solid #ffd700; box-shadow: 0 4px 15px rgba(255,215,0,0.15);">
-                <form method="POST" action="{{ url_for('main.create_team') }}" class="needs-validation" novalidate>
-                    <div class="modal-header" style="background: #ffd700; color: #000; border-top-left-radius: 13px; border-top-right-radius: 13px;">
-                        <h5 class="modal-title fw-bold" id="createTeamModalLabel">
-                            <i class="fas fa-users me-2 text-success"></i>Créer une nouvelle équipe
-                        </h5>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                    </div>
-                    <div class="modal-body">
-                        <p class="text-white mb-3">Remplissez les informations ci-dessous pour ajouter une nouvelle équipe au club.</p>
-                        <div class="mb-3">
-                            <label for="teamName" class="form-label fw-bold">Nom de l'équipe <span class="text-danger">*</span></label>
-                            <input type="text" class="form-control rounded-3 border-2" id="teamName" name="nom" placeholder="Ex : Les Rapides" required style="background: #222; color: #ffd700; border-color: #ffd700;">
-                            <div class="form-text text-light">Choisissez un nom unique pour l'équipe.</div>
-                            <div class="invalid-feedback">Le nom de l'équipe est requis.</div>
-                        </div>
-                        <div class="mb-3">
-                            <label for="teamColor" class="form-label fw-bold">Couleur de l'équipe
-                                <i class="fas fa-info-circle" data-bs-toggle="tooltip" title="Choisissez une couleur pour identifier l'équipe (optionnel)"></i>
-                            </label>
-                            <input type="color" class="form-control form-control-color rounded-3 border-2" id="teamColor" name="couleur" value="#ffd700" style="border-color: #ffd700;">
-                            <div class="form-text text-light">La couleur permet de distinguer visuellement l'équipe (optionnel).</div>
-                        </div>
-                        <div class="mb-3">
-                            <label class="form-label fw-bold">Affecter des coureurs à l'équipe</label>
-                            <div class="mb-2">
-                                <button type="button" class="btn btn-sm btn-outline-light me-2" onclick="selectAllCoureurs(true)"><i class="fas fa-check-square me-1"></i>Tout sélectionner</button>
-                                <button type="button" class="btn btn-sm btn-outline-light" onclick="selectAllCoureurs(false)"><i class="fas fa-square me-1"></i>Tout désélectionner</button>
-                            </div>
-                            <div class="row g-2" style="max-height: 180px; overflow-y: auto; background: #222; border-radius: 8px; padding: 10px;">
-                                {% for coureur in all_coureurs %}
-                                    <div class="col-12 col-md-6">
-                                        <div class="form-check">
-                                            <input class="form-check-input" type="checkbox" name="coureurs" value="{{ coureur.id }}" id="coureur{{ coureur.id }}">
-                                            <label class="form-check-label text-light" for="coureur{{ coureur.id }}">
-                                                {{ coureur.prenom }} {{ coureur.nom }} ({{ coureur.email }})
-                                            </label>
-                                        </div>
-                                    </div>
-                                {% endfor %}
-                                {% if not all_coureurs %}
-                                    <div class="col-12 text-muted">Aucun coureur disponible.</div>
-                                {% endif %}
-                            </div>
-                            <div class="form-text text-light">Cochez les coureurs à ajouter dans cette équipe (optionnel).</div>
-                        </div>
-                    </div>
-                    <div class="modal-footer" style="background: #222; border-bottom-left-radius: 13px; border-bottom-right-radius: 13px;">
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
-                        <button type="submit" class="btn btn-success" style="background: #ffd700; color: #000; border: none; font-weight: 600;">Créer l'équipe</button>
-                    </div>
-                </form>
-            </div>
-        </div>
-    </div>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
     <script>

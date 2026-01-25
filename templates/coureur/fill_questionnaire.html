@@ -195,7 +195,7 @@
                     <div class="card-body">
                         <div class="row">
                             <div class="col-md-6">
-                                <strong>Date de course:</strong> {{ questionnaire.course_date.strftime('%d/%m/%Y') }}
+                                <strong>Date de l'évènement:</strong> {{ questionnaire.course_date.strftime('%d/%m/%Y') }}
                             </div>
                             <div class="col-md-6">
                                 <strong>Points Direct Vélo:</strong> {{ questionnaire.direct_velo_points }} points
@@ -207,6 +207,28 @@
                     <i class="fas fa-info-circle me-2"></i>
                     Évaluez chaque participant de la course sur une échelle de 1 à 10
                 </p>
+                <div class="card mt-3 mb-4">
+                    <div class="card-body">
+                        <h6 class="mb-3"><strong>Barème de notation :</strong></h6>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <small><strong>0</strong> = coureur absent</small><br>
+                                <small><strong>1</strong> = Apport nul</small><br>
+                                <small><strong>2</strong> = très mauvais apport</small><br>
+                                <small><strong>3</strong> = mauvais apport</small><br>
+                                <small><strong>4</strong> = apport médiocre</small><br>
+                                <small><strong>5</strong> = apport insuffisant</small><br>
+                            </div>
+                            <div class="col-md-6">
+                                <small><strong>6</strong> = apport suffisant</small><br>
+                                <small><strong>7</strong> = apport satisfaisant</small><br>
+                                <small><strong>8</strong> = bon apport</small><br>
+                                <small><strong>9</strong> = très bon apport</small><br>
+                                <small><strong>10</strong> = excellent apport</small><br>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
 

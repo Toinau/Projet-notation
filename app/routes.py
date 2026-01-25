@@ -1,10 +1,9 @@
-from flask import Blueprint, render_template, redirect, url_for, request, flash, session, abort, current_app, send_from_directory, jsonify
+from flask import Blueprint, render_template, redirect, url_for, request, flash, session, current_app, send_from_directory, jsonify
 from werkzeug.security import generate_password_hash, check_password_hash
 from app.models import User, Questionnaire, QuestionnaireParticipant, QuestionnaireResponse, Team
 from flask_login import current_user, login_user, login_required
 from app import db, mail, serializer
 from flask_mail import Message
-from itsdangerous import SignatureExpired, BadSignature
 from datetime import datetime
 from sqlalchemy import func, case
 import os
@@ -565,9 +564,11 @@ def create_questionnaire():
     from app.models import Team
     equipes = Team.query.filter_by(actif=True).order_by(Team.nom).all()
     team_id = request.args.get('team_id') or request.form.get('team_id')
-    coureurs = []
+    # Par défaut, si aucune équipe n'est sélectionnée, on affiche tous les coureurs actifs
     if team_id:
         coureurs = User.query.filter_by(role='coureur', is_active=True, team_id=team_id).order_by(User.nom).all()
+    else:
+        coureurs = get_coureurs_list()
     if request.method == 'POST' and 'course_name' in request.form:
         try:
             # Récupération des données du formulaire
@@ -606,37 +607,29 @@ def create_questionnaire():
                 db.session.add(participant)
             db.session.commit()
             
-            # Envoyer les notifications WhatsApp aux coureurs
-            from app.whatsapp_service import WhatsAppService
+            # Envoyer les notifications email aux coureurs
+            from app.email_service import send_questionnaire_notification_email
             
-            whatsapp_service = WhatsAppService()
-            whatsapp_sent = 0
-            whatsapp_errors = 0
+            emails_sent = 0
+            emails_errors = 0
             
             for coureur_id in present_coureurs:
                 coureur = User.query.get(int(coureur_id))
-                if coureur and coureur.telephone and coureur.notifications_sms:
-                    clean_number = whatsapp_service._clean_phone_number(coureur.telephone)
-                    date_str = questionnaire.course_date.strftime('%d/%m/%Y')
-                    success, message = whatsapp_service.send_questionnaire_template(
-                        clean_number,
-                        coureur.prenom,
-                        questionnaire.course_name,
-                        date_str
-                    )
+                if coureur and coureur.email:
+                    success, message = send_questionnaire_notification_email(coureur, questionnaire)
                     if success:
-                        whatsapp_sent += 1
+                        emails_sent += 1
                     else:
-                        whatsapp_errors += 1
-                        current_app.logger.warning(f"Erreur WhatsApp pour {coureur.prenom} {coureur.nom}: {message}")
+                        emails_errors += 1
+                        current_app.logger.warning(f"Erreur email pour {coureur.prenom} {coureur.nom}: {message}")
             
             nb_coureurs = len(present_coureurs)
             flash_message = f'Questionnaire créé avec succès pour la course "{course_name}" avec {nb_coureurs} coureurs et {direct_velo_points} points Direct Vélo!'
             
-            if whatsapp_sent > 0:
-                flash_message += f' {whatsapp_sent} notification(s) WhatsApp envoyée(s).'
-            if whatsapp_errors > 0:
-                flash_message += f' {whatsapp_errors} erreur(s) WhatsApp.'
+            if emails_sent > 0:
+                flash_message += f' {emails_sent} notification(s) email envoyée(s).'
+            if emails_errors > 0:
+                flash_message += f' {emails_errors} erreur(s) email.'
                 
             flash(flash_message, 'success')
             return redirect(url_for('main.admin_dashboard'))
@@ -881,32 +874,44 @@ def change_password():
 
 @main_bp.route('/forgot_password', methods=['GET', 'POST'])
 def forgot_password():
-    user = current_user
     if request.method == 'POST':
-        if not user.is_authenticated:
-            return redirect(url_for('main.login'))
         email = request.form['email'].strip().lower()
         try:
             user = User.query.filter_by(email=email).first()
             if user:
                 token = serializer.dumps(user.email, salt='reset-password')
                 link = url_for('main.reset_password', token=token, _external=True)
-                msg = Message('Réinitialisation de votre mot de passe', recipients=[email])
+                
+                # Récupération de l'expéditeur depuis la configuration
+                sender = current_app.config.get('MAIL_DEFAULT_SENDER') or current_app.config.get('MAIL_USERNAME')
+                if not sender:
+                    current_app.logger.error("Configuration email manquante : MAIL_DEFAULT_SENDER ou MAIL_USERNAME requis")
+                    flash('Erreur de configuration email. Veuillez contacter l\'administrateur.', 'danger')
+                    return redirect(url_for('main.login'))
+                
+                msg = Message(
+                    'Réinitialisation de votre mot de passe',
+                    sender=sender,
+                    recipients=[email]
+                )
                 msg.body = f'Cliquez sur ce lien pour réinitialiser votre mot de passe : {link}'
                 mail.send(msg)
+                current_app.logger.info(f"Email de réinitialisation envoyé à {email}")
             flash("Si l'adresse e-mail existe, un lien a été envoyé.", 'info')
         except Exception as e:
             current_app.logger.error(f"Erreur envoi email reset: {e}")
-            flash('Erreur lors de l\'envoi de l\'email.', 'danger')
+            error_msg = str(e)
+            # Message d'erreur plus explicite pour les problèmes d'authentification Gmail
+            if '535' in error_msg or 'BadCredentials' in error_msg or 'Username and Password not accepted' in error_msg:
+                flash('Erreur d\'authentification Gmail. Vérifiez : 1) Utilisez un "mot de passe d\'application" (16 caractères) et non votre mot de passe Gmail normal, 2) L\'authentification à deux facteurs est activée, 3) Le mot de passe dans .env n\'a pas d\'espaces, 4) L\'application a été REDÉMARRÉE après modification du .env. Consultez RESOLUTION_ERREUR_GMAIL.md', 'danger')
+            else:
+                flash(f'Erreur lors de l\'envoi de l\'email: {error_msg}', 'danger')
         return redirect(url_for('main.login'))
     return render_template('forgot_password.html')
 
 @main_bp.route('/reset_password/<token>', methods=['GET', 'POST'])
 def reset_password(token):
-    user = current_user
     try:
-        if not user.is_authenticated:
-            return redirect(url_for('main.login'))
         email = serializer.loads(token, salt='reset-password', max_age=3600)
     except Exception:
         flash('Le lien est invalide ou expiré.', 'danger')
@@ -921,7 +926,7 @@ def reset_password(token):
             is_valid, message = User.validate_password(new_password)
             if not is_valid:
                 flash(message, 'danger')
-                return render_template('reset_password.html')
+                return render_template('reset_password.html', token=token)
             user.password = generate_password_hash(new_password)
             db.session.commit()
             flash('Mot de passe modifié avec succès.', 'success')
@@ -930,7 +935,7 @@ def reset_password(token):
             db.session.rollback()
             current_app.logger.error(f"Erreur reset password: {e}")
             flash('Erreur lors de la réinitialisation du mot de passe.', 'danger')
-    return render_template('reset_password.html')
+    return render_template('reset_password.html', token=token)
 
 @main_bp.route('/coureur/questionnaires')
 @login_required
@@ -1205,10 +1210,32 @@ def coureur_points_details():
                     QuestionnaireResponse.evaluated_id.in_(equipe_user_ids)
                 ).scalar() or 0
                 
-                # Calculer le nombre de votants pour cette course
+                # Calculer la note maximale et minimale équipe pour cette course
+                note_max_equipe = db.session.query(func.max(QuestionnaireResponse.rating)).filter(
+                    QuestionnaireResponse.questionnaire_id == questionnaire.id,
+                    QuestionnaireResponse.evaluated_id.in_(equipe_user_ids)
+                ).scalar() or 0
+                
+                note_min_equipe = db.session.query(func.min(QuestionnaireResponse.rating)).filter(
+                    QuestionnaireResponse.questionnaire_id == questionnaire.id,
+                    QuestionnaireResponse.evaluated_id.in_(equipe_user_ids)
+                ).scalar() or 0
+                
+                # Calculer le nombre de votants pour cette course (évaluateurs qui ont donné des notes)
                 nb_votants = db.session.query(QuestionnaireResponse.evaluator_id).filter(
                     QuestionnaireResponse.questionnaire_id == questionnaire.id
                 ).distinct().count()
+                
+                # Calculer le nombre de participants qui ont répondu au questionnaire
+                nb_repondus = db.session.query(QuestionnaireParticipant).filter(
+                    QuestionnaireParticipant.questionnaire_id == questionnaire.id,
+                    QuestionnaireParticipant.has_responded == True
+                ).count()
+                
+                # Calculer le nombre total de participants au questionnaire
+                nb_total_participants = db.session.query(QuestionnaireParticipant).filter(
+                    QuestionnaireParticipant.questionnaire_id == questionnaire.id
+                ).count()
                 
                 # Accumuler pour le calcul de la moyenne du mois sélectionné
                 if float(note_moyenne_perso) > 0:
@@ -1223,7 +1250,11 @@ def coureur_points_details():
                     'note_max_perso': int(note_max_perso) if note_max_perso else 0,
                     'note_min_perso': int(note_min_perso) if note_min_perso else 0,
                     'note_moyenne_equipe': round(float(note_moyenne_equipe), 1),
+                    'note_max_equipe': int(note_max_equipe) if note_max_equipe else 0,
+                    'note_min_equipe': int(note_min_equipe) if note_min_equipe else 0,
                     'nb_votants': nb_votants,
+                    'nb_repondus': nb_repondus,
+                    'nb_total_participants': nb_total_participants,
                     'has_responded': has_responded
                 })
         
@@ -2103,6 +2134,10 @@ def admin_global_rankings():
             else:
                 season_val = course_year
             available_seasons.add(season_val)
+        # Toujours inclure au moins la saison en cours et la saison précédente
+        current_season = now.year + 1 if now.month >= 11 else now.year
+        available_seasons.add(current_season)
+        available_seasons.add(current_season - 1)
         # Utiliser la variable season déjà calculée et sécurisée
         season_options = []
         for s in sorted(available_seasons, reverse=True):
@@ -2185,18 +2220,18 @@ def create_team():
     user = current_user
     if not user.is_admin():
         flash('Accès interdit. Privilèges administrateur requis.', 'danger')
-        return redirect(url_for('main.admin_dashboard'))
+        return redirect(url_for('main.admin_teams'))
     nom = request.form.get('nom', '').strip()
     description = request.form.get('description', '').strip()
     couleur = request.form.get('couleur', '').strip() or None
     coureurs_ids = request.form.getlist('coureurs')
     if not nom:
         flash("Le nom de l'équipe est requis.", 'danger')
-        return redirect(url_for('main.admin_dashboard'))
+        return redirect(url_for('main.admin_teams'))
     # Vérifier unicité du nom
     if Team.query.filter_by(nom=nom).first():
         flash("Une équipe avec ce nom existe déjà.", 'danger')
-        return redirect(url_for('main.admin_dashboard'))
+        return redirect(url_for('main.admin_teams'))
     try:
         team = Team(nom=nom, description=description, couleur=couleur, actif=True)
         db.session.add(team)
@@ -2214,7 +2249,7 @@ def create_team():
         db.session.rollback()
         current_app.logger.error(f"Erreur création équipe : {e}")
         flash("Erreur lors de la création de l'équipe.", 'danger')
-    return redirect(url_for('main.admin_dashboard'))
+    return redirect(url_for('main.admin_teams'))
 
 @main_bp.route('/admin/teams')
 @login_required
@@ -2283,6 +2318,20 @@ def retirer_coureur(team_id, coureur_id):
 @login_required
 def api_coureurs_par_equipe(team_id):
     coureurs = User.query.filter_by(role='coureur', is_active=True, team_id=team_id).order_by(User.nom).all()
+    data = [
+        {
+            'id': c.id,
+            'prenom': c.prenom,
+            'nom': c.nom,
+            'email': c.email
+        } for c in coureurs
+    ]
+    return jsonify(data)
+
+@main_bp.route('/admin/api/coureurs_tous')
+@login_required
+def api_coureurs_tous():
+    coureurs = User.query.filter_by(role='coureur', is_active=True).order_by(User.nom).all()
     data = [
         {
             'id': c.id,

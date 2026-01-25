@@ -42,7 +42,12 @@
     </div>
 </nav>
 <div class="container mt-4">
-    <h1 class="display-6 mb-4"><i class="fas fa-users me-2 text-warning"></i>Gestion des équipes</h1>
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="display-6 mb-0"><i class="fas fa-users me-2 text-warning"></i>Gestion des équipes</h1>
+        <button class="btn btn-custom" data-bs-toggle="modal" data-bs-target="#createTeamModal">
+            <i class="fas fa-users me-2"></i>Créer une équipe
+        </button>
+    </div>
     {% with messages = get_flashed_messages(with_categories=true) %}
         {% if messages %}
             {% for category, message in messages %}
@@ -161,6 +166,52 @@
         <p class="text-muted">Créez une équipe pour commencer.</p>
     </div>
     {% endif %}
+</div>
+<!-- Modal Création d'équipe -->
+<div class="modal fade" id="createTeamModal" tabindex="-1" aria-labelledby="createTeamModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content bg-dark text-light" style="border: 2px solid #ffd700;">
+      <form method="POST" action="{{ url_for('main.create_team') }}" class="needs-validation" novalidate>
+        <div class="modal-header" style="background: #ffd700; color: #000;">
+          <h5 class="modal-title" id="createTeamModalLabel"><i class="fas fa-users me-2 text-success"></i>Créer une nouvelle équipe</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fermer"></button>
+        </div>
+        <div class="modal-body">
+          <div class="mb-3">
+            <label for="teamName" class="form-label fw-bold">Nom de l'équipe <span class="text-danger">*</span></label>
+            <input type="text" class="form-control" id="teamName" name="nom" placeholder="Ex : Les Rapides" required style="background:#222;color:#ffd700;border-color:#ffd700;">
+            <div class="invalid-feedback">Le nom de l'équipe est requis.</div>
+          </div>
+          <div class="mb-3">
+            <label for="teamColor" class="form-label fw-bold">Couleur de l'équipe</label>
+            <input type="color" class="form-control form-control-color" id="teamColor" name="couleur" value="#ffd700" style="border-color:#ffd700;">
+          </div>
+          <div class="mb-3">
+            <label class="form-label fw-bold">Affecter des coureurs à l'équipe</label>
+            <div class="mb-2">
+              <button type="button" class="btn btn-sm btn-outline-light me-2" onclick="checkAll('coureurs-create-list', true)">Tout sélectionner</button>
+              <button type="button" class="btn btn-sm btn-outline-light" onclick="checkAll('coureurs-create-list', false)">Tout désélectionner</button>
+            </div>
+            <div id="coureurs-create-list" style="max-height: 200px; overflow-y: auto; background:#222;border-radius:8px;padding:10px;">
+              {% for coureur in coureurs_sans_equipe %}
+              <div class="form-check">
+                <input class="form-check-input" type="checkbox" name="coureurs" value="{{ coureur.id }}" id="coureur-create-{{ coureur.id }}">
+                <label class="form-check-label" for="coureur-create-{{ coureur.id }}">{{ coureur.prenom }} {{ coureur.nom }} ({{ coureur.email }})</label>
+              </div>
+              {% endfor %}
+              {% if not coureurs_sans_equipe %}
+                <div class="text-muted">Aucun coureur sans équipe disponible.</div>
+              {% endif %}
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+          <button type="submit" class="btn btn-custom">Créer l'équipe</button>
+        </div>
+      </form>
+    </div>
+  </div>
 </div>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
 <script>
