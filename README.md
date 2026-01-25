@@ -287,12 +287,27 @@ Les erreurs sont loggées avec `app.logger.error()` pour faciliter le débogage.
 
 ## 🚀 Déploiement
 
+### Déploiement sur Ionos
+
+Pour déployer l'application sur un VPS Ionos et la rendre accessible 24h/24, consultez le guide complet :
+
+📖 **[GUIDE_DEPLOIEMENT_IONOS.md](GUIDE_DEPLOIEMENT_IONOS.md)** - Guide détaillé étape par étape
+
+Le guide couvre :
+- Achat et configuration du VPS Ionos
+- Installation des dépendances (Python, PostgreSQL, Nginx, Gunicorn)
+- Configuration de l'application en production
+- Configuration SSL/HTTPS avec Let's Encrypt
+- Mise à jour et maintenance
+
 ### Variables d'Environnement de Production
 ```env
 DATABASE_URL=postgresql://...
 SECRET_KEY=clé-secrète-production
 MAIL_USERNAME=email-production
 MAIL_PASSWORD=mot-de-passe-production
+FLASK_ENV=production
+FLASK_DEBUG=False
 ```
 
 ## 🤝 Contribution

@@ -3,6 +3,10 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
+# Détection de l'environnement de production
+FLASK_ENV = os.environ.get('FLASK_ENV', 'development')
+IS_PRODUCTION = FLASK_ENV == 'production' or os.environ.get('FLASK_DEBUG', 'True').lower() == 'false'
+
 class Config:
     SECRET_KEY = os.environ.get('SECRET_KEY') or 'dev-secret-key-change-in-production'
     
@@ -10,32 +14,40 @@ class Config:
     SESSION_COOKIE_NAME = "session"
     SESSION_COOKIE_HTTPONLY = True
     SESSION_COOKIE_SAMESITE = "Lax"
-    SESSION_COOKIE_SECURE = False  # True uniquement en production HTTPS
+    SESSION_COOKIE_SECURE = IS_PRODUCTION  # True en production HTTPS
 
     REMEMBER_COOKIE_NAME = "remember_token"
     REMEMBER_COOKIE_HTTPONLY = True
     REMEMBER_COOKIE_SAMESITE = "Lax"
-    REMEMBER_COOKIE_SECURE = False  # True uniquement en production HTTPS
+    REMEMBER_COOKIE_SECURE = IS_PRODUCTION  # True en production HTTPS
 
     # Durée de la session (exemple : 7 jours)
     PERMANENT_SESSION_LIFETIME = 60 * 60 * 24 * 7  # en secondes (ici 7 jours)
     
     # Configuration de la base de données
-    # En production, Railway fournit automatiquement DATABASE_URL
-    basedir = os.path.abspath(os.path.dirname(__file__))
-    sqlite_path = os.path.join(basedir, 'instance', 'app.db')
-
-    # Crée le dossier 'instance' s'il n'existe pas
-    os.makedirs(os.path.dirname(sqlite_path), exist_ok=True)
-
-    SQLALCHEMY_DATABASE_URI = os.environ.get('DATABASE_URL') or f"sqlite:///{sqlite_path}"
-
+    # En production, utilise PostgreSQL via DATABASE_URL
+    # En développement, utilise SQLite
+    _database_url = os.environ.get('DATABASE_URL')
+    if IS_PRODUCTION and _database_url:
+        _db_uri = _database_url
+    else:
+        basedir = os.path.abspath(os.path.dirname(__file__))
+        sqlite_path = os.path.join(basedir, 'instance', 'app.db')
+        # Crée le dossier 'instance' s'il n'existe pas
+        os.makedirs(os.path.dirname(sqlite_path), exist_ok=True)
+        _db_uri = _database_url or f"sqlite:///{sqlite_path}"
     
-    # Fix pour PostgreSQL sur Railway
-    if SQLALCHEMY_DATABASE_URI and SQLALCHEMY_DATABASE_URI.startswith("postgres://"):
-        SQLALCHEMY_DATABASE_URI = SQLALCHEMY_DATABASE_URI.replace("postgres://", "postgresql://", 1)
+    # Fix pour PostgreSQL (remplace postgres:// par postgresql://)
+    if _db_uri and _db_uri.startswith("postgres://"):
+        _db_uri = _db_uri.replace("postgres://", "postgresql://", 1)
+    
+    SQLALCHEMY_DATABASE_URI = _db_uri
     
     SQLALCHEMY_TRACK_MODIFICATIONS = False
+    
+    # Mode debug (désactivé en production)
+    DEBUG = not IS_PRODUCTION
+    TESTING = False
     
     # Configuration email
     MAIL_SERVER = os.environ.get('MAIL_SERVER') or 'smtp.gmail.com'
