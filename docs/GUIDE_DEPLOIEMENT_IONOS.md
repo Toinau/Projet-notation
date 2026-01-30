@@ -19,6 +19,7 @@ Ce guide vous explique étape par étape comment déployer votre application Fla
 12. [Vérification et tests](#vérification-et-tests)
 13. [Mise à jour de l'application](#mise-à-jour-de-lapplication)
 14. [Dépannage](#dépannage)
+15. [Sauvegarde de la base de données](#sauvegarde-de-la-base-de-données)
 
 ---
 
@@ -811,6 +812,26 @@ Avant de considérer le déploiement terminé, vérifiez :
 - [ ] Application testée dans le navigateur
 - [ ] Connexion admin fonctionnelle
 - [ ] Logs vérifiés (pas d'erreurs)
+
+---
+
+## Sauvegarde de la base de données
+
+Pour ne pas perdre les données en cas de problème, sauvegardez régulièrement la base PostgreSQL et récupérez les dumps sur votre PC.
+
+**Sur le VPS** (créer un dump) :
+```bash
+cd /var/www/Projet-notation
+./deploy/backup_db.sh
+```
+Le fichier est créé dans `backups/db_AAAA-MM-JJ_HH-MM.dump`.
+
+**Depuis votre PC** (récupérer les sauvegardes) :
+```powershell
+scp -r root@VOTRE_IP:/var/www/Projet-notation/backups ./backups-vps
+```
+
+**Procédure complète** (sauvegarde, récupération, restauration, cron) : voir **[SAUVEGARDE_VPS.md](SAUVEGARDE_VPS.md)**.
 
 ---
 
