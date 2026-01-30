@@ -23,9 +23,9 @@ ssh root@VOTRE_IP_SERVEUR
 
 ### Étape 2 : Déploiement automatique
 ```bash
-# Depuis votre machine locale
-chmod +x deploy.sh
-./deploy.sh VOTRE_IP_SERVEUR
+# Depuis votre machine locale (à la racine du projet)
+chmod +x deploy/deploy.sh
+./deploy/deploy.sh VOTRE_IP_SERVEUR
 ```
 
 ### Étape 3 : Configuration manuelle
@@ -37,7 +37,7 @@ ssh root@VOTRE_IP_SERVEUR
 cd /var/www/Projet-notation
 
 # Créer le fichier .env
-cp production.env.example .env
+cp deploy/production.env.example .env
 nano .env
 ```
 
@@ -69,7 +69,7 @@ flask create-admin
 ### Étape 6 : Configuration de Nginx
 ```bash
 # Copier la configuration Nginx
-cp nginx.conf /etc/nginx/sites-available/notation-app
+cp deploy/nginx.conf /etc/nginx/sites-available/notation-app
 
 # Modifier le domaine dans le fichier
 nano /etc/nginx/sites-available/notation-app
@@ -89,7 +89,7 @@ systemctl restart nginx
 ### Étape 7 : Configuration de Supervisor
 ```bash
 # Copier la configuration Supervisor
-cp supervisor.conf /etc/supervisor/conf.d/notation-app.conf
+cp deploy/supervisor.conf /etc/supervisor/conf.d/notation-app.conf
 
 # Redémarrer Supervisor
 supervisorctl reread

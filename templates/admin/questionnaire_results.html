@@ -66,10 +66,10 @@
             margin: 0.2rem;
         }
         .rating-block { display: block; margin: 0.2rem 0; }
-        .rating-1-3 { color: #ff6b6b; }
-        .rating-4-6 { color: #ffd93d; }
-        .rating-7-8 { color: #6bcf7f; }
-        .rating-9-10 { color: #4ecdc4; }
+        /* 3 couleurs pour les notes : rouge, blanc, vert */
+        .rating-rouge { color: #ff6b6b; }
+        .rating-blanc { color: #ffffff; }
+        .rating-vert { color: #6bcf7f; }
         .dropdown-menu {
             background: #1a1a1a;
             border: 1px solid #333333;
@@ -164,7 +164,7 @@
                         <strong>Date de l'évènement:</strong> {{ questionnaire.course_date.strftime('%d/%m/%Y') }}
                     </div>
                     <div class="col-md-6">
-                        <strong>Points Direct Vélo:</strong> {{ questionnaire.direct_velo_points }} points
+                        <strong>Points Evénements:</strong> {{ questionnaire.direct_velo_points }} points
                     </div>
                 </div>
             </div>
@@ -187,9 +187,18 @@
                                     <i class="fas fa-check me-1"></i>Répondu
                                 </span>
                             {% else %}
-                                <span class="badge bg-warning">
+                                <span class="badge bg-warning text-dark me-2">
                                     <i class="fas fa-clock me-1"></i>En attente
                                 </span>
+                                <form method="POST" action="{{ url_for('main.admin_resend_questionnaire_email', questionnaire_id=questionnaire.id, user_id=result.user_id) }}" class="d-inline">
+                                    <input type="hidden" name="season" value="{{ request.args.get('season') }}">
+                                    <input type="hidden" name="month" value="{{ request.args.get('month') }}">
+                                    <input type="hidden" name="year" value="{{ request.args.get('year') }}">
+                                    <input type="hidden" name="team_id" value="{{ request.args.get('team_id') }}">
+                                    <button type="submit" class="btn btn-outline-light btn-sm" title="Renvoyer l'email de rappel">
+                                        <i class="fas fa-envelope me-1"></i>Renvoyer l'email
+                                    </button>
+                                </form>
                             {% endif %}
                         </div>
                         
@@ -203,10 +212,9 @@
                                 <div class="mb-2">
                                     {% for response in result.responses_given %}
                                         <span class="rating-display rating-block
-                                            {% if response.rating <= 3 %} rating-1-3
-                                            {% elif response.rating <= 6 %} rating-4-6
-                                            {% elif response.rating <= 8 %} rating-7-8
-                                            {% else %} rating-9-10{% endif %}">
+                                            {% if response.rating <= 3 %} rating-rouge
+                                            {% elif response.rating <= 6 %} rating-blanc
+                                            {% else %} rating-vert{% endif %}">
                                             {{ response.evaluated_name }}: {{ response.rating }}/10
                                         </span>
                                     {% endfor %}

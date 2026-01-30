@@ -6,12 +6,22 @@ from werkzeug.security import generate_password_hash
 
 def register_cli(app):
     @app.cli.command('create-admin')
+    @click.option('--prenom', '-p', default=None, help='Prénom de l\'administrateur')
+    @click.option('--nom', '-n', default=None, help='Nom de l\'administrateur')
+    @click.option('--email', '-e', default=None, help='Email de l\'administrateur')
+    @click.option('--password', '-w', default=None, help='Mot de passe (8+ car., 1 maj., 1 min., 1 chiffre)')
     @with_appcontext
-    def create_admin():
-        prenom = input("Prénom admin: ").strip()
-        nom = input("Nom admin: ").strip()
-        email = input("Email admin: ").strip().lower()
-        password = input("Mot de passe admin: ")
+    def create_admin(prenom, nom, email, password):
+        if prenom is None:
+            prenom = input("Prénom admin: ").strip()
+        if nom is None:
+            nom = input("Nom admin: ").strip()
+        if email is None:
+            email = input("Email admin: ").strip().lower()
+        else:
+            email = email.strip().lower()
+        if password is None:
+            password = input("Mot de passe admin: ")
         if not prenom or not nom or not email or not password:
             print("❌ Tous les champs sont requis")
             return

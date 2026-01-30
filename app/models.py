@@ -4,6 +4,12 @@ import re
 from sqlalchemy.orm import relationship
 from flask_login import UserMixin
 
+# Table de liaison many-to-many pour User et Team
+user_team = db.Table('user_team',
+    db.Column('user_id', db.Integer, db.ForeignKey('user.id'), primary_key=True),
+    db.Column('team_id', db.Integer, db.ForeignKey('team.id'), primary_key=True)
+)
+
 class User(UserMixin, db.Model):
     id = db.Column(db.Integer, primary_key=True)
     prenom = db.Column(db.String(100), nullable=False)
@@ -16,8 +22,8 @@ class User(UserMixin, db.Model):
     notifications_sms = db.Column(db.Boolean, default=True, nullable=False)  # Préférence SMS
     notifications_email = db.Column(db.Boolean, default=True, nullable=False)  # Préférence Email
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
-    team_id = db.Column(db.Integer, db.ForeignKey('team.id'))
-    team = relationship('Team', back_populates='users')
+    # Relation many-to-many avec Team
+    teams = relationship('Team', secondary=user_team, back_populates='users')
 
     def __repr__(self):
         return f'<User {self.prenom} {self.nom} - {self.role}>'
@@ -127,7 +133,8 @@ class Team(db.Model):
     description = db.Column(db.String(256))
     couleur = db.Column(db.String(16))
     actif = db.Column(db.Boolean, default=True)
-    users = relationship('User', back_populates='team')
+    # Relation many-to-many avec User
+    users = relationship('User', secondary=user_team, back_populates='teams')
 
     def __repr__(self):
         return f'<Team {self.nom}>' 

@@ -29,6 +29,8 @@ Ce guide vous explique étape par étape comment déployer votre application Fla
 - Accès SSH à votre machine locale
 - Les identifiants de votre application (email Gmail, etc.)
 
+**⚠️ Note importante** : Ce guide est conçu pour un **VPS Linux (Ubuntu)**. Un VPS Windows n'est **pas recommandé** et nécessiterait une configuration complètement différente (et plus coûteuse).
+
 ---
 
 ## Choix : Domaine principal ou sous-domaine ?
@@ -69,7 +71,27 @@ Le guide couvre les deux options. Suivez simplement les instructions corresponda
 2. **Choisissez un plan** :
    - **VPS S** (recommandé pour commencer) : 2 vCPU, 4 GB RAM, 80 GB SSD (~5€/mois)
    - **VPS M** (si vous avez beaucoup d'utilisateurs) : 4 vCPU, 8 GB RAM, 160 GB SSD (~10€/mois)
-3. **Système d'exploitation** : Choisissez **Ubuntu 22.04 LTS** (ou 24.04 si disponible)
+3. **Système d'exploitation** : **Choisissez Linux (Ubuntu 22.04 LTS ou 24.04)** ⚠️
+
+**⚠️ Important : Linux obligatoire, pas Windows !**
+
+**Pourquoi Linux ?**
+- ✅ **Gratuit** : Pas de licence Windows à payer (~15-20€/mois en plus)
+- ✅ **Performance** : Meilleures performances pour les serveurs web
+- ✅ **Compatible** : Tous les outils nécessaires (Nginx, Gunicorn, PostgreSQL) sont conçus pour Linux
+- ✅ **Sécurité** : Plus sécurisé et stable pour les serveurs
+- ✅ **Communauté** : Large support et documentation
+- ✅ **Scripts** : Tous les scripts de ce guide sont pour Linux
+
+**Windows ne convient pas car** :
+- ❌ Coût supplémentaire important (licence Windows Server)
+- ❌ Configuration beaucoup plus complexe
+- ❌ Nginx et Gunicorn ne sont pas optimisés pour Windows
+- ❌ Les scripts de déploiement ne fonctionneraient pas
+- ❌ Performance moindre pour les applications web
+
+**Recommandation** : Choisissez **Ubuntu 22.04 LTS** (ou 24.04 si disponible)
+
 4. **Finalisez la commande**
 
 ### 1.2 Récupération des informations
@@ -210,7 +232,7 @@ chmod -R 755 /var/www/Projet-notation
 cd /var/www/Projet-notation
 
 # Copier le fichier d'exemple
-cp production.env.example .env
+cp deploy/production.env.example .env
 
 # Éditer le fichier
 nano .env
@@ -274,7 +296,7 @@ flask create-admin
 cd /var/www/Projet-notation
 
 # Copier la configuration
-cp supervisor.conf /etc/supervisor/conf.d/notation-app.conf
+cp deploy/supervisor.conf /etc/supervisor/conf.d/notation-app.conf
 
 # Vérifier que le fichier est correct
 cat /etc/supervisor/conf.d/notation-app.conf
@@ -328,10 +350,10 @@ cd /var/www/Projet-notation
 # - Pour un sous-domaine : utilisez nginx.conf.sous-domaine.example
 
 # Option A : Domaine principal
-cp nginx.conf /etc/nginx/sites-available/notation-app
+cp deploy/nginx.conf /etc/nginx/sites-available/notation-app
 
 # Option B : Sous-domaine (recommandé)
-cp nginx.conf.sous-domaine.example /etc/nginx/sites-available/notation-app
+cp deploy/nginx.conf.sous-domaine.example /etc/nginx/sites-available/notation-app
 
 # Éditer pour mettre votre domaine ou sous-domaine
 nano /etc/nginx/sites-available/notation-app

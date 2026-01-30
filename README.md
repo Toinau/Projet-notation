@@ -26,7 +26,7 @@ Application Flask moderne pour la gestion et l'évaluation des coureurs du club 
 - **Commentaires** sur les questionnaires
 - **Statistiques détaillées** par course et par coureur
 - **Classements** mensuels et annuels
-- **Points Direct Vélo** intégrés au système de notation
+- **Points Evénements** intégrés au système de notation
 
 ### 🏆 Classements et Statistiques
 - **Classement global** de la saison
@@ -97,7 +97,7 @@ MAIL_DEFAULT_SENDER=votre-email@gmail.com
 python scripts/configure_gmail.py
 ```
 
-📧 **Note** : Consultez `GUIDE_CONFIGURATION_GMAIL.md` pour la configuration détaillée de Gmail.
+📧 **Note** : Consultez `docs/GUIDE_CONFIGURATION_GMAIL.md` pour la configuration détaillée de Gmail.
 
 ## 🎯 Utilisation
 
@@ -167,14 +167,20 @@ Projet-notation/
 ├── run.py                    # Application principale
 ├── config.py                # Configuration
 ├── requirements.txt         # Dépendances
-├── env.example             # Exemple de variables d'environnement
-├── CLI_COMMANDS.md         # Documentation des commandes CLI
-├── README.md              # Ce fichier
-├── backup_project.py      # Script de sauvegarde
-├── restore_backup.py      # Script de restauration
-├── populate_fake_users.py # Génération de comptes de test
-├── test_multiple_accounts.py # Comptes de test spécifiques
-├── app/                   # Application Flask
+├── env.example              # Exemple de variables d'environnement (développement)
+├── README.md                # Ce fichier
+├── docs/                    # Documentation
+│   ├── CLI_COMMANDS.md      # Commandes CLI
+│   ├── GUIDE_CONFIGURATION_GMAIL.md
+│   ├── GUIDE_DEPLOIEMENT_IONOS.md
+│   └── DEPLOYMENT_GUIDE.md
+├── deploy/                  # Fichiers de déploiement (VPS)
+│   ├── deploy.sh            # Script de déploiement automatique
+│   ├── production.env.example
+│   ├── supervisor.conf
+│   ├── nginx.conf
+│   └── nginx.conf.sous-domaine.example
+├── app/                     # Application Flask
 │   ├── __init__.py       # Initialisation de l'app
 │   ├── models.py         # Modèles de base de données
 │   ├── routes.py         # Routes de l'application
@@ -202,7 +208,7 @@ Projet-notation/
 - **Évaluation croisée** des coureurs
 - **Commentaires** sur les questionnaires
 - **Statistiques détaillées** (notes moyennes, max, min)
-- **Classements** avec points Direct Vélo
+- **Classements** avec points Evénements
 
 ### 🏆 Classements et Statistiques
 - **Classement global** de la saison
@@ -291,7 +297,7 @@ Les erreurs sont loggées avec `app.logger.error()` pour faciliter le débogage.
 
 Pour déployer l'application sur un VPS Ionos et la rendre accessible 24h/24, consultez le guide complet :
 
-📖 **[GUIDE_DEPLOIEMENT_IONOS.md](GUIDE_DEPLOIEMENT_IONOS.md)** - Guide détaillé étape par étape
+📖 **[GUIDE_DEPLOIEMENT_IONOS.md](docs/GUIDE_DEPLOIEMENT_IONOS.md)** - Guide détaillé étape par étape
 
 Le guide couvre :
 - Achat et configuration du VPS Ionos

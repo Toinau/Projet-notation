@@ -33,10 +33,14 @@ class ProductionConfig:
     # Configuration email
     MAIL_SERVER = os.environ.get('MAIL_SERVER') or 'smtp.gmail.com'
     MAIL_PORT = int(os.environ.get('MAIL_PORT') or 587)
-    MAIL_USE_TLS = os.environ.get('MAIL_USE_TLS', 'true').lower() in ['true', 'on', '1']
+    MAIL_USE_SSL = os.environ.get('MAIL_USE_SSL', 'false').lower() in ['true', 'on', '1']
+    MAIL_USE_TLS = False if MAIL_USE_SSL else (os.environ.get('MAIL_USE_TLS', 'true').lower() in ['true', 'on', '1'])
     MAIL_USERNAME = os.environ.get('MAIL_USERNAME')
     MAIL_PASSWORD = os.environ.get('MAIL_PASSWORD')
     MAIL_DEFAULT_SENDER = os.environ.get('MAIL_DEFAULT_SENDER')
+    
+    # URL de l'application (liens dans les emails)
+    APP_URL = os.environ.get('APP_URL', 'https://votre-domaine.com')
     
     # Mode production
     DEBUG = False

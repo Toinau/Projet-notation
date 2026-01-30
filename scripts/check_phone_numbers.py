@@ -10,7 +10,7 @@ from app.models import User
 import re
 
 def clean_phone_number(phone_number):
-    """Nettoie et formate le numéro de téléphone pour WhatsApp"""
+    """Nettoie et formate le numéro de téléphone (SMS / international)"""
     if not phone_number:
         return None
     

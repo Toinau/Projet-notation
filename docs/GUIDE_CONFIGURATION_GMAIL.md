@@ -93,12 +93,12 @@ MAIL_DEFAULT_SENDER=votre-email@gmail.com
 
 ### Vérifier la configuration actuelle
 ```bash
-python check_email_config.py
+python scripts/check_email_config.py
 ```
 
 ### Tester l'envoi d'email
 ```bash
-python test_email_config.py
+python scripts/test_email_config.py
 ```
 
 Entrez votre adresse email pour recevoir un email de test.
@@ -133,6 +133,26 @@ Entrez votre adresse email pour recevoir un email de test.
 - Vérifiez votre dossier spam
 - Vérifiez que l'adresse email de destination est correcte
 - Vérifiez les logs de l'application pour voir les erreurs détaillées
+
+### "Connection unexpectedly closed" (après STARTTLS)
+Si les logs affichent une fermeture de connexion juste après `Ready to start TLS`, le port 587 (STARTTLS) peut poser problème (réseau, pare-feu, IPv6). **Passez au port 465 avec SSL direct** :
+
+Dans votre fichier `.env`, remplacez :
+
+```env
+MAIL_PORT=587
+MAIL_USE_TLS=true
+```
+
+par :
+
+```env
+MAIL_PORT=465
+MAIL_USE_TLS=false
+MAIL_USE_SSL=true
+```
+
+Puis **redémarrez l'application**. Gmail accepte les deux (587 + STARTTLS et 465 + SSL) ; le port 465 évite souvent cette erreur.
 
 ## 📞 Si rien ne fonctionne
 

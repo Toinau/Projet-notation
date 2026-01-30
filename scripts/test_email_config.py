@@ -116,8 +116,18 @@ print()
 print("📧 Test d'envoi d'email :")
 print("-" * 60)
 
-# Demander l'adresse email de test
-test_email = input("Entrez votre adresse email pour recevoir un email de test (ou appuyez sur Entrée pour annuler) : ").strip()
+# Adresse email : argument en ligne de commande ou saisie interactive
+if len(sys.argv) >= 2:
+    test_email = sys.argv[1].strip()
+    print(f"  Adresse de test (argument) : {test_email}")
+else:
+    try:
+        test_email = input("Entrez votre adresse email pour recevoir un email de test (ou appuyez sur Entrée pour annuler) : ").strip()
+    except EOFError:
+        print()
+        print("  Usage : python scripts/test_email_config.py <adresse-email>")
+        print("  Exemple : python scripts/test_email_config.py votre@email.com")
+        sys.exit(0)
 
 if not test_email:
     print("Test annulé")

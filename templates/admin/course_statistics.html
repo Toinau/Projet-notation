@@ -69,10 +69,10 @@
             display: inline-block;
             margin: 0.2rem;
         }
-        .rating-1-3 { color: #ff6b6b; }
-        .rating-4-6 { color: #ffd93d; }
-        .rating-7-8 { color: #6bcf7f; }
-        .rating-9-10 { color: #4ecdc4; }
+        /* 3 couleurs pour les notes moyennes : rouge, blanc, vert */
+        .rating-rouge { color: #ff6b6b; }
+        .rating-blanc { color: #ffffff; }
+        .rating-vert { color: #6bcf7f; }
         .team-avg {
             background: #ffd700;
             color: #000000;
@@ -108,6 +108,11 @@
         .table td {
             border-color: #333333;
         }
+        /* Mois avec au moins une course dans la liste déroulante */
+        select#select-month option.month-has-courses {
+            color: #6bcf7f;
+            font-weight: 600;
+        }
     </style>
 </head>
 <body>
@@ -122,7 +127,7 @@
                 <div class="nav-item dropdown">
                     <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
                         <i class="fas fa-user-circle me-1"></i>
-                        {{ session.username }}
+                        {{ current_user.prenom }} {{ current_user.nom }}
                     </a>
                     <ul class="dropdown-menu">
                         <li><a class="dropdown-item" href="{{ url_for('main.change_password') }}">
@@ -180,9 +185,9 @@
                                     <label class="form-label text-white mb-1" for="select-month"><i class="fas fa-calendar me-1 text-warning"></i>Mois</label>
                                     <select id="select-month" name="month" class="form-select" onchange="this.form.submit()">
                                         {% for option in month_options %}
-                                            <option value="{{ option.month }}" data-year="{{ option.year }}" {% if option.selected %}selected{% endif %}>
+                                            <option value="{{ option.month }}" data-year="{{ option.year }}" {% if option.selected %}selected{% endif %} {% if option.has_courses %}class="month-has-courses"{% endif %}>
                                                 {% set month_names = ["Janvier", "Février", "Mars", "Avril", "Mai", "Juin", "Juillet", "Août", "Septembre", "Octobre", "Novembre", "Décembre"] %}
-                                                {{ month_names[option.month - 1] }} {{ option.year }}
+                                                {{ month_names[option.month - 1] }} {{ option.year }}{% if option.has_courses %} ●{% endif %}
                                             </option>
                                         {% endfor %}
                                     </select>
@@ -198,7 +203,6 @@
                                     </select>
                                 </div>
                             </div>
-                            <input type="hidden" name="season" value="{{ selected_season }}">
                         </form>
                     </div>
                 </div>
@@ -230,7 +234,7 @@
                         </div>
                         <small class="text-muted">
                             <i class="fas fa-star me-1"></i>
-                            {{ course.questionnaire.direct_velo_points }} pts Direct Vélo
+                            {{ course.questionnaire.direct_velo_points }} pts Evénements
                         </small>
                     </div>
                 </div>
@@ -256,10 +260,9 @@
                                 </td>
                                 <td>
                                     <span class="rating-display 
-                                        {% if participant.avg_rating <= 3 %}rating-1-3
-                                        {% elif participant.avg_rating <= 6 %}rating-4-6
-                                        {% elif participant.avg_rating <= 8 %}rating-7-8
-                                        {% else %}rating-9-10{% endif %}">
+                                        {% if participant.avg_rating <= 3 %}rating-rouge
+                                        {% elif participant.avg_rating <= 6 %}rating-blanc
+                                        {% else %}rating-vert{% endif %}">
                                         {{ participant.avg_rating }}/10
                                     </span>
                                 </td>

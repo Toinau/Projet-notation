@@ -7,7 +7,11 @@
     <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <style>
-        body { background: #000; color: #fff; }
+        body {
+            background: #000000;
+            min-height: 100vh;
+            color: #ffffff;
+        }
         .navbar-custom {
             background: #ffd700;
             border-bottom: 3px solid #ffed4e;
@@ -20,15 +24,83 @@
         .navbar-custom .nav-link:hover {
             color: #333333 !important;
         }
-        .card { background: #1a1a1a; border: 1px solid #333; }
-        .card-header { background: #ffd700 !important; color: #000; }
-        .table th, .table td { color: #fff !important; border-color: #333; }
-        .table th { background: #222; color: #fff !important; }
-        .table td { background: #000; color: #fff !important; }
-        .table tbody tr td { color: #fff !important; }
-        .table tbody tr td strong { color: #fff !important; }
-        .btn-custom { background: #ffd700; color: #000; font-weight: 600; }
-        .btn-custom:hover { background: #ffed4e; color: #000; }
+        .dropdown-menu {
+            background: #1a1a1a;
+            border: 1px solid #333333;
+        }
+        .dropdown-item { color: #ffffff; }
+        .dropdown-item:hover { background: #333333; color: #ffffff; }
+        .card {
+            background: #1a1a1a;
+            border: 1px solid #333333;
+            border-radius: 10px;
+            overflow: hidden;
+            transition: box-shadow 0.2s ease;
+        }
+        .card:hover { box-shadow: 0 4px 15px rgba(255, 215, 0, 0.15); }
+        .card-header {
+            background: #ffd700 !important;
+            color: #000000 !important;
+            border-bottom: 1px solid #ffed4e;
+            font-weight: 600;
+            padding: 0.85rem 1rem;
+        }
+        .card-header .form-select {
+            background: #1a1a1a;
+            color: #fff;
+            border-color: #444;
+        }
+        .card-header .form-select:focus {
+            border-color: #ffd700;
+            box-shadow: 0 0 0 0.2rem rgba(255, 215, 0, 0.25);
+        }
+        .card-header label { color: #000 !important; }
+        .table {
+            color: #ffffff;
+            margin-bottom: 0;
+        }
+        .table thead th {
+            background: #222222 !important;
+            color: #ffd700 !important;
+            border-color: #333333;
+            font-weight: 600;
+            padding: 0.75rem 1rem;
+        }
+        .table tbody td {
+            border-color: #333333;
+            padding: 0.65rem 1rem;
+            vertical-align: middle;
+        }
+        .table tbody td:first-child,
+        .table tbody td:nth-child(2) { color: #ffffff !important; }
+        .table tbody tr:hover td { background: #252525 !important; }
+        .table tbody tr td strong { color: #ffd700; }
+        .table-striped tbody tr:nth-of-type(odd) td { background: #1a1a1a; }
+        .table-striped tbody tr:nth-of-type(even) td { background: #151515; }
+        .text-muted { color: #aaaaaa !important; }
+        .section-title {
+            color: #ffffff;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 2px solid #ffd700;
+        }
+        .rank-podium-1 { background: linear-gradient(90deg, rgba(255,215,0,0.15) 0%, transparent 100%); }
+        .rank-podium-2 { background: linear-gradient(90deg, rgba(192,192,192,0.12) 0%, transparent 100%); }
+        .rank-podium-3 { background: linear-gradient(90deg, rgba(205,127,50,0.12) 0%, transparent 100%); }
+        .filter-card {
+            background: #1a1a1a;
+            border: 1px solid #333333;
+            border-radius: 10px;
+            padding: 1rem 1.25rem;
+        }
+        .filter-card .form-select {
+            background: #333333;
+            color: #fff;
+            border-color: #555;
+        }
+        .page-title { color: #ffffff; font-weight: 700; }
+        .page-subtitle { color: #aaaaaa; font-size: 1rem; }
     </style>
 </head>
 <body>
@@ -58,69 +130,38 @@
             </div>
         </div>
     </nav>
-    <div class="container mt-4">
-        <form method="get" class="mb-3">
-            <div class="input-group">
-                <select class="form-select" name="team_id" onchange="this.form.submit()">
-                    <option value="">Toutes les équipes</option>
-                    {% for team in teams %}
-                    <option value="{{ team.id }}" {% if request.args.get('team_id', type=int) == team.id %}selected{% endif %}>{{ team.nom }}</option>
-                    {% endfor %}
-                </select>
-                <button class="btn btn-outline-secondary" type="submit">Filtrer</button>
-            </div>
-        </form>
-        <h1 class="mb-4"><i class="fas fa-globe-americas text-warning me-2"></i>Classements globaux de la saison {{ season }}</h1>
-        
-        <!-- Classements par Points -->
-        <h2 class="mb-3"><i class="fas fa-star text-warning me-2"></i>Classements par Points</h2>
+    <div class="container mt-4 mb-5">
         <div class="row mb-4">
-            <div class="col-md-6">
-                <div class="card mb-3">
-                    <div class="card-header d-flex align-items-center">
-                        <i class="fas fa-trophy me-2 text-warning"></i>
-                        <span class="me-3">Classement total de la saison</span>
-                        <form method="get" class="d-inline-flex align-items-center ms-auto" id="season-form" style="margin-bottom:0;">
-                            <label for="season" class="me-2 mb-0">Saison :</label>
-                            <select name="season" id="season" class="form-select form-select-sm w-auto me-2">
-                                {% for option in season_options %}
-                                    <option value="{{ option.year }}" {% if option.selected %}selected{% endif %}>Saison {{ option.year }}</option>
-                                {% endfor %}
-                            </select>
-                            <input type="hidden" name="month" id="season-month" value="{{ selected_month }}">
-                            <input type="hidden" name="year" id="season-year" value="{{ selected_year }}">
-                        </form>
-                    </div>
-                    <div class="card-body p-0">
-                        <table class="table table-striped mb-0">
-                            <thead><tr><th>Rang</th><th>Coureur</th><th>Points</th></tr></thead>
-                            <tbody>
-                            {% if saison_points %}
-                                {% for c in saison_points %}
-                                <tr>
-                                    <td>{{ loop.index }}</td>
-                                    <td>{{ c.prenom }} {{ c.nom }}</td>
-                                    <td><strong>{{ c.points }}</strong></td>
-                                </tr>
-                                {% endfor %}
-                            {% else %}
-                                <tr>
-                                    <td colspan="3" class="text-center text-muted">
-                                        <i class="fas fa-info-circle me-2"></i>
-                                        Aucune course dans la saison {{ season }}
-                                    </td>
-                                </tr>
-                            {% endif %}
-                            </tbody>
-                        </table>
-                    </div>
+            <div class="col-lg-8">
+                <h1 class="page-title mb-1">
+                    <i class="fas fa-globe-americas text-warning me-2"></i>Classements globaux
+                </h1>
+                <p class="page-subtitle mb-0">Saison {{ season }} — Points et notes moyennes par mois et sur la saison</p>
+            </div>
+            <div class="col-lg-4 mt-3 mt-lg-0 d-flex align-items-center">
+                <div class="filter-card w-100">
+                    <form method="get" class="d-flex align-items-center gap-2">
+                        <label for="team_id" class="mb-0 text-nowrap" style="color: #ccc;"><i class="fas fa-users me-1 text-warning"></i>Équipe :</label>
+                        <select class="form-select form-select-sm flex-grow-1" name="team_id" id="team_id" onchange="this.form.submit()">
+                            <option value="">Toutes les équipes</option>
+                            {% for team in teams %}
+                            <option value="{{ team.id }}" {% if request.args.get('team_id', type=int) == team.id %}selected{% endif %}>{{ team.nom }}</option>
+                            {% endfor %}
+                        </select>
+                    </form>
                 </div>
             </div>
+        </div>
+        
+        <!-- Classements par Points -->
+        <h2 class="section-title"><i class="fas fa-star text-warning me-2"></i>Classements par Points</h2>
+        <div class="row mb-4">
+            <!-- Gauche : classement du mois -->
             <div class="col-md-6">
                 <div class="card mb-3">
                     <div class="card-header d-flex align-items-center">
-                        <i class="fas fa-calendar-alt me-2 text-warning"></i>
-                        <form method="get" class="d-inline-flex align-items-center ms-2" id="month-form">
+                        <i class="fas fa-calendar-alt me-2 text-dark"></i>
+                        <form method="get" class="d-inline-flex align-items-center ms-2 flex-wrap" id="month-form">
                             <label for="month" class="me-2 mb-0">Classement du mois :</label>
                             <select name="month" id="month" class="form-select form-select-sm me-2">
                                 {% for m in months %}
@@ -131,6 +172,7 @@
                             </select>
                             <input type="hidden" name="year" value="{{ selected_year }}">
                             <input type="hidden" name="season" value="{{ season }}">
+                            {% if request.args.get('team_id') %}<input type="hidden" name="team_id" value="{{ request.args.get('team_id') }}">{% endif %}
                         </form>
                     </div>
                     <div class="card-body p-0">
@@ -139,17 +181,60 @@
                             <tbody>
                             {% if mois_points %}
                                 {% for c in mois_points %}
-                                <tr>
-                                    <td>{{ loop.index }}</td>
+                                <tr class="{% if loop.index <= 3 %}rank-podium-{{ loop.index }}{% endif %}">
+                                    <td class="fw-bold">{% if loop.index == 1 %}<i class="fas fa-medal text-warning me-1"></i>{% elif loop.index == 2 %}<i class="fas fa-medal text-secondary me-1"></i>{% elif loop.index == 3 %}<i class="fas fa-medal me-1" style="color:#cd7f32;"></i>{% endif %}{{ loop.index }}</td>
                                     <td>{{ c.prenom }} {{ c.nom }}</td>
                                     <td><strong>{{ c.points }}</strong></td>
                                 </tr>
                                 {% endfor %}
                             {% else %}
                                 <tr>
-                                    <td colspan="3" class="text-center text-muted">
+                                    <td colspan="3" class="text-center text-muted py-4">
                                         <i class="fas fa-info-circle me-2"></i>
                                         Aucune course en {{ selected_month_name }} {{ selected_year }}
+                                    </td>
+                                </tr>
+                            {% endif %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            <!-- Droite : classement de la saison -->
+            <div class="col-md-6">
+                <div class="card mb-3">
+                    <div class="card-header d-flex align-items-center">
+                        <i class="fas fa-trophy me-2 text-dark"></i>
+                        <span class="me-3">Classement total de la saison</span>
+                        <form method="get" class="d-inline-flex align-items-center ms-auto" id="season-form" style="margin-bottom:0;">
+                            <label for="season" class="me-2 mb-0">Saison :</label>
+                            <select name="season" id="season" class="form-select form-select-sm w-auto me-2">
+                                {% for option in season_options %}
+                                    <option value="{{ option.year }}" {% if option.selected %}selected{% endif %}>Saison {{ option.year }}</option>
+                                {% endfor %}
+                            </select>
+                            <input type="hidden" name="month" id="season-month" value="{{ selected_month }}">
+                            <input type="hidden" name="year" id="season-year" value="{{ selected_year }}">
+                            {% if request.args.get('team_id') %}<input type="hidden" name="team_id" value="{{ request.args.get('team_id') }}">{% endif %}
+                        </form>
+                    </div>
+                    <div class="card-body p-0">
+                        <table class="table table-striped mb-0">
+                            <thead><tr><th>Rang</th><th>Coureur</th><th>Points</th></tr></thead>
+                            <tbody>
+                            {% if saison_points %}
+                                {% for c in saison_points %}
+                                <tr class="{% if loop.index <= 3 %}rank-podium-{{ loop.index }}{% endif %}">
+                                    <td class="fw-bold">{% if loop.index == 1 %}<i class="fas fa-medal text-warning me-1"></i>{% elif loop.index == 2 %}<i class="fas fa-medal text-secondary me-1"></i>{% elif loop.index == 3 %}<i class="fas fa-medal me-1" style="color:#cd7f32;"></i>{% endif %}{{ loop.index }}</td>
+                                    <td>{{ c.prenom }} {{ c.nom }}</td>
+                                    <td><strong>{{ c.points }}</strong></td>
+                                </tr>
+                                {% endfor %}
+                            {% else %}
+                                <tr>
+                                    <td colspan="3" class="text-center text-muted py-4">
+                                        <i class="fas fa-info-circle me-2"></i>
+                                        Aucune course dans la saison {{ season }}
                                     </td>
                                 </tr>
                             {% endif %}
@@ -161,54 +246,14 @@
         </div>
         
         <!-- Classements par Notes Moyennes -->
-        <h2 class="mb-3"><i class="fas fa-chart-line text-warning me-2"></i>Classements par Notes Moyennes</h2>
+        <h2 class="section-title mt-5"><i class="fas fa-chart-line text-warning me-2"></i>Classements par Notes Moyennes</h2>
         <div class="row mb-4">
+            <!-- Gauche : notes moyennes du mois -->
             <div class="col-md-6">
                 <div class="card mb-3">
                     <div class="card-header d-flex align-items-center">
-                        <i class="fas fa-trophy me-2 text-warning"></i>
-                        <span class="me-3">Notes moyennes de la saison</span>
-                        <form method="get" class="d-inline-flex align-items-center ms-auto" id="season-notes-form" style="margin-bottom:0;">
-                            <label for="season-notes" class="me-2 mb-0">Saison :</label>
-                            <select name="season" id="season-notes" class="form-select form-select-sm w-auto me-2">
-                                {% for option in season_options %}
-                                    <option value="{{ option.year }}" {% if option.selected %}selected{% endif %}>Saison {{ option.year }}</option>
-                                {% endfor %}
-                            </select>
-                            <input type="hidden" name="month" id="season-notes-month" value="{{ selected_month }}">
-                            <input type="hidden" name="year" id="season-notes-year" value="{{ selected_year }}">
-                        </form>
-                    </div>
-                    <div class="card-body p-0">
-                        <table class="table table-striped mb-0">
-                            <thead><tr><th>Rang</th><th>Coureur</th><th>Note Moyenne</th></tr></thead>
-                            <tbody>
-                            {% if saison_notes %}
-                                {% for c in saison_notes %}
-                                <tr>
-                                    <td>{{ loop.index }}</td>
-                                    <td>{{ c.prenom }} {{ c.nom }}</td>
-                                    <td><strong>{{ c.note }}/10</strong></td>
-                                </tr>
-                                {% endfor %}
-                            {% else %}
-                                <tr>
-                                    <td colspan="3" class="text-center text-muted">
-                                        <i class="fas fa-info-circle me-2"></i>
-                                        Aucune note dans la saison {{ season }}
-                                    </td>
-                                </tr>
-                            {% endif %}
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-            </div>
-            <div class="col-md-6">
-                <div class="card mb-3">
-                    <div class="card-header d-flex align-items-center">
-                        <i class="fas fa-calendar-alt me-2 text-warning"></i>
-                        <form method="get" class="d-inline-flex align-items-center ms-2" id="month-notes-form">
+                        <i class="fas fa-calendar-alt me-2 text-dark"></i>
+                        <form method="get" class="d-inline-flex align-items-center ms-2 flex-wrap" id="month-notes-form">
                             <label for="month-notes" class="me-2 mb-0">Notes moyennes du mois :</label>
                             <select name="month" id="month-notes" class="form-select form-select-sm me-2">
                                 {% for m in months %}
@@ -219,6 +264,7 @@
                             </select>
                             <input type="hidden" name="year" value="{{ selected_year }}">
                             <input type="hidden" name="season" value="{{ season }}">
+                            {% if request.args.get('team_id') %}<input type="hidden" name="team_id" value="{{ request.args.get('team_id') }}">{% endif %}
                         </form>
                     </div>
                     <div class="card-body p-0">
@@ -227,17 +273,60 @@
                             <tbody>
                             {% if mois_notes %}
                                 {% for c in mois_notes %}
-                                <tr>
-                                    <td>{{ loop.index }}</td>
+                                <tr class="{% if loop.index <= 3 %}rank-podium-{{ loop.index }}{% endif %}">
+                                    <td class="fw-bold">{% if loop.index == 1 %}<i class="fas fa-medal text-warning me-1"></i>{% elif loop.index == 2 %}<i class="fas fa-medal text-secondary me-1"></i>{% elif loop.index == 3 %}<i class="fas fa-medal me-1" style="color:#cd7f32;"></i>{% endif %}{{ loop.index }}</td>
                                     <td>{{ c.prenom }} {{ c.nom }}</td>
                                     <td><strong>{{ c.note }}/10</strong></td>
                                 </tr>
                                 {% endfor %}
                             {% else %}
                                 <tr>
-                                    <td colspan="3" class="text-center text-muted">
+                                    <td colspan="3" class="text-center text-muted py-4">
                                         <i class="fas fa-info-circle me-2"></i>
                                         Aucune note en {{ selected_month_name }} {{ selected_year }}
+                                    </td>
+                                </tr>
+                            {% endif %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            <!-- Droite : notes moyennes de la saison -->
+            <div class="col-md-6">
+                <div class="card mb-3">
+                    <div class="card-header d-flex align-items-center">
+                        <i class="fas fa-trophy me-2 text-dark"></i>
+                        <span class="me-3">Notes moyennes de la saison</span>
+                        <form method="get" class="d-inline-flex align-items-center ms-auto" id="season-notes-form" style="margin-bottom:0;">
+                            <label for="season-notes" class="me-2 mb-0">Saison :</label>
+                            <select name="season" id="season-notes" class="form-select form-select-sm w-auto me-2">
+                                {% for option in season_options %}
+                                    <option value="{{ option.year }}" {% if option.selected %}selected{% endif %}>Saison {{ option.year }}</option>
+                                {% endfor %}
+                            </select>
+                            <input type="hidden" name="month" id="season-notes-month" value="{{ selected_month }}">
+                            <input type="hidden" name="year" id="season-notes-year" value="{{ selected_year }}">
+                            {% if request.args.get('team_id') %}<input type="hidden" name="team_id" value="{{ request.args.get('team_id') }}">{% endif %}
+                        </form>
+                    </div>
+                    <div class="card-body p-0">
+                        <table class="table table-striped mb-0">
+                            <thead><tr><th>Rang</th><th>Coureur</th><th>Note Moyenne</th></tr></thead>
+                            <tbody>
+                            {% if saison_notes %}
+                                {% for c in saison_notes %}
+                                <tr class="{% if loop.index <= 3 %}rank-podium-{{ loop.index }}{% endif %}">
+                                    <td class="fw-bold">{% if loop.index == 1 %}<i class="fas fa-medal text-warning me-1"></i>{% elif loop.index == 2 %}<i class="fas fa-medal text-secondary me-1"></i>{% elif loop.index == 3 %}<i class="fas fa-medal me-1" style="color:#cd7f32;"></i>{% endif %}{{ loop.index }}</td>
+                                    <td>{{ c.prenom }} {{ c.nom }}</td>
+                                    <td><strong>{{ c.note }}/10</strong></td>
+                                </tr>
+                                {% endfor %}
+                            {% else %}
+                                <tr>
+                                    <td colspan="3" class="text-center text-muted py-4">
+                                        <i class="fas fa-info-circle me-2"></i>
+                                        Aucune note dans la saison {{ season }}
                                     </td>
                                 </tr>
                             {% endif %}

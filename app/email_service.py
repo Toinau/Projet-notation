@@ -94,7 +94,7 @@ def send_questionnaire_notification_email(user, questionnaire):
                 <div class="highlight">
                     <h3>📋 {questionnaire.course_name}</h3>
                     <p><strong>Date de course :</strong> {questionnaire.course_date.strftime('%d/%m/%Y')}</p>
-                    <p><strong>Points Direct Vélo :</strong> {questionnaire.direct_velo_points} points</p>
+                    <p><strong>Points Evénements :</strong> {questionnaire.direct_velo_points} points</p>
                 </div>
                 
                 <p>Connectez-vous à votre espace coureur pour évaluer vos coéquipiers et contribuer à la notation de l'équipe.</p>
@@ -125,7 +125,7 @@ def send_questionnaire_notification_email(user, questionnaire):
         Un nouveau questionnaire de notation est disponible pour la course : {questionnaire.course_name}
         
         Date de course : {questionnaire.course_date.strftime('%d/%m/%Y')}
-        Points Direct Vélo : {questionnaire.direct_velo_points} points
+        Points Evénements : {questionnaire.direct_velo_points} points
         
         Connectez-vous à votre espace coureur pour évaluer vos coéquipiers.
         

@@ -68,8 +68,6 @@
                     <thead>
                         <tr>
                             <th>Nom</th>
-                            <th>Couleur</th>
-                            <th>Description</th>
                             <th>Actions</th>
                         </tr>
                     </thead>
@@ -99,53 +97,51 @@
                                 </div>
                             </td>
                             <td>
-                                {% if team.couleur %}
-                                    <span style="display:inline-block;width:24px;height:24px;background:{{ team.couleur }};border-radius:50%;border:1px solid #fff;"></span>
-                                {% else %}
-                                    <span class="text-muted">-</span>
-                                {% endif %}
-                            </td>
-                            <td>{{ team.description or '-' }}</td>
-                            <td>
                                 <form method="POST" action="{{ url_for('main.delete_team', team_id=team.id) }}" style="display:inline;" onsubmit="return confirm('Supprimer l\'équipe {{ team.nom }} ?');">
                                     <button type="submit" class="btn btn-outline-danger btn-sm"><i class="fas fa-trash"></i> Supprimer</button>
                                 </form>
-                                <!-- Bouton Affecter des coureurs -->
-                                <button type="button" class="btn btn-custom btn-sm ms-2" data-bs-toggle="modal" data-bs-target="#affecterModal{{ team.id }}">
-                                    <i class="fas fa-user-plus"></i> Affecter des coureurs
+                                <!-- Bouton Modifier l'équipe -->
+                                <button type="button" class="btn btn-custom btn-sm ms-2" data-bs-toggle="modal" data-bs-target="#editModal{{ team.id }}">
+                                    <i class="fas fa-pen"></i> Modifier l'équipe
                                 </button>
-                                <!-- Modal Affectation -->
-                                <div class="modal fade" id="affecterModal{{ team.id }}" tabindex="-1" aria-labelledby="affecterModalLabel{{ team.id }}" aria-hidden="true">
-                                  <div class="modal-dialog">
+                                <!-- Modal Modification -->
+                                <div class="modal fade" id="editModal{{ team.id }}" tabindex="-1" aria-labelledby="editModalLabel{{ team.id }}" aria-hidden="true">
+                                  <div class="modal-dialog modal-lg">
                                     <div class="modal-content bg-dark text-light">
-                                      <form method="POST" action="{{ url_for('main.affecter_coureurs', team_id=team.id) }}">
-                                        <div class="modal-header">
-                                          <h5 class="modal-title" id="affecterModalLabel{{ team.id }}">Affecter des coureurs à l'équipe <span class="text-warning">{{ team.nom }}</span></h5>
+                                      <form method="POST" action="{{ url_for('main.edit_team', team_id=team.id) }}">
+                                        <div class="modal-header" style="border-color: #333;">
+                                          <h5 class="modal-title" id="editModalLabel{{ team.id }}"><i class="fas fa-pen me-2 text-warning"></i>Modifier l'équipe</h5>
                                           <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Fermer"></button>
                                         </div>
                                         <div class="modal-body">
-                                          {% if coureurs_sans_equipe %}
+                                          <div class="mb-4">
+                                            <label for="edit-nom-{{ team.id }}" class="form-label fw-bold">Nom de l'équipe <span class="text-danger">*</span></label>
+                                            <input type="text" class="form-control" id="edit-nom-{{ team.id }}" name="nom" value="{{ team.nom }}" required style="background:#222;color:#fff;border-color:#ffd700;">
+                                          </div>
+                                          <div class="mb-2">
+                                            <label class="form-label fw-bold">Affecter des coureurs à cette équipe</label>
                                             <div class="mb-2">
-                                              <button type="button" class="btn btn-sm btn-outline-light" onclick="checkAll('coureurs-list-{{ team.id }}', true)">Tout sélectionner</button>
-                                              <button type="button" class="btn btn-sm btn-outline-light ms-2" onclick="checkAll('coureurs-list-{{ team.id }}', false)">Tout désélectionner</button>
+                                              <button type="button" class="btn btn-sm btn-outline-light" onclick="checkAll('coureurs-list-edit-{{ team.id }}', true)">Tout sélectionner</button>
+                                              <button type="button" class="btn btn-sm btn-outline-light ms-2" onclick="checkAll('coureurs-list-edit-{{ team.id }}', false)">Tout désélectionner</button>
                                             </div>
-                                            <div id="coureurs-list-{{ team.id }}">
-                                              {% for coureur in coureurs_sans_equipe %}
+                                            <div id="coureurs-list-edit-{{ team.id }}" style="max-height: 220px; overflow-y: auto; background:#222;border-radius:8px;padding:10px;">
+                                              {% for coureur in tous_coureurs %}
+                                                {% if coureur not in team.users %}
                                                 <div class="form-check">
-                                                  <input class="form-check-input" type="checkbox" name="coureur_ids" value="{{ coureur.id }}" id="coureur{{ team.id }}-{{ coureur.id }}">
-                                                  <label class="form-check-label" for="coureur{{ team.id }}-{{ coureur.id }}">
-                                                    {{ coureur.prenom }} {{ coureur.nom }} ({{ coureur.email }})
+                                                  <input class="form-check-input" type="checkbox" name="coureur_ids" value="{{ coureur.id }}" id="coureur-edit-{{ team.id }}-{{ coureur.id }}">
+                                                  <label class="form-check-label" for="coureur-edit-{{ team.id }}-{{ coureur.id }}">
+                                                    {{ coureur.prenom }} {{ coureur.nom }} ({{ coureur.email }}){% if coureur.teams %} <span class="text-muted small">— déjà dans {{ coureur.teams | map(attribute='nom') | join(', ') }}</span>{% endif %}
                                                   </label>
                                                 </div>
+                                                {% endif %}
                                               {% endfor %}
                                             </div>
-                                          {% else %}
-                                            <p class="text-muted">Aucun coureur sans équipe à affecter.</p>
-                                          {% endif %}
+                                            <p class="text-muted small mt-2">Sélectionnez les coureurs à ajouter (ceux déjà dans l'équipe n'apparaissent pas). Les retirer se fait via le bouton « Retirer » dans la liste ci-dessus.</p>
+                                          </div>
                                         </div>
-                                        <div class="modal-footer">
+                                        <div class="modal-footer" style="border-color: #333;">
                                           <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
-                                          <button type="submit" class="btn btn-custom">Affecter</button>
+                                          <button type="submit" class="btn btn-custom">Enregistrer</button>
                                         </div>
                                       </form>
                                     </div>
@@ -183,26 +179,23 @@
             <div class="invalid-feedback">Le nom de l'équipe est requis.</div>
           </div>
           <div class="mb-3">
-            <label for="teamColor" class="form-label fw-bold">Couleur de l'équipe</label>
-            <input type="color" class="form-control form-control-color" id="teamColor" name="couleur" value="#ffd700" style="border-color:#ffd700;">
-          </div>
-          <div class="mb-3">
             <label class="form-label fw-bold">Affecter des coureurs à l'équipe</label>
             <div class="mb-2">
               <button type="button" class="btn btn-sm btn-outline-light me-2" onclick="checkAll('coureurs-create-list', true)">Tout sélectionner</button>
               <button type="button" class="btn btn-sm btn-outline-light" onclick="checkAll('coureurs-create-list', false)">Tout désélectionner</button>
             </div>
             <div id="coureurs-create-list" style="max-height: 200px; overflow-y: auto; background:#222;border-radius:8px;padding:10px;">
-              {% for coureur in coureurs_sans_equipe %}
+              {% for coureur in tous_coureurs %}
               <div class="form-check">
                 <input class="form-check-input" type="checkbox" name="coureurs" value="{{ coureur.id }}" id="coureur-create-{{ coureur.id }}">
-                <label class="form-check-label" for="coureur-create-{{ coureur.id }}">{{ coureur.prenom }} {{ coureur.nom }} ({{ coureur.email }})</label>
+                <label class="form-check-label" for="coureur-create-{{ coureur.id }}">{{ coureur.prenom }} {{ coureur.nom }} ({{ coureur.email }}){% if coureur.teams %} <span class="text-muted small">— déjà dans {{ coureur.teams | map(attribute='nom') | join(', ') }}</span>{% endif %}</label>
               </div>
               {% endfor %}
-              {% if not coureurs_sans_equipe %}
-                <div class="text-muted">Aucun coureur sans équipe disponible.</div>
+              {% if not tous_coureurs %}
+                <div class="text-muted">Aucun coureur disponible.</div>
               {% endif %}
             </div>
+            <p class="text-muted small mt-2">Vous pouvez sélectionner tous les coureurs, y compris ceux déjà dans une autre équipe (un coureur peut être dans plusieurs équipes).</p>
           </div>
         </div>
         <div class="modal-footer">

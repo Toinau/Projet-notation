@@ -52,7 +52,8 @@ class Config:
     # Configuration email
     MAIL_SERVER = os.environ.get('MAIL_SERVER') or 'smtp.gmail.com'
     MAIL_PORT = int(os.environ.get('MAIL_PORT') or 587)
-    MAIL_USE_TLS = os.environ.get('MAIL_USE_TLS', 'true').lower() in ['true', 'on', '1']
+    MAIL_USE_SSL = os.environ.get('MAIL_USE_SSL', 'false').lower() in ['true', 'on', '1']
+    MAIL_USE_TLS = False if MAIL_USE_SSL else (os.environ.get('MAIL_USE_TLS', 'true').lower() in ['true', 'on', '1'])
     MAIL_USERNAME = os.environ.get('MAIL_USERNAME')
     MAIL_PASSWORD = os.environ.get('MAIL_PASSWORD')
     MAIL_DEFAULT_SENDER = os.environ.get('MAIL_DEFAULT_SENDER')
@@ -65,11 +66,6 @@ class Config:
     # Configuration Free Mobile pour SMS
     FREE_MOBILE_USER = os.environ.get('FREE_MOBILE_USER')
     FREE_MOBILE_API_KEY = os.environ.get('FREE_MOBILE_API_KEY')
-    
-    # Configuration WhatsApp Business API
-    WHATSAPP_PHONE_NUMBER_ID = os.environ.get('WHATSAPP_PHONE_NUMBER_ID')
-    WHATSAPP_ACCESS_TOKEN = os.environ.get('WHATSAPP_ACCESS_TOKEN')
-    WHATSAPP_PHONE_NUMBER = os.environ.get('WHATSAPP_PHONE_NUMBER')
     
     # Configuration de l'URL de l'application pour les liens dans les emails
     APP_URL = os.environ.get('APP_URL', 'http://localhost:5000')

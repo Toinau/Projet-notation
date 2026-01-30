@@ -34,38 +34,6 @@
             background: #ffed4e;
             color: #000000;
         }
-        .card {
-            background: #1a1a1a;
-            border: 1px solid #333333;
-        }
-        .card-header {
-            background: #ffd700 !important;
-            color: #000000;
-            border-bottom: 1px solid #ffed4e;
-        }
-        .course-card {
-            background: #1a1a1a;
-            border: 1px solid #333333;
-            border-radius: 10px;
-            padding: 1.5rem;
-            margin-bottom: 1rem;
-            transition: transform 0.2s ease, box-shadow 0.2s ease;
-        }
-        .course-card:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 15px rgba(255, 215, 0, 0.2);
-        }
-        .points-display {
-            font-size: 1.5rem;
-            font-weight: bold;
-            text-align: center;
-            padding: 0.5rem;
-            border-radius: 8px;
-            background: #333333;
-        }
-        .points-high { color: #4ecdc4; }
-        .points-medium { color: #6bcf7f; }
-        .points-low { color: #ffd93d; }
         .dropdown-menu {
             background: #1a1a1a;
             border: 1px solid #333333;
@@ -73,37 +41,145 @@
         .dropdown-item {
             color: #ffffff;
         }
-        .dropdown-item:hover {
+        .dropdown-item:hover, .dropdown-item:focus {
             background: #333333;
             color: #ffffff;
         }
-        .total-points {
+        .dropdown-item.active {
             background: #ffd700;
             color: #000000;
-            border-radius: 15px;
-            padding: 2rem;
+        }
+        .stats-card {
+            background: linear-gradient(160deg, #ffd700 0%, #e6c200 50%, #d4af00 100%);
+            color: #000000;
+            border-radius: 10px;
+            padding: 1rem 1.25rem;
+            margin-bottom: 1rem;
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2), 0 0 0 1px rgba(0, 0, 0, 0.06);
+            border: none;
+            transition: box-shadow 0.2s ease, transform 0.2s ease;
+            position: relative;
+            overflow: visible;
+            font-family: inherit;
+        }
+        .stats-card::before {
+            content: "";
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent);
+            pointer-events: none;
+        }
+        .stats-card:hover {
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25), 0 0 0 1px rgba(0, 0, 0, 0.08);
+            transform: translateY(-1px);
+        }
+        .stats-card .stats-card-label {
+            font-size: 1.05rem;
+            font-weight: 600;
+            color: rgba(0, 0, 0, 0.75);
+            margin-bottom: 0.25rem;
+            /* Même police que le titre "Mes statistiques" (h1 / page-title) */
+            font-family: var(--bs-heading-font-family), var(--bs-body-font-family), inherit;
+        }
+        .stats-card .note-value {
+            font-size: 2.5rem;
+            font-weight: 700;
+            line-height: 1.2;
+            color: #000000;
             text-align: center;
-            margin-bottom: 2rem;
-            box-shadow: 0 6px 20px rgba(255, 215, 0, 0.3);
+            font-family: inherit;
         }
-        .text-muted {
+        .stats-card .note-value .note-scale {
+            font-size: 1.1rem;
+            font-weight: 600;
+            opacity: 0.7;
+            margin-left: 0.15rem;
+            font-family: inherit;
+        }
+        .stats-card .btn-outline-dark {
+            border-color: rgba(0, 0, 0, 0.35);
+            color: #1a1a1a;
+            font-weight: 600;
+            font-size: 0.8rem;
+            padding: 0.35rem 0.7rem;
+        }
+        .stats-card .btn-outline-dark:hover {
+            background: #1a1a1a;
+            border-color: #1a1a1a;
+            color: #fff;
+        }
+        .section-title {
+            color: #ffffff;
+            font-weight: 600;
+            margin-bottom: 1.25rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 2px solid #ffd700;
+        }
+        .course-card {
+            background: #1a1a1a;
+            border: 1px solid #333333;
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 1.25rem;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            height: 100%;
+        }
+        .course-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(255, 215, 0, 0.15);
+            border-color: #444;
+        }
+        .course-card h5 {
+            color: #ffffff;
+            font-weight: 600;
+        }
+        .course-card .stat-label {
+            color: #aaaaaa;
+            font-size: 0.8rem;
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 0.03em;
+            margin-bottom: 0.25rem;
+        }
+        .course-card .stat-value {
+            color: #ffffff;
+            font-size: 1.1rem;
+            font-weight: 600;
+        }
+        .course-card .stat-value.text-success { color: #6bcf7f !important; }
+        .course-card .stat-value.text-danger { color: #ff6b6b !important; }
+        .badge-repondu {
+            background: #198754 !important;
+            color: #fff;
+            font-weight: 600;
+            padding: 0.4rem 0.75rem;
+        }
+        .badge-attente {
+            background: #ffc107 !important;
+            color: #000;
+            font-weight: 600;
+            padding: 0.4rem 0.75rem;
+        }
+        .empty-state {
+            background: #1a1a1a;
+            border: 1px dashed #333;
+            border-radius: 12px;
+            padding: 3rem 2rem;
+            text-align: center;
+        }
+        .empty-state .fa-chart-line {
+            color: #444;
+            margin-bottom: 1rem;
+        }
+        .empty-state p,
+        .empty-state .text-muted {
             color: #ffffff !important;
         }
-        .lead.text-muted {
-            color: #ffffff !important;
-        }
-        .course-card small {
-            color: #ffffff !important;
-        }
-        .course-card .text-muted {
-            color: #ffffff !important;
-        }
-        .course-card .text-center small {
-            color: #ffffff !important;
-        }
-        .course-card .text-center .text-muted {
-            color: #ffffff !important;
-        }
+        .page-title { color: #ffffff; font-weight: 700; }
+        .page-subtitle { color: #aaaaaa; font-size: 1rem; }
     </style>
 </head>
 <body>
@@ -150,29 +226,28 @@
         <!-- Header -->
         <div class="row mb-4">
             <div class="col-12">
-                <h1 class="display-6">
+                <h1 class="page-title mb-1">
                     <i class="fas fa-chart-line me-2 text-warning"></i>
                     Mes statistiques
                 </h1>
-                <p class="lead text-muted">Détail de vos performances et des statistiques d'équipe par évènement</p>
+                <p class="page-subtitle mb-0">Détail de vos performances et des statistiques d'équipe par évènement</p>
             </div>
         </div>
 
         <!-- Notes moyennes -->
-        <div class="row mb-4">
-            <div class="col-md-6">
-                <div class="total-points">
-                    <div class="d-flex justify-content-between align-items-center mb-2">
-                        <h2 class="mb-0">
-                            <i class="fas fa-calendar-alt me-2"></i>
-                            Note Moyenne de {{ selected_month_name }}
-                        </h2>
+        <div class="row mb-4 g-3 justify-content-center">
+            <div class="col-md-5 col-lg-4">
+                <div class="stats-card h-100 d-flex flex-column">
+                    <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-auto">
+                        <span class="stats-card-label">
+                            <i class="fas fa-calendar-alt me-1"></i>Note moyenne du mois
+                        </span>
                         <div class="dropdown">
-                            <button class="btn btn-outline-dark btn-sm dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                            <button class="btn btn-outline-dark btn-sm dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
                                 <i class="fas fa-calendar me-1"></i>
-                                Changer de mois
+                                {{ selected_month_name }} {{ selected_year }}
                             </button>
-                            <ul class="dropdown-menu">
+                            <ul class="dropdown-menu dropdown-menu-dark">
                                 {% for option in month_options %}
                                     <li>
                                         <a class="dropdown-item {% if option.selected %}active{% endif %}" 
@@ -184,31 +259,31 @@
                             </ul>
                         </div>
                     </div>
-                    <div class="display-4 fw-bold">
+                    <div class="note-value mt-2 text-center w-100">
                         {% if note_moyenne_selected_month > 0 %}
-                            {{ note_moyenne_selected_month }}/10
+                            {{ note_moyenne_selected_month }}<span class="note-scale">/ 10</span>
                         {% else %}
-                            N/A
+                            <span class="note-scale">—</span>
                         {% endif %}
                     </div>
                 </div>
             </div>
-            <div class="col-md-6">
-                <div class="total-points">
-                    <h2 class="mb-2">
-                        <i class="fas fa-star me-2"></i>
-                        Note Moyenne Saison
-                    </h2>
-                    <div class="display-4 fw-bold">{{ note_moyenne_globale }}/10</div>
+            <div class="col-md-5 col-lg-4">
+                <div class="stats-card h-100 d-flex flex-column">
+                    <span class="stats-card-label mb-auto">
+                        <i class="fas fa-star me-1"></i>Note moyenne de la saison
+                    </span>
+                    <div class="note-value mt-2 text-center w-100">{{ note_moyenne_globale }}<span class="note-scale">/ 10</span></div>
                 </div>
             </div>
         </div>
 
-        <!-- Liste des courses -->
+        <!-- Liste des évènements du mois -->
         {% if courses_details %}
-            <div class="row">
+            <h2 class="section-title"><i class="fas fa-flag-checkered text-warning me-2"></i>Évènements — {{ selected_month_name }} {{ selected_year }}</h2>
+            <div class="row g-3">
                 {% for course in courses_details %}
-                <div class="col-lg-6 mb-3">
+                <div class="col-lg-6">
                     <div class="course-card">
                         <div class="d-flex justify-content-between align-items-start mb-3">
                             <h5 class="mb-0">
@@ -216,74 +291,53 @@
                                 {{ course.course_name }}
                             </h5>
                             {% if course.has_responded %}
-                                <span class="badge bg-success">
+                                <span class="badge badge-repondu">
                                     <i class="fas fa-check me-1"></i>Répondu
                                 </span>
                             {% else %}
-                                <span class="badge bg-warning">
+                                <span class="badge badge-attente">
                                     <i class="fas fa-clock me-1"></i>En attente
                                 </span>
                             {% endif %}
                         </div>
                         
-                        <div class="row mb-3">
+                        <div class="row g-3 mb-2">
                             <div class="col-6">
-                                <small class="text-muted">
-                                    <i class="fas fa-calendar me-1"></i>
-                                    Date
-                                </small>
-                                <div>{{ course.course_date.strftime('%d/%m/%Y') }}</div>
+                                <div class="stat-label"><i class="fas fa-calendar me-1 text-warning"></i>Date</div>
+                                <div class="stat-value">{{ course.course_date.strftime('%d/%m/%Y') }}</div>
                             </div>
                             <div class="col-6">
-                                <small class="text-muted">
-                                    <i class="fas fa-star me-1"></i>
-                                    Points Direct Vélo
-                                </small>
-                                <div class="h5 mb-0">{{ course.direct_velo_points }} points</div>
+                                <div class="stat-label"><i class="fas fa-star me-1 text-warning"></i>Points Événements</div>
+                                <div class="stat-value">{{ course.direct_velo_points }} pts</div>
                             </div>
                         </div>
 
-                        <div class="row mb-3">
+                        <div class="row g-3 mb-2">
                             <div class="col-6">
-                                <small class="text-muted">
-                                    <i class="fas fa-user me-1"></i>
-                                    Note moyenne perso
-                                </small>
-                                <div class="h5 mb-0">{{ course.note_moyenne_perso }}/10</div>
+                                <div class="stat-label"><i class="fas fa-user me-1 text-warning"></i>Note moyenne perso</div>
+                                <div class="stat-value">{{ course.note_moyenne_perso }}/10</div>
                             </div>
                             <div class="col-6">
-                                <small class="text-muted">
-                                    <i class="fas fa-users me-1"></i>
-                                    Note moyenne équipe
-                                </small>
-                                <div class="h5 mb-0">{{ course.note_moyenne_equipe }}/10</div>
+                                <div class="stat-label"><i class="fas fa-users me-1 text-warning"></i>Note moyenne équipe</div>
+                                <div class="stat-value">{{ course.note_moyenne_equipe }}/10</div>
                             </div>
                         </div>
 
-                        <div class="row mb-3">
+                        <div class="row g-3 mb-2">
                             <div class="col-6">
-                                <small class="text-muted">
-                                    <i class="fas fa-arrow-up me-1 text-success"></i>
-                                    Note max équipe
-                                </small>
-                                <div class="h5 mb-0 text-success">{{ course.note_max_equipe }}/10</div>
+                                <div class="stat-label"><i class="fas fa-arrow-up me-1 text-success"></i>Note max équipe</div>
+                                <div class="stat-value text-success">{{ course.note_max_equipe }}/10</div>
                             </div>
                             <div class="col-6">
-                                <small class="text-muted">
-                                    <i class="fas fa-arrow-down me-1 text-danger"></i>
-                                    Note mini équipe
-                                </small>
-                                <div class="h5 mb-0 text-danger">{{ course.note_min_equipe }}/10</div>
+                                <div class="stat-label"><i class="fas fa-arrow-down me-1 text-danger"></i>Note min équipe</div>
+                                <div class="stat-value text-danger">{{ course.note_min_equipe }}/10</div>
                             </div>
                         </div>
 
-                        <div class="row mb-3">
+                        <div class="row g-3">
                             <div class="col-12">
-                                <small class="text-muted">
-                                    <i class="fas fa-vote-yea me-1"></i>
-                                    Nombre de votants
-                                </small>
-                                <div class="h5 mb-0">{{ course.nb_repondus }} / {{ course.nb_total_participants }} votants</div>
+                                <div class="stat-label"><i class="fas fa-vote-yea me-1 text-warning"></i>Votants</div>
+                                <div class="stat-value">{{ course.nb_repondus }} / {{ course.nb_total_participants }}</div>
                             </div>
                         </div>
                     </div>
@@ -291,10 +345,10 @@
                 {% endfor %}
             </div>
         {% else %}
-            <div class="text-center mt-5">
-                <i class="fas fa-chart-line fa-3x text-muted mb-3"></i>
-                <h4 class="text-muted">Aucune course participée</h4>
-                <p class="text-muted">Vous n'avez pas encore participé à des courses avec évaluation.</p>
+            <div class="empty-state mt-4">
+                <i class="fas fa-chart-line fa-3x d-block mb-3"></i>
+                <h4 class="text-white mb-2">Aucun évènement ce mois</h4>
+                <p class="text-muted mb-4">Aucune course avec évaluation en {{ selected_month_name }} {{ selected_year }}.</p>
                 <a href="{{ url_for('main.coureur_dashboard') }}" class="btn btn-custom">
                     <i class="fas fa-arrow-left me-2"></i>
                     Retour au Dashboard
@@ -305,4 +359,4 @@
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
 </body>
-</html> 
+</html>

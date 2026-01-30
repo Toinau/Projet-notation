@@ -38,17 +38,6 @@ Teste l'envoi d'un email pour vérifier la configuration.
 python scripts/test_email_config.py
 ```
 
-## 📱 Configuration WhatsApp
-
-### `get_whatsapp_phone_id.py`
-Récupère l'ID du numéro de téléphone WhatsApp.
-
-### `update_whatsapp_phone_id.py`
-Met à jour l'ID du numéro de téléphone WhatsApp.
-
-### `update_whatsapp_token.py`
-Met à jour le token d'accès WhatsApp.
-
 ## 📞 Utilitaires
 
 ### `check_phone_numbers.py`

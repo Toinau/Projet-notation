@@ -1,5 +1,5 @@
 import os
-from flask import Flask
+from flask import Flask, render_template
 from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
 from flask_mail import Mail
@@ -20,9 +20,11 @@ def create_app():
 
     app.config.from_object('config.Config')
     
-    # Activer le mode debug pour le rechargement automatique
-    app.config['DEBUG'] = True
-    app.config['TEMPLATES_AUTO_RELOAD'] = True
+    # En développement : rechargement auto des templates ; en production : ne pas écraser DEBUG
+    if not app.config.get('DEBUG'):
+        app.config['TEMPLATES_AUTO_RELOAD'] = False
+    else:
+        app.config['TEMPLATES_AUTO_RELOAD'] = True
     
     db.init_app(app)
     migrate.init_app(app, db)
@@ -45,4 +47,14 @@ def create_app():
     from .cli import register_cli
     register_cli(app)
 
-    return app 
+    # Gestion des erreurs HTTP (évite d'exposer des traces en production)
+    @app.errorhandler(404)
+    def not_found_error(error):
+        return render_template('errors/404.html'), 404
+
+    @app.errorhandler(500)
+    def internal_error(error):
+        app.logger.error(f"Erreur 500: {error}")
+        return render_template('errors/500.html'), 500
+
+    return app

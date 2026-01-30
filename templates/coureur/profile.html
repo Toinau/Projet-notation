@@ -62,15 +62,19 @@
                         </div>
                         
                         <div class="mb-3">
-                            <label for="team_id" class="form-label">Équipe</label>
-                            <select class="form-control" id="team_id" name="team_id" required>
-                                <option value="">Sélectionnez une équipe</option>
+                            <label for="team_ids" class="form-label">Équipes</label>
+                            <div class="form-control" style="max-height: 150px; overflow-y: auto; background: #1a1a1a; border-color: #333;">
                                 {% for team in teams %}
-                                <option value="{{ team.id }}" {% if current_user.team_id == team.id %}selected{% endif %}>
-                                    {{ team.nom }}
-                                </option>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" name="team_ids" value="{{ team.id }}" id="team_{{ team.id }}" 
+                                           {% if team in current_user.teams %}checked{% endif %}>
+                                    <label class="form-check-label" for="team_{{ team.id }}">
+                                        {{ team.nom }}
+                                    </label>
+                                </div>
                                 {% endfor %}
-                            </select>
+                            </div>
+                            <small class="form-text text-muted">Vous pouvez sélectionner plusieurs équipes.</small>
                         </div>
                         
                         <div class="d-grid gap-2">
