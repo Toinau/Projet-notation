@@ -79,10 +79,13 @@ def register():
                 telephone=telephone,
                 notifications_sms=notifications_sms,
                 password=hashed_password, 
-                role=role, 
-                team_id=team_id
+                role=role
             )
             db.session.add(new_user)
+            if team_id:
+                team = Team.query.get(int(team_id))
+                if team:
+                    new_user.teams.append(team)
             db.session.commit()
             flash(f'Votre compte {role} a été créé avec succès!', 'success')
             return redirect(url_for('main.login'))
