@@ -1,7 +1,13 @@
 import os
 from dotenv import load_dotenv
 
+# Charger .env puis .env.local (les variables de .env.local écrasent celles de .env)
+# En local : créez .env.local avec FLASK_ENV=development et DATABASE_URL= pour utiliser SQLite
+# Sur le serveur : pas de .env.local → seul .env est utilisé (PostgreSQL de prod)
 load_dotenv()
+_env_local = os.path.join(os.path.dirname(__file__), '.env.local')
+if os.path.isfile(_env_local):
+    load_dotenv(_env_local, override=True)
 
 # Détection de l'environnement de production
 FLASK_ENV = os.environ.get('FLASK_ENV', 'development')

@@ -1,236 +1,282 @@
 <!DOCTYPE html>
 <html lang="fr">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Classements</title>
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link
+      href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css"
+      rel="stylesheet"
+    />
+    <link
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+      rel="stylesheet"
+    />
     <style>
-        body {
-            background: #000000;
-            min-height: 100vh;
-            color: #ffffff;
-        }
-        .navbar-custom {
-            background: #ffd700;
-            border-bottom: 3px solid #ffed4e;
-        }
-        .navbar-custom .navbar-brand,
-        .navbar-custom .nav-link {
-            color: #000000 !important;
-            font-weight: 600;
-        }
-        .navbar-custom .nav-link:hover {
-            color: #333333 !important;
-        }
-        .btn-custom {
-            background: #ffd700;
-            border: none;
-            color: #000000;
-            font-weight: 600;
-        }
-        .btn-custom:hover {
-            background: #ffed4e;
-            color: #000000;
-        }
-        .ranking-card {
-            background: #1a1a1a;
-            border: 1px solid #333333;
-            border-radius: 15px;
-            padding: 2rem;
-            margin-bottom: 2rem;
-            box-shadow: 0 4px 15px rgba(255, 215, 0, 0.1);
-        }
-        .ranking-header {
-            background: #ffd700;
-            color: #000000;
-            border-radius: 10px;
-            padding: 1rem;
-            text-align: center;
-            margin-bottom: 1.5rem;
-        }
-        .ranking-item {
-            background: #333333;
-            border-radius: 8px;
-            padding: 1rem;
-            margin-bottom: 0.5rem;
-            display: flex;
-            align-items: center;
-            transition: transform 0.2s ease;
-        }
-        .ranking-item:hover {
-            transform: translateX(5px);
-        }
-        .position {
-            background: #ffd700;
-            color: #000000;
-            border-radius: 50%;
-            width: 40px;
-            height: 40px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: bold;
-            margin-right: 1rem;
-        }
-        .position-1 { background: #ffd700; }
-        .position-2 { background: #c0c0c0; }
-        .position-3 { background: #cd7f32; }
-        .dropdown-menu {
-            background: #1a1a1a;
-            border: 1px solid #333333;
-        }
-        .dropdown-item {
-            color: #ffffff;
-        }
-        .dropdown-item:hover {
-            background: #333333;
-            color: #ffffff;
-        }
+      body {
+        background: #000000;
+        min-height: 100vh;
+        color: #ffffff;
+      }
+      .navbar-custom {
+        background: #ffd700;
+        border-bottom: 3px solid #ffed4e;
+      }
+      .navbar-custom .navbar-brand,
+      .navbar-custom .nav-link {
+        color: #000000 !important;
+        font-weight: 600;
+      }
+      .navbar-custom .nav-link:hover {
+        color: #333333 !important;
+      }
+      .btn-custom {
+        background: #ffd700;
+        border: none;
+        color: #000000;
+        font-weight: 600;
+      }
+      .btn-custom:hover {
+        background: #ffed4e;
+        color: #000000;
+      }
+      .ranking-card {
+        background: #1a1a1a;
+        border: 1px solid #333333;
+        border-radius: 15px;
+        padding: 2rem;
+        margin-bottom: 2rem;
+        box-shadow: 0 4px 15px rgba(255, 215, 0, 0.1);
+      }
+      .ranking-header {
+        background: #ffd700;
+        color: #000000;
+        border-radius: 10px;
+        padding: 1rem;
+        text-align: center;
+        margin-bottom: 1.5rem;
+      }
+      .ranking-item {
+        background: #333333;
+        border-radius: 8px;
+        padding: 1rem;
+        margin-bottom: 0.5rem;
+        display: flex;
+        align-items: center;
+        transition: transform 0.2s ease;
+      }
+      .ranking-item:hover {
+        transform: translateX(5px);
+      }
+      .position {
+        background: #ffd700;
+        color: #000000;
+        border-radius: 50%;
+        width: 40px;
+        height: 40px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: bold;
+        margin-right: 1rem;
+      }
+      .position-1 {
+        background: #ffd700;
+      }
+      .position-2 {
+        background: #c0c0c0;
+      }
+      .position-3 {
+        background: #cd7f32;
+      }
+      .dropdown-menu {
+        background: #1a1a1a;
+        border: 1px solid #333333;
+      }
+      .dropdown-item {
+        color: #ffffff;
+      }
+      .dropdown-item:hover {
+        background: #333333;
+        color: #ffffff;
+      }
     </style>
-</head>
-<body>
+  </head>
+  <body>
     <!-- Navigation -->
     <nav class="navbar navbar-expand-lg navbar-custom shadow-sm">
-        <div class="container">
-            <a class="navbar-brand" href="{{ url_for('main.coureur_dashboard') }}">
-                <i class="fas fa-arrow-left me-2"></i>
-                Retour Dashboard
+      <div class="container">
+        <a class="navbar-brand" href="{{ url_for('main.coureur_dashboard') }}">
+          <i class="fas fa-arrow-left me-2"></i>
+          Retour Dashboard
+        </a>
+        <div class="navbar-nav ms-auto">
+          <div class="nav-item dropdown">
+            <a
+              class="nav-link dropdown-toggle"
+              href="#"
+              role="button"
+              data-bs-toggle="dropdown"
+            >
+              <i class="fas fa-user-circle me-1"></i>
+              {{ current_user.prenom }} {{ current_user.nom }}
             </a>
-            <div class="navbar-nav ms-auto">
-                <div class="nav-item dropdown">
-                    <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
-                        <i class="fas fa-user-circle me-1"></i>
-                        {{ current_user.prenom }} {{ current_user.nom }}
-                    </a>
-                    <ul class="dropdown-menu">
-                        <li><a class="dropdown-item" href="{{ url_for('main.change_password') }}">
-                            <i class="fas fa-key me-2"></i>Changer le mot de passe
-                        </a></li>
-                        <li><hr class="dropdown-divider"></li>
-                        <li><a class="dropdown-item" href="{{ url_for('main.logout') }}">
-                            <i class="fas fa-sign-out-alt me-2"></i>Déconnexion
-                        </a></li>
-                    </ul>
-                </div>
-            </div>
+            <ul class="dropdown-menu">
+              <li>
+                <a
+                  class="dropdown-item"
+                  href="{{ url_for('main.change_password') }}"
+                >
+                  <i class="fas fa-key me-2"></i>Changer le mot de passe
+                </a>
+              </li>
+              <li><hr class="dropdown-divider" /></li>
+              <li>
+                <a class="dropdown-item" href="{{ url_for('main.logout') }}">
+                  <i class="fas fa-sign-out-alt me-2"></i>Déconnexion
+                </a>
+              </li>
+            </ul>
+          </div>
         </div>
+      </div>
     </nav>
 
     <div class="container mt-4">
-        <!-- Messages Flash -->
-        {% with messages = get_flashed_messages(with_categories=true) %}
-            {% if messages %}
-                {% for category, message in messages %}
-                    <div class="alert alert-{{ 'danger' if category == 'error' else category }} alert-dismissible fade show" role="alert">
-                        {{ message }}
-                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-                    </div>
-                {% endfor %}
+      <!-- Messages Flash -->
+      {% with messages = get_flashed_messages(with_categories=true) %} {% if
+      messages %} {% for category, message in messages %}
+      <div
+        class="alert alert-{{ 'danger' if category == 'error' else category }} alert-dismissible fade show"
+        role="alert"
+      >
+        {{ message }}
+        <button
+          type="button"
+          class="btn-close"
+          data-bs-dismiss="alert"
+        ></button>
+      </div>
+      {% endfor %} {% endif %} {% endwith %}
+
+      <!-- Header -->
+      <div class="row mb-4">
+        <div class="col-12">
+          <h1 class="display-6">
+            <i class="fas fa-trophy me-2 text-warning"></i>
+            Classements
+          </h1>
+          {% if user_team_names %}
+          <p class="text-white mb-0 mt-1">
+            <i class="fas fa-users me-1"></i>
+            Classement de votre équipe{% if user_team_names|length > 1 %}s{%
+            endif %} : {{ user_team_names|join(', ') }}
+          </p>
+          {% else %}
+          <p class="text-white mb-0 mt-1">
+            <i class="fas fa-info-circle me-1"></i>
+            Vous n'êtes rattaché à aucune équipe. Le classement s'affichera
+            lorsque vous serez assigné à une équipe.
+          </p>
+          {% endif %}
+        </div>
+      </div>
+
+      <!-- Classements -->
+      <div class="row">
+        <!-- Classement du mois -->
+        <div class="col-lg-6">
+          <div class="ranking-card">
+            <div class="ranking-header">
+              <div class="d-flex justify-content-between align-items-center">
+                <h4 class="mb-0">
+                  <i class="fas fa-calendar-alt me-2"></i>
+                  Classement de {{ selected_month_name }}
+                </h4>
+                <div class="dropdown">
+                  <button
+                    class="btn btn-outline-dark btn-sm dropdown-toggle"
+                    type="button"
+                    data-bs-toggle="dropdown"
+                  >
+                    <i class="fas fa-calendar me-1"></i>
+                    Changer de mois
+                  </button>
+                  <ul class="dropdown-menu">
+                    {% for option in month_options %}
+                    <li>
+                      <a
+                        class="dropdown-item {% if option.selected %}active{% endif %}"
+                        href="{{ url_for('main.coureur_rankings', month=option.value.split('-')[1]|int, year=option.value.split('-')[0]|int) }}"
+                      >
+                        {{ option.label }}
+                      </a>
+                    </li>
+                    {% endfor %}
+                  </ul>
+                </div>
+              </div>
+            </div>
+            {% if selected_month_rankings %} {% for ranking in
+            selected_month_rankings %} {% if ranking.selected_month_points > 0
+            %}
+            <div class="ranking-item">
+              <div
+                class="position position-{{ loop.index if loop.index <= 3 else 'default' }}"
+              >
+                {{ loop.index }}
+              </div>
+              <div class="flex-grow-1">
+                <h6 class="mb-0">{{ ranking.username }}</h6>
+              </div>
+              <div class="ms-auto">
+                <strong>{{ ranking.selected_month_points }} pts</strong>
+              </div>
+            </div>
+            {% endif %} {% endfor %} {% else %}
+            <div class="text-center text-white">
+              <i class="fas fa-info-circle fa-2x mb-3"></i>
+              <p>Aucun classement disponible pour {{ selected_month_name }}</p>
+            </div>
             {% endif %}
-        {% endwith %}
-
-        <!-- Header -->
-        <div class="row mb-4">
-            <div class="col-12">
-                <h1 class="display-6">
-                    <i class="fas fa-trophy me-2 text-warning"></i>
-                    Classements
-                </h1>
-            </div>
+          </div>
         </div>
 
-        <!-- Classements -->
-        <div class="row">
-            <!-- Classement du mois -->
-            <div class="col-lg-6">
-                <div class="ranking-card">
-                    <div class="ranking-header">
-                        <div class="d-flex justify-content-between align-items-center">
-                            <h4 class="mb-0">
-                                <i class="fas fa-calendar-alt me-2"></i>
-                                Classement de {{ selected_month_name }}
-                            </h4>
-                            <div class="dropdown">
-                                <button class="btn btn-outline-dark btn-sm dropdown-toggle" type="button" data-bs-toggle="dropdown">
-                                    <i class="fas fa-calendar me-1"></i>
-                                    Changer de mois
-                                </button>
-                                <ul class="dropdown-menu">
-                                    {% for option in month_options %}
-                                        <li>
-                                            <a class="dropdown-item {% if option.selected %}active{% endif %}" 
-                                               href="{{ url_for('main.coureur_rankings', month=option.value.split('-')[1]|int, year=option.value.split('-')[0]|int) }}">
-                                                {{ option.label }}
-                                            </a>
-                                        </li>
-                                    {% endfor %}
-                                </ul>
-                            </div>
-                        </div>
-                    </div>
-                    {% if selected_month_rankings %}
-                        {% for ranking in selected_month_rankings %}
-                            {% if ranking.selected_month_points > 0 %}
-                                <div class="ranking-item">
-                                    <div class="position position-{{ loop.index if loop.index <= 3 else 'default' }}">
-                                        {{ loop.index }}
-                                    </div>
-                                    <div class="flex-grow-1">
-                                        <h6 class="mb-0">{{ ranking.username }}</h6>
-                                    </div>
-                                    <div class="ms-auto">
-                                        <strong>{{ ranking.selected_month_points }} pts</strong>
-                                    </div>
-                                </div>
-                            {% endif %}
-                        {% endfor %}
-                    {% else %}
-                        <div class="text-center text-muted">
-                            <i class="fas fa-info-circle fa-2x mb-3"></i>
-                            <p>Aucun classement disponible pour {{ selected_month_name }}</p>
-                        </div>
-                    {% endif %}
-                </div>
+        <!-- Classement de la saison -->
+        <div class="col-lg-6">
+          <div class="ranking-card">
+            <div class="ranking-header">
+              <h4 class="mb-0">
+                <i class="fas fa-star me-2"></i>
+                Classement de la saison
+              </h4>
             </div>
-
-            <!-- Classement de la saison -->
-            <div class="col-lg-6">
-                <div class="ranking-card">
-                    <div class="ranking-header">
-                        <h4 class="mb-0">
-                            <i class="fas fa-star me-2"></i>
-                            Classement de la saison
-                        </h4>
-                    </div>
-                    {% if season_rankings %}
-                        {% for ranking in season_rankings %}
-                            {% if ranking.season_points > 0 %}
-                                <div class="ranking-item">
-                                    <div class="position position-{{ loop.index if loop.index <= 3 else 'default' }}">
-                                        {{ loop.index }}
-                                    </div>
-                                    <div class="flex-grow-1">
-                                        <h6 class="mb-0">{{ ranking.username }}</h6>
-                                    </div>
-                                    <div class="ms-auto">
-                                        <strong>{{ ranking.season_points }} pts</strong>
-                                    </div>
-                                </div>
-                            {% endif %}
-                        {% endfor %}
-                    {% else %}
-                        <div class="text-center text-muted">
-                            <i class="fas fa-info-circle fa-2x mb-3"></i>
-                            <p>Aucun classement disponible pour cette saison</p>
-                        </div>
-                    {% endif %}
-                </div>
+            {% if season_rankings %} {% for ranking in season_rankings %} {% if
+            ranking.season_points > 0 %}
+            <div class="ranking-item">
+              <div
+                class="position position-{{ loop.index if loop.index <= 3 else 'default' }}"
+              >
+                {{ loop.index }}
+              </div>
+              <div class="flex-grow-1">
+                <h6 class="mb-0">{{ ranking.username }}</h6>
+              </div>
+              <div class="ms-auto">
+                <strong>{{ ranking.season_points }} pts</strong>
+              </div>
             </div>
+            {% endif %} {% endfor %} {% else %}
+            <div class="text-center text-white">
+              <i class="fas fa-info-circle fa-2x mb-3"></i>
+              <p>Aucun classement disponible pour cette saison</p>
+            </div>
+            {% endif %}
+          </div>
         </div>
+      </div>
     </div>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
-</body>
-</html> 
+  </body>
+</html>

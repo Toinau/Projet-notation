@@ -1,5 +1,6 @@
 # Documentation
 
+- **DEV_LOCAL.md** – Lancer l'app en local avec SQLite (sans toucher à la prod)
 - **CLI_COMMANDS.md** – Commandes CLI (base de données, utilisateurs, etc.)
 - **GUIDE_CONFIGURATION_GMAIL.md** – Configuration email Gmail
 - **GUIDE_DEPLOIEMENT_IONOS.md** – Déploiement détaillé sur VPS Ionos

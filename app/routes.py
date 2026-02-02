@@ -514,16 +514,36 @@ def toggle_user_status(user_id):
 @main_bp.route('/admin/users/<int:user_id>/delete', methods=['POST'])
 @login_required
 def delete_user(user_id):
-    user = current_user
     try:
-        if not user.is_authenticated:
-            return redirect(url_for('main.login'))
-        user = User.query.get_or_404(user_id)
-        if user.id == current_user.id:
+        if not current_user.is_authenticated or not current_user.is_admin():
+            flash('Accès interdit. Privilèges administrateur requis.', 'danger')
+            return redirect(url_for('main.admin_users'))
+        user_to_delete = User.query.get_or_404(user_id)
+        if user_to_delete.id == current_user.id:
             flash('Vous ne pouvez pas supprimer votre propre compte.', 'warning')
             return redirect(url_for('main.admin_users'))
-        username = user.prenom + ' ' + user.nom
-        db.session.delete(user)
+        username = user_to_delete.prenom + ' ' + user_to_delete.nom
+
+        # Réaffecter les questionnaires créés par cet utilisateur à l'admin courant
+        Questionnaire.query.filter_by(created_by=user_to_delete.id).update(
+            {Questionnaire.created_by: current_user.id}
+        )
+
+        # Supprimer les réponses (notations) où l'utilisateur est évaluateur ou évalué
+        QuestionnaireResponse.query.filter(
+            (QuestionnaireResponse.evaluator_id == user_to_delete.id) |
+            (QuestionnaireResponse.evaluated_id == user_to_delete.id)
+        ).delete(synchronize_session=False)
+
+        # Supprimer les participations aux questionnaires
+        QuestionnaireParticipant.query.filter_by(user_id=user_to_delete.id).delete(
+            synchronize_session=False
+        )
+
+        # Retirer l'utilisateur de toutes les équipes (table user_team)
+        user_to_delete.teams.clear()
+
+        db.session.delete(user_to_delete)
         db.session.commit()
         flash(f'Le compte de {username} a été supprimé.', 'success')
     except Exception as e:
@@ -1713,8 +1733,18 @@ def coureur_rankings():
         start_of_current_month = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
         start_of_year = now.replace(month=1, day=1, hour=0, minute=0, second=0, microsecond=0)
         
-        # Récupérer tous les coureurs (tous les coureurs actifs, pas seulement ceux de l'équipe)
-        all_coureurs = User.query.filter_by(role='coureur', is_active=True).all()
+        # Récupérer uniquement les coureurs des équipes dont l'athlète connecté fait partie
+        team_ids = [t.id for t in user.teams]
+        if not team_ids:
+            all_coureurs = []  # Coureur sans équipe : classement vide
+        else:
+            all_coureurs = (
+                User.query.filter_by(role='coureur', is_active=True)
+                .join(User.teams)
+                .filter(Team.id.in_(team_ids))
+                .distinct()
+                .all()
+            )
         
         # Calculer la période de la saison (novembre à octobre)
         # Trouver la saison correspondant au mois sélectionné
@@ -1727,7 +1757,7 @@ def coureur_rankings():
         season_start_date = datetime(season_start_year, 11, 1).date()
         season_end_date = datetime(season_end_year, 10, 31).date()
 
-        # Calculer les points pour tous les coureurs
+        # Calculer les points pour tous les coureurs (de l'équipe)
         coureurs_rankings = []
         for coureur in all_coureurs:
             participations = db.session.query(
@@ -1812,6 +1842,7 @@ def coureur_rankings():
                     'selected': year == selected_year and month == selected_month
                 })
         
+        user_team_names = [t.nom for t in user.teams]
         return render_template('coureur/rankings.html', 
                              season_rankings=season_rankings,
                              selected_month_rankings=selected_month_rankings,
@@ -1819,7 +1850,8 @@ def coureur_rankings():
                              current_month_name=current_month_name,
                              month_options=month_options,
                              selected_month=selected_month,
-                             selected_year=selected_year)
+                             selected_year=selected_year,
+                             user_team_names=user_team_names)
         
     except Exception as e:
         current_app.logger.error(f"Erreur classements: {e}")
