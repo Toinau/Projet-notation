@@ -141,13 +141,15 @@
             <div class="col-lg-4 mt-3 mt-lg-0 d-flex align-items-center">
                 <div class="filter-card w-100">
                     <form method="get" class="d-flex align-items-center gap-2">
-                        <label for="team_id" class="mb-0 text-nowrap" style="color: #ccc;"><i class="fas fa-users me-1 text-warning"></i>Équipe :</label>
-                        <select class="form-select form-select-sm flex-grow-1" name="team_id" id="team_id" onchange="this.form.submit()">
-                            <option value="">Toutes les équipes</option>
-                            {% for team in teams %}
-                            <option value="{{ team.id }}" {% if request.args.get('team_id', type=int) == team.id %}selected{% endif %}>{{ team.nom }}</option>
+                        <label for="championship_id" class="mb-0 text-nowrap" style="color: #ccc;"><i class="fas fa-trophy me-1 text-warning"></i>Championnat :</label>
+                        <select class="form-select form-select-sm flex-grow-1" name="championship_id" id="championship_id" onchange="this.form.submit()">
+                            {% for champ in championnats %}
+                            <option value="{{ champ.id }}" {% if championship_id == champ.id %}selected{% endif %}>{{ champ.nom }}</option>
                             {% endfor %}
                         </select>
+                        <input type="hidden" name="month" value="{{ selected_month }}">
+                        <input type="hidden" name="year" value="{{ selected_year }}">
+                        <input type="hidden" name="season" value="{{ season }}">
                     </form>
                 </div>
             </div>
@@ -172,7 +174,7 @@
                             </select>
                             <input type="hidden" name="year" value="{{ selected_year }}">
                             <input type="hidden" name="season" value="{{ season }}">
-                            {% if request.args.get('team_id') %}<input type="hidden" name="team_id" value="{{ request.args.get('team_id') }}">{% endif %}
+                            {% if championship_id %}<input type="hidden" name="championship_id" value="{{ championship_id }}">{% endif %}
                         </form>
                     </div>
                     <div class="card-body p-0">
@@ -215,7 +217,7 @@
                             </select>
                             <input type="hidden" name="month" id="season-month" value="{{ selected_month }}">
                             <input type="hidden" name="year" id="season-year" value="{{ selected_year }}">
-                            {% if request.args.get('team_id') %}<input type="hidden" name="team_id" value="{{ request.args.get('team_id') }}">{% endif %}
+                            {% if championship_id %}<input type="hidden" name="championship_id" value="{{ championship_id }}">{% endif %}
                         </form>
                     </div>
                     <div class="card-body p-0">
@@ -264,7 +266,7 @@
                             </select>
                             <input type="hidden" name="year" value="{{ selected_year }}">
                             <input type="hidden" name="season" value="{{ season }}">
-                            {% if request.args.get('team_id') %}<input type="hidden" name="team_id" value="{{ request.args.get('team_id') }}">{% endif %}
+                            {% if championship_id %}<input type="hidden" name="championship_id" value="{{ championship_id }}">{% endif %}
                         </form>
                     </div>
                     <div class="card-body p-0">
@@ -307,7 +309,7 @@
                             </select>
                             <input type="hidden" name="month" id="season-notes-month" value="{{ selected_month }}">
                             <input type="hidden" name="year" id="season-notes-year" value="{{ selected_year }}">
-                            {% if request.args.get('team_id') %}<input type="hidden" name="team_id" value="{{ request.args.get('team_id') }}">{% endif %}
+                            {% if championship_id %}<input type="hidden" name="championship_id" value="{{ championship_id }}">{% endif %}
                         </form>
                     </div>
                     <div class="card-body p-0">

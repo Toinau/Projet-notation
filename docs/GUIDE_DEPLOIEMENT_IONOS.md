@@ -7,19 +7,19 @@ Ce guide vous explique étape par étape comment déployer votre application Fla
 1. [Prérequis](#prérequis)
 2. [Choix : Domaine principal ou sous-domaine ?](#choix--domaine-principal-ou-sous-domaine-)
 3. [Étape 1 : Achat et configuration du VPS Ionos](#étape-1--achat-et-configuration-du-vps-ionos)
-3. [Étape 2 : Connexion au serveur](#étape-2--connexion-au-serveur)
-4. [Étape 3 : Installation des dépendances](#étape-3--installation-des-dépendances)
-5. [Étape 4 : Configuration de la base de données](#étape-4--configuration-de-la-base-de-données)
-6. [Étape 5 : Déploiement de l'application](#étape-5--déploiement-de-lapplication)
-7. [Étape 6 : Configuration de l'environnement](#étape-6--configuration-de-lenvironnement)
-8. [Étape 7 : Configuration de Gunicorn et Supervisor](#étape-7--configuration-de-gunicorn-et-supervisor)
-9. [Étape 8 : Configuration de Nginx](#étape-8--configuration-de-nginx)
-10. [Étape 9 : Configuration SSL/HTTPS](#étape-9--configuration-sslhttps)
-11. [Étape 10 : Configuration du firewall](#étape-10--configuration-du-firewall)
-12. [Vérification et tests](#vérification-et-tests)
-13. [Mise à jour de l'application](#mise-à-jour-de-lapplication)
-14. [Dépannage](#dépannage)
-15. [Sauvegarde de la base de données](#sauvegarde-de-la-base-de-données)
+4. [Étape 2 : Connexion au serveur](#étape-2--connexion-au-serveur)
+5. [Étape 3 : Installation des dépendances](#étape-3--installation-des-dépendances)
+6. [Étape 4 : Configuration de la base de données](#étape-4--configuration-de-la-base-de-données)
+7. [Étape 5 : Déploiement de l'application](#étape-5--déploiement-de-lapplication)
+8. [Étape 6 : Configuration de l'environnement](#étape-6--configuration-de-lenvironnement)
+9. [Étape 7 : Configuration de Gunicorn et Supervisor](#étape-7--configuration-de-gunicorn-et-supervisor)
+10. [Étape 8 : Configuration de Nginx](#étape-8--configuration-de-nginx)
+11. [Étape 9 : Configuration SSL/HTTPS](#étape-9--configuration-sslhttps)
+12. [Étape 10 : Configuration du firewall](#étape-10--configuration-du-firewall)
+13. [Vérification et tests](#vérification-et-tests)
+14. [Mise à jour de l'application](#mise-à-jour-de-lapplication)
+15. [Dépannage](#dépannage)
+16. [Sauvegarde de la base de données](#sauvegarde-de-la-base-de-données)
 
 ---
 
@@ -39,11 +39,13 @@ Ce guide vous explique étape par étape comment déployer votre application Fla
 Avant de commencer, vous devez décider où héberger votre application :
 
 ### Option 1 : Domaine principal
+
 - **URL** : `https://votre-domaine.com`
 - **Avantages** : URL courte et directe
 - **Inconvénients** : Prend le domaine principal (si vous avez déjà un site web)
 
 ### Option 2 : Sous-domaine (Recommandé) ✅
+
 - **URL** : `https://app.votre-domaine.com` ou `https://notation.votre-domaine.com`
 - **Avantages** :
   - ✅ Ne perturbe pas votre site principal (si vous en avez un)
@@ -55,6 +57,7 @@ Avant de commencer, vous devez décider où héberger votre application :
 **Recommandation** : Utilisez un sous-domaine comme `app.votre-domaine.com` ou `notation.votre-domaine.com`
 
 **Exemples de sous-domaines courants** :
+
 - `app.votre-domaine.com` - Application principale
 - `notation.votre-domaine.com` - Application de notation
 - `admin.votre-domaine.com` - Interface d'administration
@@ -77,6 +80,7 @@ Le guide couvre les deux options. Suivez simplement les instructions corresponda
 **⚠️ Important : Linux obligatoire, pas Windows !**
 
 **Pourquoi Linux ?**
+
 - ✅ **Gratuit** : Pas de licence Windows à payer (~15-20€/mois en plus)
 - ✅ **Performance** : Meilleures performances pour les serveurs web
 - ✅ **Compatible** : Tous les outils nécessaires (Nginx, Gunicorn, PostgreSQL) sont conçus pour Linux
@@ -85,6 +89,7 @@ Le guide couvre les deux options. Suivez simplement les instructions corresponda
 - ✅ **Scripts** : Tous les scripts de ce guide sont pour Linux
 
 **Windows ne convient pas car** :
+
 - ❌ Coût supplémentaire important (licence Windows Server)
 - ❌ Configuration beaucoup plus complexe
 - ❌ Nginx et Gunicorn ne sont pas optimisés pour Windows
@@ -98,6 +103,7 @@ Le guide couvre les deux options. Suivez simplement les instructions corresponda
 ### 1.2 Récupération des informations
 
 Après l'achat, vous recevrez par email :
+
 - **Adresse IP** du serveur (ex: `123.456.789.012`)
 - **Nom d'utilisateur** : `root`
 - **Mot de passe** temporaire (à changer immédiatement)
@@ -117,7 +123,7 @@ Après l'achat, vous recevrez par email :
 ```powershell
 # Installer OpenSSH si nécessaire
 # Puis se connecter
-ssh root@VOTRE_IP_SERVEUR
+ssh root@82.165.129.123
 ```
 
 ### 2.2 Depuis Linux/Mac
@@ -263,7 +269,8 @@ APP_URL=https://app.votre-domaine.com
 ```
 
 **Note** : Si vous utilisez un sous-domaine, remplacez `app.votre-domaine.com` par votre sous-domaine réel (ex: `notation.votre-domaine.com`, `admin.votre-domaine.com`, etc.)
-```
+
+````
 
 **⚠️ Important** :
 - Générez une `SECRET_KEY` sécurisée avec : `python3 -c "import secrets; print(secrets.token_hex(32))"`
@@ -285,7 +292,7 @@ flask init-db
 # Créer un administrateur
 flask create-admin
 # Suivez les instructions pour créer votre compte admin
-```
+````
 
 ---
 
@@ -365,21 +372,24 @@ nano /etc/nginx/sites-available/notation-app
 Remplacez `votre-domaine.com` par votre vrai domaine dans le fichier.
 
 **Pour un domaine principal** :
+
 ```nginx
 server_name votre-domaine.com www.votre-domaine.com;
 ```
 
 **Pour un sous-domaine** (exemple avec `app.votre-domaine.com`) :
+
 ```nginx
 server_name app.votre-domaine.com;
 ```
 
 **Exemple complet avec sous-domaine** :
+
 ```nginx
 server {
     listen 80;
     server_name app.votre-domaine.com;  # Votre sous-domaine
-    
+
     # ... reste de la configuration ...
 }
 ```
@@ -439,6 +449,7 @@ apt install certbot python3-certbot-nginx -y
 #### Option B : Utiliser un sous-domaine (Recommandé) ✅
 
 **Avantages d'un sous-domaine** :
+
 - ✅ Séparation claire entre votre site principal et l'application
 - ✅ Plus facile à gérer et à mémoriser
 - ✅ Permet d'héberger plusieurs applications sur le même serveur
@@ -454,6 +465,7 @@ apt install certbot python3-certbot-nginx -y
 3. Attendez la propagation DNS (5-30 minutes)
 
 **Exemples de sous-domaines courants** :
+
 - `app.votre-domaine.com` - Application principale
 - `notation.votre-domaine.com` - Application de notation
 - `admin.votre-domaine.com` - Interface d'administration
@@ -462,6 +474,7 @@ apt install certbot python3-certbot-nginx -y
 ### 9.3 Vérification DNS
 
 **Pour un domaine principal** :
+
 ```bash
 # Vérifier que le DNS est correct
 nslookup votre-domaine.com
@@ -469,6 +482,7 @@ nslookup votre-domaine.com
 ```
 
 **Pour un sous-domaine** :
+
 ```bash
 # Vérifier que le DNS est correct
 nslookup app.votre-domaine.com
@@ -476,6 +490,7 @@ nslookup app.votre-domaine.com
 ```
 
 **Alternative avec dig** :
+
 ```bash
 # Plus détaillé
 dig app.votre-domaine.com +short
@@ -485,18 +500,21 @@ dig app.votre-domaine.com +short
 ### 9.4 Obtenir le certificat SSL
 
 **Pour un domaine principal** :
+
 ```bash
 # Obtenir le certificat SSL
 certbot --nginx -d votre-domaine.com -d www.votre-domaine.com
 ```
 
 **Pour un sous-domaine** (exemple avec `app.votre-domaine.com`) :
+
 ```bash
 # Obtenir le certificat SSL pour le sous-domaine uniquement
 certbot --nginx -d app.votre-domaine.com
 ```
 
 **Suivez les instructions** :
+
 - Entrez votre email
 - Acceptez les conditions
 - Choisissez de rediriger HTTP vers HTTPS (option 2)
@@ -719,6 +737,7 @@ supervisorctl restart notation-app
 ```
 
 **Causes courantes** :
+
 - Erreur dans le fichier `.env`
 - Problème de connexion à la base de données
 - Port 8000 déjà utilisé
@@ -820,13 +839,16 @@ Avant de considérer le déploiement terminé, vérifiez :
 Pour ne pas perdre les données en cas de problème, sauvegardez régulièrement la base PostgreSQL et récupérez les dumps sur votre PC.
 
 **Sur le VPS** (créer un dump) :
+
 ```bash
 cd /var/www/Projet-notation
 ./deploy/backup_db.sh
 ```
+
 Le fichier est créé dans `backups/db_AAAA-MM-JJ_HH-MM.dump`.
 
 **Depuis votre PC** (récupérer les sauvegardes) :
+
 ```powershell
 scp -r root@VOTRE_IP:/var/www/Projet-notation/backups ./backups-vps
 ```

@@ -234,6 +234,45 @@
             </div>
         </div>
 
+        <!-- Filtres Mois / Championnat -->
+        <div class="row mb-3">
+            <div class="col-12 d-flex flex-wrap align-items-center gap-3">
+                <span class="text-nowrap text-muted"><i class="fas fa-filter me-1"></i>Filtres :</span>
+                <div class="dropdown">
+                    <button class="btn btn-outline-light btn-sm dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                        <i class="fas fa-calendar me-1"></i>
+                        {{ selected_month_name }} {{ selected_year }}
+                    </button>
+                    <ul class="dropdown-menu dropdown-menu-dark">
+                        {% for option in month_options %}
+                            <li>
+                                <a class="dropdown-item {% if option.selected %}active{% endif %}"
+                                   href="{{ url_for('main.coureur_points_details', month=option.value.split('-')[1]|int, year=option.value.split('-')[0]|int, championship_id=selected_championship_id) if selected_championship_id else url_for('main.coureur_points_details', month=option.value.split('-')[1]|int, year=option.value.split('-')[0]|int) }}">
+                                    {{ option.label }}
+                                </a>
+                            </li>
+                        {% endfor %}
+                    </ul>
+                </div>
+                <div class="dropdown">
+                    <button class="btn btn-outline-light btn-sm dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                        <i class="fas fa-trophy me-1"></i>
+                        {% for opt in championship_options %}{% if opt.id == selected_championship_id %}{{ opt.nom }}{% endif %}{% endfor %}
+                    </button>
+                    <ul class="dropdown-menu dropdown-menu-dark">
+                        {% for opt in championship_options %}
+                            <li>
+                                <a class="dropdown-item {% if opt.id == selected_championship_id %}active{% endif %}"
+                                   href="{{ url_for('main.coureur_points_details', month=selected_month, year=selected_year, championship_id=opt.id) if opt.id else url_for('main.coureur_points_details', month=selected_month, year=selected_year) }}">
+                                    {{ opt.nom }}
+                                </a>
+                            </li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            </div>
+        </div>
+
         <!-- Notes moyennes -->
         <div class="row mb-4 g-3 justify-content-center">
             <div class="col-md-5 col-lg-4">
@@ -242,22 +281,6 @@
                         <span class="stats-card-label">
                             <i class="fas fa-calendar-alt me-1"></i>Note moyenne du mois
                         </span>
-                        <div class="dropdown">
-                            <button class="btn btn-outline-dark btn-sm dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
-                                <i class="fas fa-calendar me-1"></i>
-                                {{ selected_month_name }} {{ selected_year }}
-                            </button>
-                            <ul class="dropdown-menu dropdown-menu-dark">
-                                {% for option in month_options %}
-                                    <li>
-                                        <a class="dropdown-item {% if option.selected %}active{% endif %}" 
-                                           href="{{ url_for('main.coureur_points_details', month=option.value.split('-')[1]|int, year=option.value.split('-')[0]|int) }}">
-                                            {{ option.label }}
-                                        </a>
-                                    </li>
-                                {% endfor %}
-                            </ul>
-                        </div>
                     </div>
                     <div class="note-value mt-2 text-center w-100">
                         {% if note_moyenne_selected_month > 0 %}
@@ -280,7 +303,10 @@
 
         <!-- Liste des évènements du mois -->
         {% if courses_details %}
-            <h2 class="section-title"><i class="fas fa-flag-checkered text-warning me-2"></i>Évènements — {{ selected_month_name }} {{ selected_year }}</h2>
+            <h2 class="section-title">
+                <i class="fas fa-flag-checkered text-warning me-2"></i>Évènements — {{ selected_month_name }} {{ selected_year }}
+                {% if selected_championship_id %}{% for opt in championship_options %}{% if opt.id == selected_championship_id %}<span class="text-warning"> — {{ opt.nom }}</span>{% endif %}{% endfor %}{% endif %}
+            </h2>
             <div class="row g-3">
                 {% for course in courses_details %}
                 <div class="col-lg-6">
@@ -307,7 +333,13 @@
                                 <div class="stat-value">{{ course.course_date.strftime('%d/%m/%Y') }}</div>
                             </div>
                             <div class="col-6">
-                                <div class="stat-label"><i class="fas fa-star me-1 text-warning"></i>Points Événements</div>
+                                <div class="stat-label"><i class="fas fa-trophy me-1 text-warning"></i>Championnat</div>
+                                <div class="stat-value">{{ course.championship_name }}</div>
+                            </div>
+                        </div>
+                        <div class="row g-3 mb-2">
+                            <div class="col-12">
+                                <div class="stat-label"><i class="fas fa-star me-1 text-warning"></i>Points Événements (comptent pour le championnat ci-dessus)</div>
                                 <div class="stat-value">{{ course.direct_velo_points }} pts</div>
                             </div>
                         </div>
@@ -348,7 +380,7 @@
             <div class="empty-state mt-4">
                 <i class="fas fa-chart-line fa-3x d-block mb-3"></i>
                 <h4 class="text-white mb-2">Aucun évènement ce mois</h4>
-                <p class="text-muted mb-4">Aucune course avec évaluation en {{ selected_month_name }} {{ selected_year }}.</p>
+                <p class="text-muted mb-4">Aucune course avec évaluation en {{ selected_month_name }} {{ selected_year }}{% if selected_championship_id %} pour ce championnat{% endif %}.</p>
                 <a href="{{ url_for('main.coureur_dashboard') }}" class="btn btn-custom">
                     <i class="fas fa-arrow-left me-2"></i>
                     Retour au Dashboard

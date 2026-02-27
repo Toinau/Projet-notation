@@ -136,6 +136,11 @@
                             <h5 class="mb-0">
                                 <i class="fas fa-flag-checkered me-2 text-warning"></i>
                                 {{ questionnaire.course_name }}
+                                {% if questionnaire.championship_name %}
+                                    <small class="d-block text-warning mt-1" style="font-size: 0.85rem;">
+                                        <i class="fas fa-trophy me-1"></i>{{ questionnaire.championship_name }}
+                                    </small>
+                                {% endif %}
                             </h5>
                             {% if questionnaire.has_responded %}
                                 <span class="badge bg-success status-badge">

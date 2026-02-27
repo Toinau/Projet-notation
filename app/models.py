@@ -86,9 +86,12 @@ class Questionnaire(db.Model):
     course_name = db.Column(db.String(200), nullable=False)
     course_date = db.Column(db.Date, nullable=False)
     direct_velo_points = db.Column(db.Integer, nullable=False)
+    championship_id = db.Column(db.Integer, db.ForeignKey('championship.id'), nullable=True)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     created_by = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     
+    # Relation avec le championnat
+    championship = db.relationship('Championship', backref='questionnaires')
     # Relation avec les participants
     participants = db.relationship('QuestionnaireParticipant', backref='questionnaire', lazy=True, cascade='all, delete-orphan')
     # Relation avec les réponses (ajout du cascade)
@@ -125,6 +128,17 @@ class QuestionnaireResponse(db.Model):
     
     def __repr__(self):
         return f'<QuestionnaireResponse {self.evaluator_id} -> {self.evaluated_id}: {self.rating}/10>'
+
+class Championship(db.Model):
+    """Type de championnat (ex: Régional, National, Critérium...)"""
+    __tablename__ = 'championship'
+    id = db.Column(db.Integer, primary_key=True)
+    nom = db.Column(db.String(100), nullable=False, unique=True)
+    actif = db.Column(db.Boolean, default=True, nullable=False)
+
+    def __repr__(self):
+        return f'<Championship {self.nom}>'
+
 
 class Team(db.Model):
     __tablename__ = 'team'

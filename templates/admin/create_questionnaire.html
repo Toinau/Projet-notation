@@ -101,6 +101,93 @@
             border-radius: 5px;
             margin-bottom: 1rem;
         }
+        .panel-retenus {
+            background: #1a1a1a;
+            border: 1px solid #ffd700;
+            border-radius: 8px;
+            padding: 1rem;
+            min-height: 200px;
+            color: #ffffff;
+        }
+        .panel-retenus .list-group-item {
+            background: #222222;
+            border-color: #444444;
+            color: #ffffff;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .panel-retenus .text-muted,
+        .panel-retenus #retenus-empty-msg {
+            color: #ffffff !important;
+        }
+        .btn-trash-coureur {
+            padding: 0.2rem 0.5rem;
+            color: #dc3545;
+        }
+        .btn-trash-coureur:hover {
+            color: #ff6b6b;
+        }
+        .bareme-info-btn {
+            border-color: #ffd700;
+            color: #ffd700;
+        }
+        .bareme-info-btn:hover {
+            background: rgba(255, 215, 0, 0.2);
+            color: #ffed4e;
+            border-color: #ffed4e;
+        }
+        .popover-bareme .popover-body {
+            background: #1a1a1a;
+            color: #ffffff;
+            border: 1px solid #ffd700;
+            max-height: 70vh;
+            overflow-y: auto;
+        }
+        .popover-bareme .popover-header {
+            background: #ffd700;
+            color: #000000;
+            border-bottom: 1px solid #ffed4e;
+        }
+        /* Barème Open : grilles visuelles */
+        .bareme-open-intro {
+            font-size: 0.85rem;
+            margin-bottom: 0.75rem;
+            color: #e0e0e0;
+        }
+        .bareme-open-block {
+            margin-bottom: 0.9rem;
+        }
+        .bareme-open-block:last-child { margin-bottom: 0; }
+        .bareme-open-title {
+            font-weight: 700;
+            color: #ffd700;
+            margin-bottom: 0.35rem;
+            font-size: 0.9rem;
+        }
+        .bareme-open-table {
+            width: 100%;
+            font-size: 0.75rem;
+            border-collapse: collapse;
+            border: 1px solid #444;
+            border-radius: 6px;
+            overflow: hidden;
+        }
+        .bareme-open-table th {
+            background: #333;
+            color: #ffd700;
+            padding: 0.3rem 0.5rem;
+            text-align: left;
+            font-weight: 600;
+        }
+        .bareme-open-table td {
+            padding: 0.25rem 0.5rem;
+            border-bottom: 1px solid #2a2a2a;
+        }
+        .bareme-open-table tr:last-child td { border-bottom: none; }
+        .bareme-open-table tr:nth-child(even) td { background: #222; }
+        .bareme-open-table .col-place { width: 50%; color: #ccc; }
+        .bareme-open-table .col-pts { width: 50%; text-align: right; font-weight: 600; color: #ffd700; }
     </style>
 </head>
 <body>
@@ -159,7 +246,7 @@
 
         <!-- Formulaire de création -->
         <div class="row">
-            <div class="col-lg-8 mx-auto">
+            <div class="col-12">
                 <div class="card shadow-lg">
                     <div class="card-header">
                         <h5 class="card-title mb-0">
@@ -168,7 +255,7 @@
                         </h5>
                     </div>
                     <div class="card-body">
-                        <form method="POST">
+                        <form method="POST" id="form-create-questionnaire">
                             <!-- Informations de la course -->
                             <div class="row mb-4">
                                 <div class="col-12">
@@ -189,59 +276,79 @@
                                 </div>
                             </div>
 
+                            <!-- Type de championnat -->
+                            <div class="row mb-4">
+                                <div class="col-12">
+                                    <label for="championship_id" class="form-label">
+                                        <i class="fas fa-trophy me-1"></i>Type de championnat *
+                                    </label>
+                                    <select class="form-select" id="championship_id" name="championship_id" required>
+                                        <option value="">-- Sélectionner un championnat --</option>
+                                        {% for champ in championnats %}
+                                            <option value="{{ champ.id }}">{{ champ.nom }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                            </div>
+
                             <!-- Points Evénements -->
                             <div class="row mb-4">
                                 <div class="col-12">
-                                    <label for="direct_velo_points" class="form-label">
+                                    <label for="direct_velo_points" class="form-label d-inline-flex align-items-center">
                                         <i class="fas fa-star me-1"></i>Nombre de points Evénements *
+                                        <span class="ms-2 position-relative" id="bareme-trigger-wrapper">
+                                            <button type="button" class="btn btn-sm btn-outline-warning rounded-circle p-0 d-inline-flex align-items-center justify-content-center bareme-info-btn" 
+                                                    id="bareme-info-btn" style="width:1.5rem;height:1.5rem;" 
+                                                    data-bs-toggle="popover" data-bs-placement="top" data-bs-trigger="hover focus"
+                                                    data-bs-html="true" data-bs-custom-class="popover-bareme"
+                                                    title="Barème de points">
+                                                <i class="fas fa-info" style="font-size:0.7rem;"></i>
+                                            </button>
+                                            <div id="bareme-popover-content" class="d-none">
+                                                <div id="bareme-champ-name" class="small text-muted mb-2">Sélectionnez un championnat ci-dessus.</div>
+                                                <div id="bareme-description" class="small">—</div>
+                                            </div>
+                                        </span>
                                     </label>
                                     <input type="number" class="form-control" id="direct_velo_points" name="direct_velo_points" 
                                            required min="0" placeholder="Ex: 10">
                                 </div>
                             </div>
 
-                            <!-- Sélection de l'équipe -->
+                            <!-- Sélection des coureurs : gauche = liste par équipe, droite = coureurs retenus -->
                             <div class="row mb-4">
-                                <div class="col-12">
+                                <div class="col-lg-7">
                                     <label for="team_id" class="form-label">
-                                        <i class="fas fa-people-group me-1"></i>Choisir l'équipe *
+                                        <i class="fas fa-people-group me-1"></i>Équipe
                                     </label>
-                                    <select class="form-select" id="team_id" name="team_id">
-                                        <option value="">-- Sélectionner une équipe --</option>
-                                        {% for equipe in equipes %}
-                                            <option value="{{ equipe.id }}" {% if selected_team_id and selected_team_id|int == equipe.id %}selected{% endif %}>{{ equipe.nom }}</option>
-                                        {% endfor %}
-                                    </select>
-                                </div>
-                            </div>
-
-                            <!-- Sélection des coureurs présents -->
-                            <div class="row mb-4">
-                                <div class="col-12">
-                                    <label class="form-label">
-                                        <i class="fas fa-users me-1"></i>Sélectionner les coureurs présents *
-                                    </label>
-                                    <div class="form-text mb-3">Cochez les coureurs qui participent à cet évènement</div>
-                                    <div id="coureurs-dyn-list">
-                                        {% if coureurs %}
-                                            <div class="mb-2">
-                                                <button type="button" class="btn btn-sm btn-outline-light" id="select-all-btn">Tout sélectionner</button>
-                                                <button type="button" class="btn btn-sm btn-outline-light ms-2" id="deselect-all-btn">Tout désélectionner</button>
-                                            </div>
-                                            <div class="coureurs-list" id="coureurs-list-html" style="max-height: 300px; overflow-y: auto; border: 1px solid #444444; border-radius: 8px; padding: 1rem; background: #222222;">
-                                                {% for coureur in coureurs %}
-                                                    <div class="form-check mb-2">
-                                                        <input class="form-check-input" type="checkbox" name="present_coureurs" value="{{ coureur.id }}" id="coureur{{ coureur.id }}">
-                                                        <label class="form-check-label" for="coureur{{ coureur.id }}">
-                                                            {{ coureur.prenom }} {{ coureur.nom }} ({{ coureur.email }})
-                                                        </label>
-                                                    </div>
-                                                {% endfor %}
-                                            </div>
-                                        {% else %}
-                                            <div class="alert alert-info">Aucun coureur disponible.</div>
-                                        {% endif %}
+                                    <div class="d-flex flex-wrap gap-2 align-items-center mb-2">
+                                        <select class="form-select" id="team_id" name="team_id" style="max-width: 280px;">
+                                            <option value="">Tous les coureurs</option>
+                                            {% for equipe in equipes %}
+                                                <option value="{{ equipe.id }}" {% if selected_team_id and selected_team_id|int == equipe.id %}selected{% endif %}>{{ equipe.nom }}</option>
+                                            {% endfor %}
+                                        </select>
                                     </div>
+                                    <p class="form-text small mb-2">Choisissez une équipe pour afficher ses coureurs. Cochez ceux à inviter pour les ajouter directement à la liste.</p>
+                                    <div class="mb-2">
+                                        <button type="button" class="btn btn-sm btn-outline-light" id="select-all-btn">Tout sélectionner</button>
+                                        <button type="button" class="btn btn-sm btn-outline-light ms-2" id="deselect-all-btn">Tout désélectionner</button>
+                                    </div>
+                                    <div class="coureurs-list" id="coureurs-list-html" style="max-height: 280px; overflow-y: auto; border: 1px solid #444444; border-radius: 8px; padding: 1rem; background: #222222;">
+                                        <div class="text-muted">Choisissez une équipe pour afficher les coureurs.</div>
+                                    </div>
+                                </div>
+                                <div class="col-lg-5 mt-3 mt-lg-0">
+                                    <label class="form-label">
+                                        <i class="fas fa-user-check me-1"></i>Coureurs retenus *
+                                    </label>
+                                    <div class="panel-retenus" id="panel-coureurs-retenus">
+                                        <div id="liste-coureurs-retenus" class="list-group list-group-flush">
+                                            <!-- Rempli par JS -->
+                                        </div>
+                                        <div id="retenus-empty-msg" class="text-muted small">Aucun coureur ajouté. Cochez des noms à gauche pour les ajouter.</div>
+                                    </div>
+                                    <div id="present-coureurs-inputs"><!-- Champs cachés pour le formulaire, mis à jour par JS --></div>
                                 </div>
                             </div>
 
@@ -267,67 +374,230 @@
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
     <script>
+    var currentCoureurs = [];
+    var selectedCoureurs = [];
+
+    function renderLeftList() {
+        var listEl = document.getElementById('coureurs-list-html');
+        if (!listEl) return;
+        if (currentCoureurs.length === 0) {
+            listEl.innerHTML = '<div class="text-muted">Choisissez une équipe pour afficher les coureurs.</div>';
+            return;
+        }
+        var html = '';
+        currentCoureurs.forEach(function(c) {
+            var isRetenu = selectedCoureurs.some(function(s) { return Number(s.id) === Number(c.id); });
+            var label = c.prenom + ' ' + c.nom + (c.equipe_nom ? ' <span class="text-muted small">(' + escapeHtml(c.equipe_nom) + ')</span>' : '');
+            html += '<div class="form-check mb-2">' +
+                '<input class="form-check-input" type="checkbox" value="' + c.id + '" id="cb-coureur-' + c.id + '"' + (isRetenu ? ' checked' : '') + '>' +
+                '<label class="form-check-label" for="cb-coureur-' + c.id + '">' + label + '</label></div>';
+        });
+        listEl.innerHTML = html;
+        listEl.querySelectorAll('input[type="checkbox"]').forEach(function(cb) {
+            cb.addEventListener('change', function() {
+                var id = Number(cb.value);
+                var c = currentCoureurs.find(function(x) { return Number(x.id) === id; });
+                if (!c) return;
+                if (cb.checked) {
+                    if (!selectedCoureurs.some(function(s) { return Number(s.id) === id; })) {
+                        selectedCoureurs.push(c);
+                        selectedCoureurs.sort(function(a, b) { return (a.nom + ' ' + a.prenom).localeCompare(b.nom + ' ' + b.prenom); });
+                    }
+                } else {
+                    selectedCoureurs = selectedCoureurs.filter(function(s) { return Number(s.id) !== id; });
+                }
+                renderRightPanel();
+            });
+        });
+        addSelectAllListeners();
+    }
+
+    function renderRightPanel() {
+        var listEl = document.getElementById('liste-coureurs-retenus');
+        var emptyMsg = document.getElementById('retenus-empty-msg');
+        var creerBtn = document.getElementById('btn-creer-questionnaire');
+        if (!listEl) return;
+        if (selectedCoureurs.length === 0) {
+            listEl.innerHTML = '';
+            if (emptyMsg) emptyMsg.style.display = 'block';
+            if (creerBtn) creerBtn.disabled = true;
+            updateHiddenInputs();
+            return;
+        }
+        if (emptyMsg) emptyMsg.style.display = 'none';
+        if (creerBtn) creerBtn.disabled = false;
+        var html = '';
+        selectedCoureurs.forEach(function(c) {
+            var label = escapeHtml(c.prenom + ' ' + c.nom) + (c.equipe_nom ? ' <span class="text-muted small">(' + escapeHtml(c.equipe_nom) + ')</span>' : '');
+            html += '<div class="list-group-item d-flex justify-content-between align-items-center" data-coureur-id="' + c.id + '">' +
+                '<span>' + label + '</span>' +
+                '<button type="button" class="btn btn-link btn-trash-coureur p-0 ms-2" title="Retirer" data-coureur-id="' + c.id + '"><i class="fas fa-trash-alt"></i></button>' +
+                '</div>';
+        });
+        listEl.innerHTML = html;
+        listEl.querySelectorAll('.btn-trash-coureur').forEach(function(btn) {
+            btn.addEventListener('click', function() {
+                var id = Number(btn.getAttribute('data-coureur-id'));
+                selectedCoureurs = selectedCoureurs.filter(function(c) { return Number(c.id) !== id; });
+                var leftCb = document.getElementById('cb-coureur-' + id);
+                if (leftCb) leftCb.checked = false;
+                renderRightPanel();
+            });
+        });
+        updateHiddenInputs();
+    }
+
+    function updateHiddenInputs() {
+        var container = document.getElementById('present-coureurs-inputs');
+        if (!container) return;
+        container.innerHTML = '';
+        selectedCoureurs.forEach(function(c) {
+            var input = document.createElement('input');
+            input.type = 'hidden';
+            input.name = 'present_coureurs';
+            input.value = c.id;
+            container.appendChild(input);
+        });
+    }
+
+    function escapeHtml(text) {
+        var div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+    }
+
     function addSelectAllListeners() {
         const selectAllBtn = document.getElementById('select-all-btn');
         const deselectAllBtn = document.getElementById('deselect-all-btn');
         const list = document.getElementById('coureurs-list-html');
         if (selectAllBtn && deselectAllBtn && list) {
             selectAllBtn.onclick = function() {
-                list.querySelectorAll('input[type="checkbox"]').forEach(cb => cb.checked = true);
+                list.querySelectorAll('input[type="checkbox"]').forEach(function(cb) { cb.checked = true; });
             };
             deselectAllBtn.onclick = function() {
-                list.querySelectorAll('input[type="checkbox"]').forEach(cb => cb.checked = false);
+                list.querySelectorAll('input[type="checkbox"]').forEach(function(cb) { cb.checked = false; });
             };
         }
     }
+
+    function fetchCoureurs(teamId, callback) {
+        var url = teamId ? '/admin/api/coureurs_par_equipe/' + teamId : '/admin/api/coureurs_tous';
+        fetch(url)
+            .then(function(resp) { return resp.json(); })
+            .then(function(data) { callback(Array.isArray(data) ? data : []); })
+            .catch(function() { callback([]); });
+    }
+
     document.addEventListener('DOMContentLoaded', function() {
-        const teamSelect = document.getElementById('team_id');
-        const coureursListDiv = document.getElementById('coureurs-dyn-list');
-        const creerBtn = document.getElementById('btn-creer-questionnaire');
-        teamSelect.addEventListener('change', function() {
-            const teamId = this.value;
-            coureursListDiv.innerHTML = '<div class="text-center text-muted py-3"><span class="spinner-border spinner-border-sm"></span> Chargement...</div>';
-            const url = teamId ? `/admin/api/coureurs_par_equipe/${teamId}` : '/admin/api/coureurs_tous';
-            fetch(url)
-                .then(resp => resp.json())
-                .then(data => {
-                    if (data.length === 0) {
-                        coureursListDiv.innerHTML = '<div class="alert alert-info">Aucun coureur disponible.</div>';
-                        if (creerBtn) {
-                            creerBtn.disabled = true;
-                        }
-                    } else {
-                        let html = '<div class="mb-2">';
-                        html += '<button type="button" class="btn btn-sm btn-outline-light" id="select-all-btn">Tout sélectionner</button>';
-                        html += '<button type="button" class="btn btn-sm btn-outline-light ms-2" id="deselect-all-btn">Tout désélectionner</button>';
-                        html += '</div>';
-                        html += '<div class="coureurs-list" id="coureurs-list-html" style="max-height: 300px; overflow-y: auto; border: 1px solid #444444; border-radius: 8px; padding: 1rem; background: #222222;">';
-                        data.forEach(coureur => {
-                            html += `<div class=\"form-check mb-2\">` +
-                                `<input class=\"form-check-input\" type=\"checkbox\" name=\"present_coureurs\" value=\"${coureur.id}\" id=\"coureur${coureur.id}\">` +
-                                `<label class=\"form-check-label\" for=\"coureur${coureur.id}\">${coureur.prenom} ${coureur.nom} (${coureur.email})</label>` +
-                                `</div>`;
-                        });
-                        html += '</div>';
-                        coureursListDiv.innerHTML = html;
-                        if (creerBtn) {
-                            creerBtn.disabled = false;
-                        }
-                        addSelectAllListeners();
-                    }
-                })
-                .catch(() => {
-                    coureursListDiv.innerHTML = '<div class="alert alert-danger">Erreur lors du chargement des coureurs.</div>';
-                    if (creerBtn) {
-                        creerBtn.disabled = true;
-                    }
-                });
-        });
-        if (creerBtn) {
-            // Si des coureurs sont déjà affichés côté serveur, permettre la création
-            creerBtn.disabled = false;
+        var teamSelect = document.getElementById('team_id');
+        var listContainer = document.getElementById('coureurs-list-html');
+
+        function loadTeamCoureurs() {
+            var teamId = teamSelect ? teamSelect.value : '';
+            if (!listContainer) return;
+            listContainer.innerHTML = '<div class="text-center text-muted py-3"><span class="spinner-border spinner-border-sm"></span> Chargement...</div>';
+            fetchCoureurs(teamId, function(data) {
+                currentCoureurs = data.slice();
+                renderLeftList();
+            });
         }
-        addSelectAllListeners();
+
+        loadTeamCoureurs();
+        renderRightPanel();
+
+        if (teamSelect) {
+            teamSelect.addEventListener('change', function() {
+                loadTeamCoureurs();
+            });
+        }
+
+        // Barème : données des championnats pour le popover
+        var championnatsData = [
+            {% for champ in championnats %}
+            { id: {{ champ.id }}, nom: {{ champ.nom|tojson }} }{% if not loop.last %},{% endif %}
+            {% endfor %}
+        ];
+        function getChampNom(id) {
+            if (!id) return null;
+            var c = championnatsData.find(function(x) { return x.id === parseInt(id, 10); });
+            return c ? c.nom : null;
+        }
+        function getBaremeDescription(champNom) {
+            if (!champNom) return null;
+            var nom = String(champNom).trim();
+            if (nom === 'Elite' || nom === 'U19') {
+                return 'Nombre de points Evènements = Nombre de points Direct Vélo';
+            }
+            if (nom === 'Open') {
+                var open1 = [
+                    [1,20],[2,19],[3,18],[4,17],[5,16],[6,15],[7,14],[8,13],[9,12],[10,11],
+                    [11,10],[12,9],[13,8],[14,7],[15,6],[16,5],[17,4],[18,3],[19,2],[20,1]
+                ];
+                var open2 = [[1,10],[2,9],[3,8],[4,7],[5,6],[6,5],[7,4],[8,3],[9,2],[10,1]];
+                var open3 = [[1,5],[2,4],[3,3],[4,2],[5,1]];
+                function ord(n) {
+                    if (n === 1) return '1er';
+                    if (n === 2) return '2ème';
+                    return n + 'ème';
+                }
+                function tableHtml(title, rows) {
+                    var h = '<div class="bareme-open-block"><div class="bareme-open-title">' + title + '</div><table class="bareme-open-table"><thead><tr><th class="col-place">Place</th><th class="col-pts">Pts</th></tr></thead><tbody>';
+                    for (var i = 0; i < rows.length; i++) {
+                        h += '<tr><td class="col-place">' + ord(rows[i][0]) + '</td><td class="col-pts">' + rows[i][1] + '</td></tr>';
+                    }
+                    return h + '</tbody></table></div>';
+                }
+                return '<div class="bareme-open-intro">Nombre de points Evènements = Grille de points suivantes :</div>' +
+                    tableHtml('Open 1', open1) +
+                    tableHtml('Open 2', open2) +
+                    tableHtml('Open 3', open3);
+            }
+            return 'Points = Points Evénements × (note moyenne / 10).';
+        }
+        function updateBaremeContent() {
+            var champSelect = document.getElementById('championship_id');
+            var champNameEl = document.getElementById('bareme-champ-name');
+            var descEl = document.getElementById('bareme-description');
+            var champId = champSelect ? champSelect.value : '';
+            var champNom = getChampNom(champId);
+            if (champNom) {
+                champNameEl.textContent = 'Championnat : ' + champNom;
+                champNameEl.classList.remove('text-muted');
+                var desc = getBaremeDescription(champNom);
+                if (descEl) {
+                    descEl.innerHTML = desc;
+                }
+            } else {
+                champNameEl.textContent = 'Sélectionnez un championnat ci-dessus.';
+                champNameEl.classList.add('text-muted');
+                if (descEl) descEl.textContent = '—';
+            }
+        }
+        var baremeBtn = document.getElementById('bareme-info-btn');
+        if (baremeBtn) {
+            var contentEl = document.getElementById('bareme-popover-content');
+            var popover = new bootstrap.Popover(baremeBtn, {
+                placement: 'top',
+                trigger: 'hover focus',
+                html: true,
+                customClass: 'popover-bareme',
+                title: 'Barème de points',
+                content: contentEl ? contentEl.innerHTML : ''
+            });
+            updateBaremeContent();
+            document.getElementById('championship_id').addEventListener('change', updateBaremeContent);
+            // Rafraîchir le contenu du popover avant chaque affichage
+            baremeBtn.addEventListener('shown.bs.popover', function() {
+                updateBaremeContent();
+                var tip = document.querySelector('.popover-bareme');
+                if (tip) {
+                    var body = tip.querySelector('.popover-body');
+                    if (body) {
+                        body.innerHTML = document.getElementById('bareme-popover-content').innerHTML;
+                    }
+                }
+            });
+        }
     });
     </script>
 </body>

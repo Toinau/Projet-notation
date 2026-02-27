@@ -1,0 +1,4 @@
+prenom;nom;email;telephone;role;equipe;notifications_sms
+Jean;Dupont;jean.dupont@email.com;0612345678;coureur;Équipe A;true
+Marie;Martin;marie.martin@email.com;0698765432;admin;;false
+Pierre;Bernard;pierre.bernard@email.com;0611223344;coureur;Équipe B;true

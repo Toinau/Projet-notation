@@ -1,6 +1,6 @@
 from flask import Blueprint, render_template, redirect, url_for, request, flash, session, current_app, send_from_directory, jsonify
 from werkzeug.security import generate_password_hash, check_password_hash
-from app.models import User, Questionnaire, QuestionnaireParticipant, QuestionnaireResponse, Team, user_team
+from app.models import User, Questionnaire, QuestionnaireParticipant, QuestionnaireResponse, Team, user_team, Championship
 from flask_login import current_user, login_user, login_required
 from app import db, mail, serializer
 from flask_mail import Message
@@ -20,6 +20,40 @@ month_names = [
     "Janvier", "Février", "Mars", "Avril", "Mai", "Juin",
     "Juillet", "Août", "Septembre", "Octobre", "Novembre", "Décembre"
 ]
+
+
+def get_bareme_html_for_championship(champ_nom):
+    """Retourne le HTML du barème de points pour un championnat (même logique que create-questionnaire)."""
+    if not champ_nom:
+        return None
+    nom = (champ_nom or "").strip()
+    if nom in ("Elite", "U19"):
+        return "Nombre de points Evènements = Nombre de points Direct Vélo"
+    if nom == "Open":
+        def ord_place(n):
+            if n == 1:
+                return "1er"
+            if n == 2:
+                return "2ème"
+            return f"{n}ème"
+
+        open1 = [(i, 21 - i) for i in range(1, 21)]
+        open2 = [(i, 11 - i) for i in range(1, 11)]
+        open3 = [(i, 6 - i) for i in range(1, 6)]
+
+        def table_html(title, rows):
+            lines = [
+                "<div class=\"bareme-open-block\"><div class=\"bareme-open-title\">" + title + "</div>",
+                "<table class=\"bareme-open-table\"><thead><tr><th class=\"col-place\">Place</th><th class=\"col-pts\">Pts</th></tr></thead><tbody>"
+            ]
+            for place, pts in rows:
+                lines.append(f"<tr><td class=\"col-place\">{ord_place(place)}</td><td class=\"col-pts\">{pts}</td></tr>")
+            lines.append("</tbody></table></div>")
+            return "\n".join(lines)
+
+        intro = "<div class=\"bareme-open-intro\">Nombre de points Evènements = Grille de points suivantes :</div>"
+        return intro + table_html("Open 1", open1) + table_html("Open 2", open2) + table_html("Open 3", open3)
+    return "Points = Points Evénements × (note moyenne / 10)."
 
 @main_bp.route('/')
 def index():
@@ -601,24 +635,35 @@ def create_questionnaire():
     user = current_user
     from app.models import Team
     equipes = Team.query.filter_by(actif=True).order_by(Team.nom).all()
+    championnats = Championship.query.filter_by(actif=True).order_by(Championship.nom).all()
     team_id = request.args.get('team_id') or request.form.get('team_id')
     # Par défaut, si aucune équipe n'est sélectionnée, on affiche tous les coureurs actifs
     if team_id:
         coureurs = User.query.join(user_team).filter(user_team.c.team_id == int(team_id), User.role == 'coureur', User.is_active == True).order_by(User.nom).all()
     else:
         coureurs = get_coureurs_list()
+    # JSON pour la liste cumulative (équipe affichée pour chaque coureur)
+    coureurs_json = [
+        {'id': c.id, 'prenom': c.prenom, 'nom': c.nom, 'email': c.email or '', 'equipe_nom': ', '.join(t.nom for t in c.teams) if c.teams else '—'}
+        for c in coureurs
+    ]
     if request.method == 'POST' and 'course_name' in request.form:
         try:
             # Récupération des données du formulaire
             course_name = request.form.get('course_name', '').strip()
             course_date = request.form.get('course_date', '')
             direct_velo_points = request.form.get('direct_velo_points', '').strip()
+            championship_id = request.form.get('championship_id')
             present_coureurs = request.form.getlist('present_coureurs')
             errors = []
             if not course_name:
                 errors.append("Le nom de la course est requis")
             if not course_date:
                 errors.append("La date de la course est requise")
+            if not championship_id or not championship_id.strip():
+                errors.append("Le type de championnat est requis")
+            elif not championship_id.isdigit() or not Championship.query.get(int(championship_id)):
+                errors.append("Veuillez sélectionner un championnat valide")
             if not direct_velo_points:
                 errors.append("Le nombre de points Evénements est requis")
             elif not direct_velo_points.isdigit() or int(direct_velo_points) < 0:
@@ -628,11 +673,12 @@ def create_questionnaire():
             if errors:
                 for error in errors:
                     flash(error, 'danger')
-                return render_template('admin/create_questionnaire.html', equipes=equipes, coureurs=coureurs, selected_team_id=team_id)
+                return render_template('admin/create_questionnaire.html', equipes=equipes, championnats=championnats, coureurs=coureurs, coureurs_json=coureurs_json, selected_team_id=team_id)
             questionnaire = Questionnaire(
                 course_name=course_name,
                 course_date=datetime.strptime(course_date, '%Y-%m-%d').date(),
                 direct_velo_points=int(direct_velo_points),
+                championship_id=int(championship_id),
                 created_by=current_user.id
             )
             db.session.add(questionnaire)
@@ -675,8 +721,8 @@ def create_questionnaire():
             db.session.rollback()
             current_app.logger.error(f"Erreur création questionnaire: {e}")
             flash('Erreur lors de la création du questionnaire.', 'danger')
-            return render_template('admin/create_questionnaire.html', equipes=equipes, coureurs=coureurs, selected_team_id=team_id)
-    return render_template('admin/create_questionnaire.html', equipes=equipes, coureurs=coureurs, selected_team_id=team_id)
+            return render_template('admin/create_questionnaire.html', equipes=equipes, championnats=championnats, coureurs=coureurs, coureurs_json=coureurs_json, selected_team_id=team_id)
+    return render_template('admin/create_questionnaire.html', equipes=equipes, championnats=championnats, coureurs=coureurs, coureurs_json=coureurs_json, selected_team_id=team_id)
 
 def get_coureurs_list():
     """Récupère la liste des coureurs actifs pour l'affichage"""
@@ -996,6 +1042,7 @@ def coureur_questionnaires():
                     'course_name': questionnaire.course_name,
                     'course_date': questionnaire.course_date,
                     'direct_velo_points': questionnaire.direct_velo_points,
+                    'championship_name': questionnaire.championship.nom if questionnaire.championship else None,
                     'has_responded': participation.has_responded,
                     'response_date': participation.response_date
                 })
@@ -1115,7 +1162,9 @@ def questionnaire_results(questionnaire_id):
             flash('Vous n\'êtes pas autorisé à voir les résultats de ce questionnaire.', 'danger')
             return redirect(url_for('main.coureur_questionnaires'))
         questionnaire = Questionnaire.query.get_or_404(questionnaire_id)
-        
+        championship_name = questionnaire.championship.nom if questionnaire.championship else None
+        bareme_html = get_bareme_html_for_championship(championship_name) if championship_name else None
+
         # Récupérer les réponses du coureur
         responses = QuestionnaireResponse.query.filter_by(
             questionnaire_id=questionnaire_id,
@@ -1134,7 +1183,9 @@ def questionnaire_results(questionnaire_id):
         return render_template('coureur/questionnaire_results.html', 
                              questionnaire=questionnaire, 
                              results=results,
-                             comment=participation.comment)
+                             comment=participation.comment,
+                             championship_name=championship_name,
+                             bareme_html=bareme_html)
         
     except Exception as e:
         current_app.logger.error(f"Erreur résultats questionnaire: {e}")
@@ -1162,9 +1213,20 @@ def coureur_points_details():
     else:
         selected_year = now.year
     
+    # Filtre championnat (optionnel)
+    championship_id_raw = request.args.get('championship_id')
+    if championship_id_raw is not None and str(championship_id_raw).isdigit():
+        cid = int(championship_id_raw)
+        selected_championship_id = cid if Championship.query.get(cid) else None
+    else:
+        selected_championship_id = None
+    
     # Redirection si la date sélectionnée est dans le futur
     if selected_year > now.year or (selected_year == now.year and selected_month > now.month):
-        return redirect(url_for('main.coureur_points_details', month=now.month, year=now.year))
+        redir_url = url_for('main.coureur_points_details', month=now.month, year=now.year)
+        if selected_championship_id is not None:
+            redir_url += f'?championship_id={selected_championship_id}'
+        return redirect(redir_url)
         
     current_month_name = month_names[now.month - 1]
     selected_month_name = month_names[selected_month - 1]
@@ -1193,8 +1255,21 @@ def coureur_points_details():
         total_note_moyenne_selected_month = 0
         nb_courses_avec_notes_selected_month = 0
         
-        # Calculer d'abord les moyennes globales (toutes les courses)
+        # Filtre championnat pour les stats et la liste
+        def match_championship(q):
+            if selected_championship_id is None:
+                return True
+            return q.championship_id == selected_championship_id
+        
+        # Championnats actifs pour le filtre
+        championnats = Championship.query.filter_by(actif=True).order_by(Championship.nom).all()
+        championship_options = [{'id': None, 'nom': 'Tous les championnats'}]
+        championship_options += [{'id': c.id, 'nom': c.nom} for c in championnats]
+        
+        # Calculer d'abord les moyennes globales (toutes les courses, éventuellement filtrées par championnat)
         for participation, questionnaire in participations:
+            if not match_championship(questionnaire):
+                continue
             # Calculer la note moyenne personnelle reçue pour cette course
             note_moyenne_perso = db.session.query(func.avg(QuestionnaireResponse.rating)).filter(
                 QuestionnaireResponse.questionnaire_id == questionnaire.id,
@@ -1211,9 +1286,11 @@ def coureur_points_details():
                     total_note_moyenne_mois += float(note_moyenne_perso)
                     nb_courses_avec_notes_mois += 1
         
-        # Maintenant filtrer et afficher seulement les courses du mois sélectionné
+        # Maintenant filtrer et afficher seulement les courses du mois sélectionné (et du championnat si filtre)
         for participation, questionnaire in participations:
-            # Filtrer par mois sélectionné
+            # Filtrer par mois sélectionné et par championnat
+            if not match_championship(questionnaire):
+                continue
             if (questionnaire.course_date.year == selected_year and 
                 questionnaire.course_date.month == selected_month):
                 
@@ -1284,9 +1361,11 @@ def coureur_points_details():
                     total_note_moyenne_selected_month += float(note_moyenne_perso)
                     nb_courses_avec_notes_selected_month += 1
                 
+                championship_name = questionnaire.championship.nom if questionnaire.championship else "—"
                 courses_details.append({
                     'course_name': questionnaire.course_name,
                     'course_date': questionnaire.course_date,
+                    'championship_name': championship_name,
                     'direct_velo_points': questionnaire.direct_velo_points,
                     'note_moyenne_perso': round(float(note_moyenne_perso), 1),
                     'note_max_perso': int(note_max_perso) if note_max_perso else 0,
@@ -1341,7 +1420,9 @@ def coureur_points_details():
                              selected_month_name=selected_month_name,
                              month_options=month_options,
                              selected_month=selected_month,
-                             selected_year=selected_year)
+                             selected_year=selected_year,
+                             championship_options=championship_options,
+                             selected_championship_id=selected_championship_id)
         
     except Exception as e:
         current_app.logger.error(f"Erreur détails points: {e}")
@@ -1603,9 +1684,9 @@ def admin_resend_questionnaire_email(questionnaire_id, user_id):
     season = request.form.get('season') or request.args.get('season')
     month = request.form.get('month') or request.args.get('month')
     year = request.form.get('year') or request.args.get('year')
-    team_id = request.form.get('team_id') or request.args.get('team_id')
+    championship_id = request.form.get('championship_id') or request.args.get('championship_id')
     return redirect(url_for('main.admin_questionnaire_results', questionnaire_id=questionnaire_id,
-                            season=season, month=month, year=year, team_id=team_id))
+                            season=season, month=month, year=year, championship_id=championship_id))
 
 @main_bp.route('/debug-ranking')
 @login_required
@@ -1699,7 +1780,8 @@ def debug_ranking():
 @login_required
 def coureur_rankings():
     """
-    Affiche les classements du mois et de l'année
+    Affiche les classements du mois et de l'année par championnat.
+    Un coureur n'a accès qu'aux classements des championnats auxquels il a participé (au moins une course).
     """
     user = current_user
     try:
@@ -1708,46 +1790,69 @@ def coureur_rankings():
         from datetime import datetime
         from sqlalchemy import func
         
-        # Obtenir la date actuelle et le mois sélectionné
-        now = get_current_date()
+        # Championnats auxquels le coureur a participé (au moins un questionnaire)
+        participated_championship_ids = [
+            row[0] for row in
+            db.session.query(Questionnaire.championship_id)
+            .join(QuestionnaireParticipant, Questionnaire.id == QuestionnaireParticipant.questionnaire_id)
+            .filter(
+                QuestionnaireParticipant.user_id == user.id,
+                Questionnaire.championship_id.isnot(None)
+            )
+            .distinct()
+            .all()
+        ]
+        championnats = (
+            Championship.query.filter(
+                Championship.id.in_(participated_championship_ids),
+                Championship.actif == True
+            )
+            .order_by(Championship.nom)
+            .all()
+        ) if participated_championship_ids else []
         
-        # Sécurisation des conversions en int
+        now = get_current_date()
         month_raw = request.args.get('month')
         if month_raw is not None and str(month_raw).isdigit():
             selected_month = int(month_raw)
         else:
             selected_month = now.month
-            
         year_raw = request.args.get('year')
         if year_raw is not None and str(year_raw).isdigit():
             selected_year = int(year_raw)
         else:
             selected_year = now.year
         
-        # Redirection si la date sélectionnée est dans le futur
-        if selected_year > now.year or (selected_year == now.year and selected_month > now.month):
-            return redirect(url_for('main.coureur_rankings', month=now.month, year=now.year))
+        championship_id_raw = request.args.get('championship_id')
+        if championship_id_raw and str(championship_id_raw).isdigit():
+            selected_championship_id = int(championship_id_raw)
+            selected_champ = next((c for c in championnats if c.id == selected_championship_id), None)
+        else:
+            selected_championship_id = championnats[0].id if championnats else None
+            selected_champ = championnats[0] if championnats else None
+        # Accès uniquement aux championnats dont le coureur fait partie
+        if championnats and not selected_champ:
+            return redirect(url_for('main.coureur_rankings', championship_id=championnats[0].id, month=selected_month, year=selected_year))
         
-        # Calculer la date de début du mois sélectionné
+        if selected_year > now.year or (selected_year == now.year and selected_month > now.month):
+            return redirect(url_for('main.coureur_rankings', month=now.month, year=now.year, championship_id=selected_championship_id))
+        
         start_of_selected_month = datetime(selected_year, selected_month, 1)
         start_of_current_month = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
-        start_of_year = now.replace(month=1, day=1, hour=0, minute=0, second=0, microsecond=0)
         
-        # Récupérer uniquement les coureurs des équipes dont l'athlète connecté fait partie
-        team_ids = [t.id for t in user.teams]
-        if not team_ids:
-            all_coureurs = []  # Coureur sans équipe : classement vide
+        # Coureurs ayant au moins une participation dans une course de ce championnat
+        if not selected_championship_id:
+            all_coureurs = []
         else:
             all_coureurs = (
                 User.query.filter_by(role='coureur', is_active=True)
-                .join(User.teams)
-                .filter(Team.id.in_(team_ids))
+                .join(QuestionnaireParticipant, User.id == QuestionnaireParticipant.user_id)
+                .join(Questionnaire, QuestionnaireParticipant.questionnaire_id == Questionnaire.id)
+                .filter(Questionnaire.championship_id == selected_championship_id)
                 .distinct()
                 .all()
             )
         
-        # Calculer la période de la saison (novembre à octobre)
-        # Trouver la saison correspondant au mois sélectionné
         if selected_month >= 11:
             season_start_year = selected_year
             season_end_year = selected_year + 1
@@ -1757,7 +1862,6 @@ def coureur_rankings():
         season_start_date = datetime(season_start_year, 11, 1).date()
         season_end_date = datetime(season_end_year, 10, 31).date()
 
-        # Calculer les points pour tous les coureurs (de l'équipe)
         coureurs_rankings = []
         for coureur in all_coureurs:
             participations = db.session.query(
@@ -1765,7 +1869,8 @@ def coureur_rankings():
             ).join(
                 Questionnaire, QuestionnaireParticipant.questionnaire_id == Questionnaire.id
             ).filter(
-                QuestionnaireParticipant.user_id == coureur.id
+                QuestionnaireParticipant.user_id == coureur.id,
+                Questionnaire.championship_id == selected_championship_id
             ).all()
 
             season_points = 0
@@ -1779,14 +1884,11 @@ def coureur_rankings():
                 ).scalar() or 0
                 course_points = questionnaire.direct_velo_points * float(avg_rating)
 
-                # Ajouter aux points de la saison
                 if season_start_date <= questionnaire.course_date <= season_end_date:
                     season_points += course_points
-                # Ajouter aux points du mois actuel
                 if questionnaire.course_date >= start_of_current_month.date():
                     monthly_points += course_points
-                # Ajouter aux points du mois sélectionné
-                if (questionnaire.course_date.year == selected_year and 
+                if (questionnaire.course_date.year == selected_year and
                     questionnaire.course_date.month == selected_month):
                     selected_month_points += course_points
 
@@ -1798,42 +1900,27 @@ def coureur_rankings():
                 'selected_month_points': round(selected_month_points, 1)
             })
 
-        # Trier par points de la saison décroissants
         season_rankings = sorted(coureurs_rankings, key=lambda x: x['season_points'], reverse=True)
-        # Trier par points du mois sélectionné décroissants
         selected_month_rankings = sorted(coureurs_rankings, key=lambda x: x['selected_month_points'], reverse=True)
 
-        # Obtenir le nom du mois sélectionné
         month_names = [
             "Janvier", "Février", "Mars", "Avril", "Mai", "Juin",
             "Juillet", "Août", "Septembre", "Octobre", "Novembre", "Décembre"
         ]
         selected_month_name = month_names[selected_month - 1]
         current_month_name = month_names[now.month - 1]
-        
-        # Générer les options de mois pour le sélecteur (saison de novembre à novembre)
         month_options = []
         current_year = now.year
         current_month = now.month
-        
-        # Déterminer la saison actuelle
-        # Si on est entre novembre et décembre, c'est la saison en cours
-        # Sinon, c'est la saison précédente
-        if current_month >= 11:  # Novembre ou décembre
+        if current_month >= 11:
             season_start_year = current_year
         else:
             season_start_year = current_year - 1
-        
-        # Correction : définir la saison courante
         current_season = (now.year if now.month < 11 else now.year + 1)
-
-        # Générer les mois de la saison (novembre à novembre)
         for year in [season_start_year, season_start_year + 1]:
             start_month = 11 if year == season_start_year else 1
             end_month = 12 if year == season_start_year else 10
-            
             for month in range(start_month, end_month + 1):
-                # Ne pas inclure les mois futurs SEULEMENT si saison en cours
                 if (season_start_year + 1 == current_season) and (year == now.year and month > now.month):
                     continue
                 month_options.append({
@@ -1841,9 +1928,9 @@ def coureur_rankings():
                     'label': f"{month_names[month-1]} {year}",
                     'selected': year == selected_year and month == selected_month
                 })
-        
-        user_team_names = [t.nom for t in user.teams]
-        return render_template('coureur/rankings.html', 
+
+        selected_championship_name = selected_champ.nom if selected_champ else None
+        return render_template('coureur/rankings.html',
                              season_rankings=season_rankings,
                              selected_month_rankings=selected_month_rankings,
                              selected_month_name=selected_month_name,
@@ -1851,7 +1938,9 @@ def coureur_rankings():
                              month_options=month_options,
                              selected_month=selected_month,
                              selected_year=selected_year,
-                             user_team_names=user_team_names)
+                             championnats=championnats,
+                             selected_championship_id=selected_championship_id,
+                             selected_championship_name=selected_championship_name)
         
     except Exception as e:
         current_app.logger.error(f"Erreur classements: {e}")
@@ -1862,7 +1951,7 @@ def coureur_rankings():
 @login_required
 def admin_course_statistics():
     """
-    Affiche les statistiques des courses avec les notes moyennes et points de chaque coureur, filtrables par équipe
+    Affiche les statistiques des courses avec les notes moyennes et points de chaque coureur, filtrables par championnat.
     """
     user = current_user
     try:
@@ -1922,23 +2011,22 @@ def admin_course_statistics():
             selected_month = 11
             selected_year = season_start_year
             
-        team_id_raw = request.args.get('team_id')
-        if team_id_raw is not None and str(team_id_raw).isdigit():
-            selected_team_id = int(team_id_raw)
+        championship_id_raw = request.args.get('championship_id')
+        if championship_id_raw is not None and str(championship_id_raw).isdigit():
+            selected_championship_id = int(championship_id_raw)
         else:
-            selected_team_id = None
+            selected_championship_id = None
         
-        # Redirection si la date sélectionnée est dans le futur
-        if selected_year > now.year or (selected_year == now.year and selected_month > now.month):
-            return redirect(url_for('main.admin_course_statistics', month=now.month, year=now.year, season=selected_season, team_id=selected_team_id))
+        # Ne pas rediriger si le mois est dans le futur : permettre d'afficher les courses déjà saisies
+        # pour des événements à venir (ex. course du 01/03/2026 visible en sélectionnant mars 2026).
         
         # Validation supplémentaire pour éviter les erreurs SQL (année max = année courante + 10)
         max_year = now.year + 10
         if selected_year > max_year or selected_year < now.year - 5 or selected_month > 12 or selected_month < 1:
-            return redirect(url_for('main.admin_course_statistics', month=now.month, year=now.year, season=selected_season, team_id=selected_team_id))
+            return redirect(url_for('main.admin_course_statistics', month=now.month, year=now.year, season=selected_season, championship_id=selected_championship_id))
         
-        # Récupérer la liste des équipes actives
-        teams = Team.query.filter_by(actif=True).order_by(Team.nom).all()
+        # Récupérer la liste des championnats
+        championnats = Championship.query.filter_by(actif=True).order_by(Championship.nom).all()
         
         # Créer les dates de début et fin du mois de manière sécurisée
         month_start_date = datetime(selected_year, selected_month, 1).date()
@@ -1947,11 +2035,15 @@ def admin_course_statistics():
         else:
             month_end_date = datetime(selected_year + 1, 1, 1).date()
         
-        # Récupérer les questionnaires du mois sélectionné
-        questionnaires = Questionnaire.query.filter(
+        # Récupérer les questionnaires du mois sélectionné selon la DATE DE L'ÉVÉNEMENT (course_date),
+        # et non la date de création du questionnaire (created_at).
+        questionnaires_query = Questionnaire.query.filter(
             Questionnaire.course_date >= month_start_date,
             Questionnaire.course_date < month_end_date
-        ).order_by(Questionnaire.course_date.desc()).all()
+        )
+        if selected_championship_id:
+            questionnaires_query = questionnaires_query.filter(Questionnaire.championship_id == selected_championship_id)
+        questionnaires = questionnaires_query.order_by(Questionnaire.course_date.desc()).all()
         course_stats = []
         for questionnaire in questionnaires:
             # Récupérer tous les participants de ce questionnaire
@@ -1965,8 +2057,6 @@ def admin_course_statistics():
             ).filter(
                 QuestionnaireParticipant.questionnaire_id == questionnaire.id
             )
-            if selected_team_id:
-                participants_query = participants_query.join(user_team).filter(user_team.c.team_id == selected_team_id)
             participants = participants_query.all()
             participant_stats = []
             all_ratings = []
@@ -2053,8 +2143,8 @@ def admin_course_statistics():
                              selected_month=selected_month,
                              selected_year=selected_year,
                              selected_season=selected_season,
-                             teams=teams,
-                             selected_team_id=selected_team_id)
+                             championnats=championnats,
+                             selected_championship_id=selected_championship_id)
     except Exception as e:
         current_app.logger.error(f"Erreur statistiques courses admin: {e}")
         flash('Erreur lors du chargement des statistiques.', 'danger')
@@ -2064,17 +2154,26 @@ def admin_course_statistics():
 @login_required
 def admin_global_rankings():
     """
-    Affiche le classement global de la saison en cours, du mois en cours et des mois précédents (sélection via liste déroulante)
+    Affiche le classement global par championnat : points = Points Evénements × note moyenne par course (rattachés au championnat).
     """
     user = current_user
     try:
         if not user.is_authenticated:
             return redirect(url_for('main.login'))
-        team_id_raw = request.args.get('team_id')
-        if team_id_raw is not None and str(team_id_raw).isdigit():
-            team_id = int(team_id_raw)
+        championship_id_raw = request.args.get('championship_id')
+        if championship_id_raw is not None and str(championship_id_raw).isdigit():
+            championship_id = int(championship_id_raw)
         else:
-            team_id = None
+            # Par défaut : championnat "Elite" (ou premier actif)
+            elite = Championship.query.filter(
+                db.func.lower(Championship.nom).in_(['elite', 'élite'])
+            ).filter_by(actif=True).first()
+            default_champ = elite or Championship.query.filter_by(actif=True).order_by(Championship.nom).first()
+            championship_id = default_champ.id if default_champ else None
+            if championship_id is not None:
+                args = request.args.to_dict()
+                args['championship_id'] = championship_id
+                return redirect(url_for('main.admin_global_rankings', **args))
         from datetime import datetime
         from sqlalchemy import func
         now = get_current_date()
@@ -2126,12 +2225,12 @@ def admin_global_rankings():
         
         # Redirection si la date sélectionnée est dans le futur
         if selected_year > now.year or (selected_year == now.year and selected_month > now.month):
-            return redirect(url_for('main.admin_global_rankings', month=now.month, year=now.year, season=season, team_id=team_id))
+            return redirect(url_for('main.admin_global_rankings', month=now.month, year=now.year, season=season, championship_id=championship_id))
         
         # Validation supplémentaire pour éviter les erreurs SQL (année max = année courante + 10)
         max_year = now.year + 10
         if selected_year > max_year or selected_year < now.year - 5 or selected_month > 12 or selected_month < 1:
-            return redirect(url_for('main.admin_global_rankings', month=now.month, year=now.year, season=season, team_id=team_id))
+            return redirect(url_for('main.admin_global_rankings', month=now.month, year=now.year, season=season, championship_id=championship_id))
         
         # Classement du mois sélectionné
         month_start = datetime(selected_year, selected_month, 1)
@@ -2139,9 +2238,16 @@ def admin_global_rankings():
             month_end = datetime(selected_year, selected_month+1, 1)
         else:
             month_end = datetime(selected_year+1, 1, 1)
-        # Récupérer tous les coureurs actifs
         coureurs = User.query.filter_by(role='coureur', is_active=True).all()
-        # Classement saison
+        # Filtre questionnaire par championnat (si sélectionné)
+        def season_filter(q):
+            return season_start.date() <= q.course_date <= season_end.date()
+        def month_filter(q):
+            return month_start.date() <= q.course_date < month_end.date()
+        def championship_filter(q):
+            return championship_id is None or q.championship_id == championship_id
+
+        # Classement saison (points = Points Evénements × note moyenne, rattachés au championnat)
         saison_points = []
         for coureur in coureurs:
             participations = db.session.query(QuestionnaireParticipant, Questionnaire).join(
@@ -2153,20 +2259,17 @@ def admin_global_rankings():
             ).all()
             total_points = 0
             for participation, questionnaire in participations:
+                if not championship_filter(questionnaire):
+                    continue
                 avg_rating = db.session.query(func.avg(QuestionnaireResponse.rating)).filter(
                     QuestionnaireResponse.questionnaire_id == questionnaire.id,
                     QuestionnaireResponse.evaluated_id == coureur.id
                 ).scalar() or 0
                 total_points += questionnaire.direct_velo_points * float(avg_rating)
-            if total_points > 0:  # Ne pas afficher les coureurs avec 0 points
-                # Ajouter le coureur pour chaque équipe à laquelle il appartient
-                if coureur.teams:
-                    for team in coureur.teams:
-                        saison_points.append({'prenom': coureur.prenom, 'nom': coureur.nom, 'points': round(total_points, 1), 'team_id': team.id})
-                else:
-                    saison_points.append({'prenom': coureur.prenom, 'nom': coureur.nom, 'points': round(total_points, 1), 'team_id': None})
+            if total_points > 0:
+                saison_points.append({'prenom': coureur.prenom, 'nom': coureur.nom, 'points': round(total_points, 1)})
         saison_points.sort(key=lambda x: x['points'], reverse=True)
-        # Classement du mois sélectionné
+
         mois_points = []
         for coureur in coureurs:
             participations = db.session.query(QuestionnaireParticipant, Questionnaire).join(
@@ -2178,21 +2281,17 @@ def admin_global_rankings():
             ).all()
             total_points = 0
             for participation, questionnaire in participations:
+                if not championship_filter(questionnaire):
+                    continue
                 avg_rating = db.session.query(func.avg(QuestionnaireResponse.rating)).filter(
                     QuestionnaireResponse.questionnaire_id == questionnaire.id,
                     QuestionnaireResponse.evaluated_id == coureur.id
                 ).scalar() or 0
                 total_points += questionnaire.direct_velo_points * float(avg_rating)
-            if total_points > 0:  # Ne pas afficher les coureurs avec 0 points
-                # Ajouter le coureur pour chaque équipe à laquelle il appartient
-                if coureur.teams:
-                    for team in coureur.teams:
-                        mois_points.append({'prenom': coureur.prenom, 'nom': coureur.nom, 'points': round(total_points, 1), 'team_id': team.id})
-                else:
-                    mois_points.append({'prenom': coureur.prenom, 'nom': coureur.nom, 'points': round(total_points, 1), 'team_id': None})
+            if total_points > 0:
+                mois_points.append({'prenom': coureur.prenom, 'nom': coureur.nom, 'points': round(total_points, 1)})
         mois_points.sort(key=lambda x: x['points'], reverse=True)
         
-        # Classement des notes moyennes de la saison
         saison_notes = []
         for coureur in coureurs:
             participations = db.session.query(QuestionnaireParticipant, Questionnaire).join(
@@ -2205,6 +2304,8 @@ def admin_global_rankings():
             total_rating = 0
             nb_courses_avec_notes = 0
             for participation, questionnaire in participations:
+                if not championship_filter(questionnaire):
+                    continue
                 avg_rating = db.session.query(func.avg(QuestionnaireResponse.rating)).filter(
                     QuestionnaireResponse.questionnaire_id == questionnaire.id,
                     QuestionnaireResponse.evaluated_id == coureur.id
@@ -2214,15 +2315,9 @@ def admin_global_rankings():
                     nb_courses_avec_notes += 1
             if nb_courses_avec_notes > 0:
                 avg_rating_season = round(total_rating / nb_courses_avec_notes, 1)
-                # Ajouter le coureur pour chaque équipe à laquelle il appartient
-                if coureur.teams:
-                    for team in coureur.teams:
-                        saison_notes.append({'prenom': coureur.prenom, 'nom': coureur.nom, 'note': avg_rating_season, 'team_id': team.id})
-                else:
-                    saison_notes.append({'prenom': coureur.prenom, 'nom': coureur.nom, 'note': avg_rating_season, 'team_id': None})
+                saison_notes.append({'prenom': coureur.prenom, 'nom': coureur.nom, 'note': avg_rating_season})
         saison_notes.sort(key=lambda x: x['note'], reverse=True)
         
-        # Classement des notes moyennes du mois sélectionné
         mois_notes = []
         for coureur in coureurs:
             participations = db.session.query(QuestionnaireParticipant, Questionnaire).join(
@@ -2235,6 +2330,8 @@ def admin_global_rankings():
             total_rating = 0
             nb_courses_avec_notes = 0
             for participation, questionnaire in participations:
+                if not championship_filter(questionnaire):
+                    continue
                 avg_rating = db.session.query(func.avg(QuestionnaireResponse.rating)).filter(
                     QuestionnaireResponse.questionnaire_id == questionnaire.id,
                     QuestionnaireResponse.evaluated_id == coureur.id
@@ -2244,12 +2341,7 @@ def admin_global_rankings():
                     nb_courses_avec_notes += 1
             if nb_courses_avec_notes > 0:
                 avg_rating_month = round(total_rating / nb_courses_avec_notes, 1)
-                # Ajouter le coureur pour chaque équipe à laquelle il appartient
-                if coureur.teams:
-                    for team in coureur.teams:
-                        mois_notes.append({'prenom': coureur.prenom, 'nom': coureur.nom, 'note': avg_rating_month, 'team_id': team.id})
-                else:
-                    mois_notes.append({'prenom': coureur.prenom, 'nom': coureur.nom, 'note': avg_rating_month, 'team_id': None})
+                mois_notes.append({'prenom': coureur.prenom, 'nom': coureur.nom, 'note': avg_rating_month})
         mois_notes.sort(key=lambda x: x['note'], reverse=True)
         # Pour affichage du mois
         month_names = ["Janvier", "Février", "Mars", "Avril", "Mai", "Juin", "Juillet", "Août", "Septembre", "Octobre", "Novembre", "Décembre"]
@@ -2294,13 +2386,7 @@ def admin_global_rankings():
             "Juillet", "Août", "Septembre", "Octobre", "Novembre", "Décembre"
         ]
         selected_month_name = month_names[selected_month - 1]
-        if team_id:
-            # Filtrer les classements pour ne prendre que les membres de l'équipe sélectionnée
-            saison_points = [c for c in saison_points if c['team_id'] == team_id]
-            mois_points = [c for c in mois_points if c['team_id'] == team_id]
-            saison_notes = [c for c in saison_notes if c['team_id'] == team_id]
-            mois_notes = [c for c in mois_notes if c['team_id'] == team_id]
-        teams = Team.query.filter_by(actif=True).all()
+        championnats = Championship.query.filter_by(actif=True).order_by(Championship.nom).all()
         return render_template('admin/global_rankings.html',
             saison_points=saison_points,
             mois_points=mois_points,
@@ -2312,13 +2398,82 @@ def admin_global_rankings():
             selected_month=selected_month,
             selected_year=selected_year,
             selected_month_name=selected_month_name,
-            teams=teams,
-            int=int  # Ajout pour Jinja
+            championnats=championnats,
+            championship_id=championship_id,
+            int=int
         )
     except Exception as e:
         current_app.logger.error(f"Erreur classements globaux: {e}")
         flash('Erreur lors du chargement des classements globaux.', 'danger')
         return redirect(url_for('main.admin_dashboard'))
+
+@main_bp.route('/admin/questionnaire/<int:questionnaire_id>/edit', methods=['GET', 'POST'])
+@login_required
+def edit_questionnaire(questionnaire_id):
+    """
+    Permet à l'admin de modifier un questionnaire : date, nom, points événements, championnat.
+    Changer le championnat met à jour automatiquement les classements (filtrés par championnat).
+    """
+    if not current_user.is_admin():
+        flash('Accès interdit.', 'danger')
+        return redirect(url_for('main.admin_questionnaires'))
+    questionnaire = Questionnaire.query.get_or_404(questionnaire_id)
+    championnats = Championship.query.filter_by(actif=True).order_by(Championship.nom).all()
+    season = request.args.get('season')
+    month = request.args.get('month')
+    year = request.args.get('year')
+    championship_id_param = request.args.get('championship_id')
+
+    if request.method == 'POST':
+        course_name = request.form.get('course_name', '').strip()
+        course_date_str = request.form.get('course_date', '')
+        direct_velo_points_str = request.form.get('direct_velo_points', '').strip()
+        championship_id = request.form.get('championship_id')
+        errors = []
+        if not course_name:
+            errors.append("Le nom de l'évènement est requis")
+        if not course_date_str:
+            errors.append("La date de l'évènement est requise")
+        if not championship_id or not str(championship_id).strip():
+            errors.append("Le type de championnat est requis")
+        elif not str(championship_id).isdigit() or not Championship.query.get(int(championship_id)):
+            errors.append("Veuillez sélectionner un championnat valide")
+        if not direct_velo_points_str:
+            errors.append("Le nombre de points Evénements est requis")
+        elif not direct_velo_points_str.isdigit() or int(direct_velo_points_str) < 0:
+            errors.append("Le nombre de points Evénements doit être un nombre positif")
+
+        if errors:
+            for err in errors:
+                flash(err, 'danger')
+            return render_template('admin/edit_questionnaire.html',
+                                   questionnaire=questionnaire,
+                                   championnats=championnats,
+                                   season=season, month=month, year=year, championship_id_param=championship_id_param)
+        try:
+            questionnaire.course_name = course_name
+            questionnaire.course_date = datetime.strptime(course_date_str, '%Y-%m-%d').date()
+            questionnaire.direct_velo_points = int(direct_velo_points_str)
+            questionnaire.championship_id = int(championship_id)
+            db.session.commit()
+            flash('Questionnaire mis à jour. Les classements par championnat sont recalculés automatiquement.', 'success')
+        except Exception as e:
+            db.session.rollback()
+            current_app.logger.error(f"Erreur modification questionnaire: {e}")
+            flash('Erreur lors de la modification du questionnaire.', 'danger')
+            return render_template('admin/edit_questionnaire.html',
+                                   questionnaire=questionnaire,
+                                   championnats=championnats,
+                                   season=season, month=month, year=year, championship_id_param=championship_id_param)
+        url = url_for('main.admin_questionnaire_results', questionnaire_id=questionnaire_id,
+                      season=season, month=month, year=year, championship_id=championship_id_param)
+        return redirect(url)
+
+    return render_template('admin/edit_questionnaire.html',
+                           questionnaire=questionnaire,
+                           championnats=championnats,
+                           season=season, month=month, year=year, championship_id_param=championship_id_param)
+
 
 @main_bp.route('/admin/questionnaire/<int:questionnaire_id>/delete', methods=['POST'])
 @login_required
@@ -2379,6 +2534,82 @@ def create_team():
         current_app.logger.error(f"Erreur création équipe : {e}")
         flash("Erreur lors de la création de l'équipe.", 'danger')
     return redirect(url_for('main.admin_teams'))
+
+@main_bp.route('/admin/championships/create', methods=['POST'])
+@login_required
+def create_championship():
+    if not current_user.is_admin():
+        flash('Accès interdit. Privilèges administrateur requis.', 'danger')
+        return redirect(url_for('main.admin_dashboard'))
+    nom = request.form.get('nom', '').strip()
+    if not nom:
+        flash("Le nom du championnat est requis.", 'danger')
+        return redirect(url_for('main.admin_championships'))
+    if Championship.query.filter_by(nom=nom).first():
+        flash("Un championnat avec ce nom existe déjà.", 'danger')
+        return redirect(url_for('main.admin_championships'))
+    try:
+        champ = Championship(nom=nom, actif=True)
+        db.session.add(champ)
+        db.session.commit()
+        flash(f"Championnat « {nom} » créé avec succès.", 'success')
+    except Exception as e:
+        db.session.rollback()
+        current_app.logger.error(f"Erreur création championnat : {e}")
+        flash("Erreur lors de la création du championnat.", 'danger')
+    return redirect(url_for('main.admin_championships'))
+
+@main_bp.route('/admin/championships/<int:championship_id>/edit', methods=['POST'])
+@login_required
+def edit_championship(championship_id):
+    if not current_user.is_admin():
+        flash("Accès interdit.", "danger")
+        return redirect(url_for('main.admin_championships'))
+    champ = Championship.query.get_or_404(championship_id)
+    nom = request.form.get('nom', '').strip()
+    if not nom:
+        flash("Le nom du championnat est requis.", 'danger')
+        return redirect(url_for('main.admin_championships'))
+    autre = Championship.query.filter(Championship.nom == nom, Championship.id != championship_id).first()
+    if autre:
+        flash("Un autre championnat porte déjà ce nom.", 'danger')
+        return redirect(url_for('main.admin_championships'))
+    try:
+        champ.nom = nom
+        db.session.commit()
+        flash(f"Championnat « {champ.nom} » modifié avec succès.", "success")
+    except Exception as e:
+        db.session.rollback()
+        current_app.logger.error(f"Erreur modification championnat : {e}")
+        flash("Erreur lors de la modification du championnat.", "danger")
+    return redirect(url_for('main.admin_championships'))
+
+@main_bp.route('/admin/championships/<int:championship_id>/delete', methods=['POST'])
+@login_required
+def delete_championship(championship_id):
+    if not current_user.is_admin():
+        flash('Accès interdit. Privilèges administrateur requis.', 'danger')
+        return redirect(url_for('main.admin_championships'))
+    champ = Championship.query.get_or_404(championship_id)
+    nom = champ.nom
+    try:
+        db.session.delete(champ)
+        db.session.commit()
+        flash(f"Championnat « {nom} » supprimé avec succès.", 'success')
+    except Exception as e:
+        db.session.rollback()
+        current_app.logger.error(f"Erreur suppression championnat : {e}")
+        flash("Erreur lors de la suppression du championnat.", 'danger')
+    return redirect(url_for('main.admin_championships'))
+
+@main_bp.route('/admin/championships')
+@login_required
+def admin_championships():
+    if not current_user.is_admin():
+        flash('Accès interdit. Privilèges administrateur requis.', 'danger')
+        return redirect(url_for('main.admin_dashboard'))
+    championnats = Championship.query.order_by(Championship.nom).all()
+    return render_template('admin/championships.html', championnats=championnats)
 
 @main_bp.route('/admin/teams')
 @login_required
@@ -2462,13 +2693,15 @@ def retirer_coureur(team_id, coureur_id):
 @main_bp.route('/admin/api/coureurs_par_equipe/<int:team_id>')
 @login_required
 def api_coureurs_par_equipe(team_id):
+    team = Team.query.get_or_404(team_id)
     coureurs = User.query.join(user_team).filter(user_team.c.team_id == team_id, User.role == 'coureur', User.is_active == True).order_by(User.nom).all()
     data = [
         {
             'id': c.id,
             'prenom': c.prenom,
             'nom': c.nom,
-            'email': c.email
+            'email': c.email or '',
+            'equipe_nom': team.nom
         } for c in coureurs
     ]
     return jsonify(data)
@@ -2482,7 +2715,8 @@ def api_coureurs_tous():
             'id': c.id,
             'prenom': c.prenom,
             'nom': c.nom,
-            'email': c.email
+            'email': c.email or '',
+            'equipe_nom': ', '.join(t.nom for t in c.teams) if c.teams else '—'
         } for c in coureurs
     ]
     return jsonify(data)

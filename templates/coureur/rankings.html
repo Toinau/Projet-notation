@@ -166,17 +166,21 @@
             <i class="fas fa-trophy me-2 text-warning"></i>
             Classements
           </h1>
-          {% if user_team_names %}
-          <p class="text-white mb-0 mt-1">
-            <i class="fas fa-users me-1"></i>
-            Classement de votre équipe{% if user_team_names|length > 1 %}s{%
-            endif %} : {{ user_team_names|join(', ') }}
-          </p>
+          {% if championnats %}
+          <form method="get" class="mt-2 d-flex align-items-center flex-wrap gap-2">
+            <label for="championship_id" class="mb-0 text-white"><i class="fas fa-trophy me-1"></i>Championnat :</label>
+            <select name="championship_id" id="championship_id" class="form-select form-select-sm w-auto" style="max-width: 220px;" onchange="this.form.submit()">
+              {% for c in championnats %}
+              <option value="{{ c.id }}" {% if selected_championship_id == c.id %}selected{% endif %}>{{ c.nom }}</option>
+              {% endfor %}
+            </select>
+            <input type="hidden" name="month" value="{{ selected_month }}">
+            <input type="hidden" name="year" value="{{ selected_year }}">
+          </form>
           {% else %}
           <p class="text-white mb-0 mt-1">
             <i class="fas fa-info-circle me-1"></i>
-            Vous n'êtes rattaché à aucune équipe. Le classement s'affichera
-            lorsque vous serez assigné à une équipe.
+            Aucun championnat configuré. Le classement s'affichera lorsqu'au moins un championnat existera.
           </p>
           {% endif %}
         </div>
@@ -207,7 +211,7 @@
                     <li>
                       <a
                         class="dropdown-item {% if option.selected %}active{% endif %}"
-                        href="{{ url_for('main.coureur_rankings', month=option.value.split('-')[1]|int, year=option.value.split('-')[0]|int) }}"
+                        href="{{ url_for('main.coureur_rankings', month=option.value.split('-')[1]|int, year=option.value.split('-')[0]|int, championship_id=selected_championship_id) }}"
                       >
                         {{ option.label }}
                       </a>

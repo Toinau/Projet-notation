@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Modifier le questionnaire</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        body {
+            background: #000000;
+            min-height: 100vh;
+            color: #ffffff;
+        }
+        .navbar-custom {
+            background: #ffd700;
+            border-bottom: 3px solid #ffed4e;
+        }
+        .navbar-custom .navbar-brand,
+        .navbar-custom .nav-link {
+            color: #000000 !important;
+            font-weight: 600;
+        }
+        .navbar-custom .nav-link:hover {
+            color: #333333 !important;
+        }
+        .btn-custom {
+            background: #ffd700;
+            border: none;
+            color: #000000;
+            font-weight: 600;
+        }
+        .btn-custom:hover {
+            background: #ffed4e;
+            color: #000000;
+        }
+        .card {
+            background: #1a1a1a;
+            border: 1px solid #333333;
+        }
+        .card-header {
+            background: #ffd700 !important;
+            color: #000000;
+            border-bottom: 1px solid #ffed4e;
+        }
+        .form-control, .form-select {
+            background: #333333;
+            border: 1px solid #555555;
+            color: #ffffff;
+        }
+        .form-control:focus, .form-select:focus {
+            background: #444444;
+            border-color: #ffd700;
+            color: #ffffff;
+            box-shadow: 0 0 0 0.2rem rgba(255, 215, 0, 0.25);
+        }
+        .form-label {
+            color: #ffffff;
+            font-weight: 600;
+        }
+        .form-text {
+            color: #cccccc;
+        }
+        input[type="date"]::-webkit-calendar-picker-indicator {
+            filter: invert(1);
+            cursor: pointer;
+        }
+        input[type="date"]::-moz-calendar-picker-indicator {
+            filter: invert(1);
+            cursor: pointer;
+        }
+        .dropdown-menu {
+            background: #1a1a1a;
+            border: 1px solid #333333;
+        }
+        .dropdown-item {
+            color: #ffffff;
+        }
+        .dropdown-item:hover {
+            background: #333333;
+            color: #ffffff;
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-custom shadow-sm">
+        <div class="container">
+            <a class="navbar-brand" href="{{ url_for('main.admin_questionnaire_results', questionnaire_id=questionnaire.id, season=season, month=month, year=year, championship_id=championship_id_param) }}">
+                <i class="fas fa-arrow-left me-2"></i>
+                Retour aux résultats
+            </a>
+            <div class="navbar-nav ms-auto">
+                <div class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
+                        <i class="fas fa-user-circle me-1"></i>
+                        {{ current_user.prenom }} {{ current_user.nom }}
+                    </a>
+                    <ul class="dropdown-menu">
+                        <li><a class="dropdown-item" href="{{ url_for('main.change_password') }}">
+                            <i class="fas fa-key me-2"></i>Changer le mot de passe
+                        </a></li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li><a class="dropdown-item" href="{{ url_for('main.logout') }}">
+                            <i class="fas fa-sign-out-alt me-2"></i>Déconnexion
+                        </a></li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container mt-4">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ 'danger' if category == 'error' else category }} alert-dismissible fade show" role="alert">
+                        {{ message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        <div class="row mb-4">
+            <div class="col-12">
+                <h1 class="display-6">
+                    <i class="fas fa-edit me-2 text-warning"></i>
+                    Modifier le questionnaire
+                </h1>
+                <p class="text-muted mb-0">Modifier la date, le nom, les points ou le championnat. Changer le championnat met à jour les classements concernés.</p>
+            </div>
+        </div>
+
+        <div class="card shadow-lg">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-clipboard-list me-2"></i>
+                    Paramètres du questionnaire
+                </h5>
+            </div>
+            <div class="card-body">
+                <form method="POST">
+                    <div class="row mb-4">
+                        <div class="col-12">
+                            <label for="course_name" class="form-label">
+                                <i class="fas fa-flag-checkered me-1"></i>Nom de l'évènement *
+                            </label>
+                            <input type="text" class="form-control" id="course_name" name="course_name" required
+                                   value="{{ questionnaire.course_name }}"
+                                   placeholder="Ex: Gala du club">
+                        </div>
+                    </div>
+
+                    <div class="row mb-4">
+                        <div class="col-12">
+                            <label for="course_date" class="form-label">
+                                <i class="fas fa-calendar me-1"></i>Date de l'évènement *
+                            </label>
+                            <input type="date" class="form-control" id="course_date" name="course_date" required
+                                   value="{{ questionnaire.course_date.strftime('%Y-%m-%d') }}">
+                        </div>
+                    </div>
+
+                    <div class="row mb-4">
+                        <div class="col-12">
+                            <label for="championship_id" class="form-label">
+                                <i class="fas fa-trophy me-1"></i>Championnat *
+                            </label>
+                            <select class="form-select" id="championship_id" name="championship_id" required>
+                                <option value="">-- Sélectionner un championnat --</option>
+                                {% for champ in championnats %}
+                                    <option value="{{ champ.id }}" {% if questionnaire.championship_id == champ.id %}selected{% endif %}>{{ champ.nom }}</option>
+                                {% endfor %}
+                            </select>
+                            <div class="form-text">Changer le championnat met à jour le classement de cette course dans le bon championnat.</div>
+                        </div>
+                    </div>
+
+                    <div class="row mb-4">
+                        <div class="col-12">
+                            <label for="direct_velo_points" class="form-label">
+                                <i class="fas fa-star me-1"></i>Nombre de points Evénements *
+                            </label>
+                            <input type="number" class="form-control" id="direct_velo_points" name="direct_velo_points"
+                                   required min="0" value="{{ questionnaire.direct_velo_points }}"
+                                   placeholder="Ex: 10">
+                        </div>
+                    </div>
+
+                    <div class="row mt-4">
+                        <div class="col-12 d-flex gap-2 flex-wrap">
+                            <button type="submit" class="btn btn-custom btn-lg">
+                                <i class="fas fa-save me-2"></i>
+                                Enregistrer les modifications
+                            </button>
+                            <a href="{{ url_for('main.admin_questionnaire_results', questionnaire_id=questionnaire.id, season=season, month=month, year=year, championship_id=championship_id_param) }}" class="btn btn-outline-light btn-lg">
+                                <i class="fas fa-times me-2"></i>
+                                Annuler
+                            </a>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

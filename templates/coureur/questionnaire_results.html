@@ -90,6 +90,21 @@
         .stat-item small.text-muted {
             color: #ffffff !important;
         }
+        /* Barème (aligné sur create-questionnaire) */
+        .bareme-open-intro { font-size: 0.85rem; margin-bottom: 0.75rem; color: #e0e0e0; }
+        .bareme-open-block { margin-bottom: 0.9rem; }
+        .bareme-open-block:last-child { margin-bottom: 0; }
+        .bareme-open-title { font-weight: 700; color: #ffd700; margin-bottom: 0.35rem; font-size: 0.9rem; }
+        .bareme-open-table { width: 100%; font-size: 0.75rem; border-collapse: collapse; border: 1px solid #444; border-radius: 6px; overflow: hidden; }
+        .bareme-open-table th { background: #333; color: #ffd700; padding: 0.3rem 0.5rem; text-align: left; font-weight: 600; }
+        .bareme-open-table td { padding: 0.25rem 0.5rem; border-bottom: 1px solid #2a2a2a; }
+        .bareme-open-table tr:last-child td { border-bottom: none; }
+        .bareme-open-table tr:nth-child(even) td { background: #222; }
+        .bareme-open-table .col-place { width: 50%; color: #ccc; }
+        .bareme-open-table .col-pts { width: 50%; text-align: right; font-weight: 600; color: #ffd700; }
+        .bareme-chevron { transition: transform 0.2s ease; }
+        button[aria-expanded="false"] .bareme-chevron { transform: rotate(-90deg); }
+        button[aria-expanded="true"] .bareme-chevron { transform: rotate(0); }
     </style>
 </head>
 <body>
@@ -145,6 +160,11 @@
                         <h5 class="mb-0">
                             <i class="fas fa-flag-checkered me-2"></i>
                             {{ questionnaire.course_name }}
+                            {% if championship_name %}
+                                <span class="badge bg-dark text-warning ms-2">
+                                    <i class="fas fa-trophy me-1"></i>{{ championship_name }}
+                                </span>
+                            {% endif %}
                         </h5>
                     </div>
                     <div class="card-body">
@@ -158,6 +178,30 @@
                         </div>
                     </div>
                 </div>
+
+                {% if bareme_html %}
+                <div class="card mt-3">
+                    <div class="card-header d-flex align-items-center py-2">
+                        <button class="btn btn-link btn-sm text-start text-dark p-0 text-decoration-none flex-grow-1" type="button" data-bs-toggle="collapse" data-bs-target="#baremeCollapse" aria-expanded="false" aria-controls="baremeCollapse">
+                            <i class="fas fa-chevron-down me-2 bareme-chevron"></i>
+                            <i class="fas fa-info-circle me-2"></i>
+                            Barème de points
+                            {% if championship_name %}
+                                <span class="fw-normal small">({{ championship_name }})</span>
+                            {% endif %}
+                        </button>
+                    </div>
+                    <div class="collapse" id="baremeCollapse">
+                        <div class="card-body small">
+                            {% if bareme_html and '<' in bareme_html %}
+                                {{ bareme_html | safe }}
+                            {% else %}
+                                {{ bareme_html or '' }}
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
                 <p class="lead text-muted mt-3">
                     <i class="fas fa-info-circle me-2"></i>
                     Voici les notes que vous avez attribuées à chaque participant
