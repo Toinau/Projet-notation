@@ -525,8 +525,13 @@
         function getBaremeDescription(champNom) {
             if (!champNom) return null;
             var nom = String(champNom).trim();
-            if (nom === 'Elite' || nom === 'U19') {
-                return 'Nombre de points Evènements = Nombre de points Direct Vélo';
+            if (nom === 'Elite') {
+                return 'Nombre de points Evènements = Nombre de points Direct Vélo. ' +
+                    '<a href="https://www.directvelo.com/challenge/bareme" target="_blank" rel="noopener noreferrer" class="text-warning">Voir le barème DirectVelo (Challenge DV Amateur)</a>';
+            }
+            if (nom === 'U19') {
+                return 'Nombre de points Evènements = Nombre de points Direct Vélo. ' +
+                    '<a href="https://www.directvelo.com/challenge/juniors/bareme" target="_blank" rel="noopener noreferrer" class="text-warning">Voir le barème DirectVelo (Challenge U19 Legend Wheels)</a>';
             }
             if (nom === 'Open') {
                 var open1 = [

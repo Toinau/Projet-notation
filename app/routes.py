@@ -2690,6 +2690,67 @@ def retirer_coureur(team_id, coureur_id):
     flash(f"{coureur.prenom} {coureur.nom} retiré de l'équipe {team.nom}.", "success")
     return redirect(url_for('main.admin_teams'))
 
+
+@main_bp.route('/admin/teams/coureur/<int:coureur_id>/profile')
+@login_required
+def coureur_profile(coureur_id):
+    """Retourne le profil d'un coureur (email, points mois en cours, points saison) en JSON."""
+    if not current_user.is_admin():
+        return jsonify({'error': 'Accès interdit'}), 403
+    coureur = User.query.filter_by(id=coureur_id, role='coureur').first()
+    if not coureur:
+        return jsonify({'error': 'Coureur introuvable'}), 404
+    now = datetime.utcnow()
+    # Mois en cours
+    month_start = datetime(now.year, now.month, 1).date()
+    if now.month < 12:
+        month_end = datetime(now.year, now.month + 1, 1).date()
+    else:
+        month_end = datetime(now.year + 1, 1, 1).date()
+    # Saison en cours (nov -> oct)
+    season = now.year + 1 if now.month >= 11 else now.year
+    season_start = datetime(season - 1, 11, 1).date()
+    season_end = datetime(season, 10, 31).date()
+    # Points du mois
+    participations_mois = db.session.query(QuestionnaireParticipant, Questionnaire).join(
+        Questionnaire, QuestionnaireParticipant.questionnaire_id == Questionnaire.id
+    ).filter(
+        QuestionnaireParticipant.user_id == coureur.id,
+        Questionnaire.course_date >= month_start,
+        Questionnaire.course_date < month_end
+    ).all()
+    points_mois = 0
+    for participation, questionnaire in participations_mois:
+        avg_rating = db.session.query(func.avg(QuestionnaireResponse.rating)).filter(
+            QuestionnaireResponse.questionnaire_id == questionnaire.id,
+            QuestionnaireResponse.evaluated_id == coureur.id
+        ).scalar() or 0
+        points_mois += questionnaire.direct_velo_points * float(avg_rating)
+    # Points saison
+    participations_saison = db.session.query(QuestionnaireParticipant, Questionnaire).join(
+        Questionnaire, QuestionnaireParticipant.questionnaire_id == Questionnaire.id
+    ).filter(
+        QuestionnaireParticipant.user_id == coureur.id,
+        Questionnaire.course_date >= season_start,
+        Questionnaire.course_date <= season_end
+    ).all()
+    points_saison = 0
+    for participation, questionnaire in participations_saison:
+        avg_rating = db.session.query(func.avg(QuestionnaireResponse.rating)).filter(
+            QuestionnaireResponse.questionnaire_id == questionnaire.id,
+            QuestionnaireResponse.evaluated_id == coureur.id
+        ).scalar() or 0
+        points_saison += questionnaire.direct_velo_points * float(avg_rating)
+    return jsonify({
+        'id': coureur.id,
+        'prenom': coureur.prenom,
+        'nom': coureur.nom,
+        'email': coureur.email or '',
+        'points_mois': round(points_mois, 1),
+        'points_saison': round(points_saison, 1)
+    })
+
+
 @main_bp.route('/admin/api/coureurs_par_equipe/<int:team_id>')
 @login_required
 def api_coureurs_par_equipe(team_id):

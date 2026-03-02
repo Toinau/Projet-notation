@@ -685,16 +685,19 @@ Machine locale          GitHub              Serveur production
 
 #### Si vous avez modifié le fichier .env
 
-Le fichier `.env` n'est **pas** versionné sur GitHub (pour des raisons de sécurité). Si vous devez modifier des variables d'environnement :
+Le fichier `.env` n'est **pas** versionné sur GitHub (pour des raisons de sécurité). Si vous devez modifier des variables d'environnement (ex. nouveau compte Gmail) :
 
 ```bash
 # Sur le serveur
 cd /var/www/Projet-notation
 nano .env
-# Modifier les variables nécessaires
-# Redémarrer l'application
+# Modifier les variables nécessaires (MAIL_USERNAME, MAIL_PASSWORD, MAIL_DEFAULT_SENDER, etc.)
+# Sauvegarder (Ctrl+O, Entrée) puis quitter (Ctrl+X)
+# Redémarrer l'application pour appliquer les changements
 supervisorctl restart notation-app
 ```
+
+**Guide détaillé** : voir **[MISE_A_JOUR_ENV_PRODUCTION.md](MISE_A_JOUR_ENV_PRODUCTION.md)**.
 
 #### Si vous avez ajouté de nouvelles dépendances
 

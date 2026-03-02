@@ -25,6 +25,8 @@
         .team-name i { margin-right: 0.5em; vertical-align: middle; }
         .team-coureurs-block { background: #181818; border-radius: 8px; padding: 0.5em 1em; margin-top: 0.5em; }
         .coureur-badge { background: #222; color: #ffd700; font-weight: bold; border-radius: 50%; width: 32px; height: 32px; display: inline-flex; align-items: center; justify-content: center; margin-right: 0.7em; font-size: 1rem; border: 1px solid #ffd700; }
+        .coureur-badge-btn { cursor: pointer; transition: transform 0.15s, box-shadow 0.15s; padding: 0; }
+        .coureur-badge-btn:hover { transform: scale(1.08); box-shadow: 0 0 12px rgba(255, 215, 0, 0.5); }
         .coureur-item { display: flex; align-items: center; justify-content: space-between; padding: 0.3em 0; border-bottom: 1px solid #333; }
         .coureur-item:last-child { border-bottom: none; }
         .coureur-info { display: flex; align-items: center; }
@@ -81,7 +83,7 @@
                                     {% for coureur in team.users %}
                                         <div class="coureur-item">
                                             <span class="coureur-info">
-                                                <span class="coureur-badge">{{ coureur.prenom[0] }}{{ coureur.nom[0] }}</span>
+                                                <button type="button" class="coureur-badge coureur-badge-btn" data-coureur-id="{{ coureur.id }}" data-coureur-nom="{{ coureur.prenom }} {{ coureur.nom }}" title="Voir le profil">{{ coureur.prenom[0] }}{{ coureur.nom[0] }}</button>
                                                 <span class="coureur-nom">{{ coureur.prenom }} {{ coureur.nom }}</span> <span class="text-muted ms-2">({{ coureur.email }})</span>
                                             </span>
                                             <form method="POST" action="{{ url_for('main.retirer_coureur', team_id=team.id, coureur_id=coureur.id) }}" style="display:inline;">
@@ -163,6 +165,27 @@
     </div>
     {% endif %}
 </div>
+<!-- Modal Profil coureur -->
+<div class="modal fade" id="profilCoureurModal" tabindex="-1" aria-labelledby="profilCoureurModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content bg-dark text-light" style="border: 2px solid #ffd700;">
+      <div class="modal-header" style="background: #ffd700; color: #000;">
+        <h5 class="modal-title" id="profilCoureurModalLabel"><i class="fas fa-user me-2"></i>Profil</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fermer"></button>
+      </div>
+      <div class="modal-body" id="profilCoureurBody">
+        <div class="text-center py-4" id="profilCoureurLoading">
+          <div class="spinner-border text-warning" role="status"><span class="visually-hidden">Chargement…</span></div>
+        </div>
+        <div id="profilCoureurContent" style="display: none;">
+          <p class="mb-2"><strong><i class="fas fa-envelope me-2 text-warning"></i>Adresse mail</strong><br><span id="profil-email" class="text-light"></span></p>
+          <p class="mb-2"><strong><i class="fas fa-calendar-alt me-2 text-warning"></i>Points du mois en cours</strong><br><span id="profil-points-mois" class="text-warning fw-bold"></span></p>
+          <p class="mb-0"><strong><i class="fas fa-trophy me-2 text-warning"></i>Points sur la saison</strong><br><span id="profil-points-saison" class="text-warning fw-bold"></span></p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
 <!-- Modal Création d'équipe -->
 <div class="modal fade" id="createTeamModal" tabindex="-1" aria-labelledby="createTeamModalLabel" aria-hidden="true">
   <div class="modal-dialog">
@@ -214,6 +237,40 @@ function checkAll(listId, check) {
   const checkboxes = list.querySelectorAll('input[type="checkbox"]');
   checkboxes.forEach(cb => cb.checked = check);
 }
+
+document.querySelectorAll('.coureur-badge-btn').forEach(function(btn) {
+  btn.addEventListener('click', function() {
+    var coureurId = this.getAttribute('data-coureur-id');
+    var coureurNom = this.getAttribute('data-coureur-nom');
+    var modal = new bootstrap.Modal(document.getElementById('profilCoureurModal'));
+    document.getElementById('profilCoureurModalLabel').innerHTML = '<i class="fas fa-user me-2"></i>Profil – ' + (coureurNom || '');
+    document.getElementById('profilCoureurLoading').style.display = 'block';
+    document.getElementById('profilCoureurContent').style.display = 'none';
+    modal.show();
+    fetch('{{ url_for("main.coureur_profile", coureur_id=0) }}'.replace('0', coureurId), { credentials: 'same-origin' })
+      .then(function(r) { return r.json(); })
+      .then(function(data) {
+        document.getElementById('profilCoureurLoading').style.display = 'none';
+        document.getElementById('profilCoureurContent').style.display = 'block';
+        if (data.error) {
+          document.getElementById('profil-email').textContent = data.error;
+          document.getElementById('profil-points-mois').textContent = '—';
+          document.getElementById('profil-points-saison').textContent = '—';
+        } else {
+          document.getElementById('profil-email').textContent = data.email || '—';
+          document.getElementById('profil-points-mois').textContent = data.points_mois;
+          document.getElementById('profil-points-saison').textContent = data.points_saison;
+        }
+      })
+      .catch(function() {
+        document.getElementById('profilCoureurLoading').style.display = 'none';
+        document.getElementById('profilCoureurContent').style.display = 'block';
+        document.getElementById('profil-email').textContent = 'Erreur de chargement.';
+        document.getElementById('profil-points-mois').textContent = '—';
+        document.getElementById('profil-points-saison').textContent = '—';
+      });
+  });
+});
 </script>
 </body>
 </html> 
